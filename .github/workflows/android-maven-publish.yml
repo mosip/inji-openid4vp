@@ -1,0 +1,25 @@
+name: Android Artifact Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message for manually triggering'
+        required: false
+        default: 'Triggered for inji-openId4VP Updates'
+        type: string
+
+jobs:
+  maven-publish:
+    uses: mosip/kattu/.github/workflows/maven-publish-android.yml@master
+    with:
+      SERVICE_LOCATION: 'kotlin'
+      ANDROID_SERVICE_LOCATION: 'openId4VP'
+      JAVA_VERSION: 21
+    secrets:
+      OSSRH_USER: ${{ secrets.OSSRH_USER }}
+      OSSRH_URL: ${{secrets.OSSRH_SNAPSHOT_URL }}
+      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
+      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+      GPG_SECRET: ${{ secrets.GPG_SECRET }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
