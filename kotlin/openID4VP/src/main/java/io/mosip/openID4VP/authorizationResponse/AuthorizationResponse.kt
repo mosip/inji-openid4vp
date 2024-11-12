@@ -44,7 +44,13 @@ class AuthorizationResponse {
             }
         }
 
-        fun shareVP(vpResponseMetadata: VPResponseMetadata, nonce: String, responseUri: String, presentationDefinitionId: String): String {
+        fun shareVP(
+            vpResponseMetadata: VPResponseMetadata,
+            nonce: String,
+            state: String,
+            responseUri: String,
+            presentationDefinitionId: String
+        ): String {
             try {
                 vpResponseMetadata.validate()
                 var pathIndex = 0
@@ -71,7 +77,7 @@ class AuthorizationResponse {
                 return constructHttpRequestBody(
                     vpToken,
                     presentationSubmission,
-                    responseUri,
+                    responseUri, state
                 )
             } catch (exception: Exception) {
                 Logger.error(logTag, exception)
@@ -82,7 +88,7 @@ class AuthorizationResponse {
         private fun constructHttpRequestBody(
             vpToken: VPToken,
             presentationSubmission: PresentationSubmission,
-            responseUri: String,
+            responseUri: String, state: String
         ): String {
             val encodedVPToken: String
             val encodedPresentationSubmission: String
@@ -102,7 +108,8 @@ class AuthorizationResponse {
             try {
                 val bodyParams = mapOf(
                     "vp_token" to encodedVPToken,
-                    "presentation_submission" to encodedPresentationSubmission
+                    "presentation_submission" to encodedPresentationSubmission,
+                    "state" to state
                 )
 
                 return sendHttpPostRequest(responseUri, bodyParams)

@@ -63,6 +63,7 @@ class OpenID4VP(private val traceabilityId: String) {
             return AuthorizationResponse.shareVP(
                 vpResponseMetadata,
                 authorizationRequest.nonce,
+                authorizationRequest.state,
                 authorizationRequest.responseUri,
                 (this.authorizationRequest.presentationDefinition as PresentationDefinition).id
             )
