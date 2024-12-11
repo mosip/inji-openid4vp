@@ -16,34 +16,37 @@ class AuthenticationResponse {
             authorizationRequest: AuthorizationRequest,
             trustedVerifiers: List<Verifier>,
             updateAuthorizationRequest: (PresentationDefinition, ClientMetadata?) -> Unit,
+            clientValidation: Boolean
         ) {
-            validateVerifier(
-                authorizationRequest.clientId,
-                authorizationRequest.responseUri,
-                trustedVerifiers
-            )?.let {
-                try {
-                    var clientMetadata: ClientMetadata? = null
-                    authorizationRequest.clientMetadata?.let {
-                        clientMetadata =
+            if (clientValidation) {
+                validateVerifier(
+                    authorizationRequest.clientId,
+                    authorizationRequest.responseUri,
+                    trustedVerifiers
+                )?.let {
+                    try {
+                        var clientMetadata: ClientMetadata? = null
+                        authorizationRequest.clientMetadata?.let {
+                            clientMetadata =
+                                deserializeAndValidate(
+                                    (authorizationRequest.clientMetadata).toString(),
+                                    ClientMetadataSerializer
+                                )
+                        }
+                        val presentationDefinition: PresentationDefinition =
                             deserializeAndValidate(
-                                (authorizationRequest.clientMetadata).toString(),
-                                ClientMetadataSerializer
+                                (authorizationRequest.presentationDefinition).toString(),
+                                PresentationDefinitionSerializer
                             )
+                        updateAuthorizationRequest(presentationDefinition, clientMetadata)
+                    } catch (e: Exception) {
+                        throw e
                     }
-                    val presentationDefinition: PresentationDefinition =
-                        deserializeAndValidate(
-                            (authorizationRequest.presentationDefinition).toString(),
-                            PresentationDefinitionSerializer
-                        )
-                    updateAuthorizationRequest(presentationDefinition, clientMetadata)
-                } catch (e: Exception) {
-                    throw e
+                } ?: run {
+                    throw Logger.handleException(
+                        exceptionType = "InvalidVerifierClientID", className = className
+                    )
                 }
-            } ?: run {
-                throw Logger.handleException(
-                    exceptionType = "InvalidVerifierClientID", className = className
-                )
             }
         }
 
