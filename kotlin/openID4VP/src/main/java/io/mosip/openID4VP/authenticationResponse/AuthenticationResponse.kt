@@ -16,18 +16,19 @@ class AuthenticationResponse {
             authorizationRequest: AuthorizationRequest,
             trustedVerifiers: List<Verifier>,
             updateAuthorizationRequest: (PresentationDefinition, ClientMetadata?) -> Unit,
-            clientValidation: Boolean
+            shouldValidateClient: Boolean
         ) {
-            val verifier = validateVerifier(
-                authorizationRequest.clientId,
-                authorizationRequest.responseUri,
-                trustedVerifiers
-            )
-            if (clientValidation && verifier == null) {
-                throw Logger.handleException(
-                    exceptionType = "InvalidVerifierClientID", className = className
+            if (shouldValidateClient) {
+                validateVerifier(
+                    authorizationRequest.clientId,
+                    authorizationRequest.responseUri,
+                    trustedVerifiers
+                ) ?: throw Logger.handleException(
+                    exceptionType = "InvalidVerifierClientID",
+                    className = className
                 )
             }
+
             try {
                 var clientMetadata: ClientMetadata? = null
                 authorizationRequest.clientMetadata?.let {

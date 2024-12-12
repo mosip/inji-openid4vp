@@ -29,7 +29,7 @@ class OpenID4VP(private val traceabilityId: String) {
     }
 
     fun authenticateVerifier(
-        encodedAuthorizationRequest: String, trustedVerifiers: List<Verifier>, clientValidation: Boolean
+        encodedAuthorizationRequest: String, trustedVerifiers: List<Verifier>, shouldValidateClient: Boolean
     ): AuthorizationRequest {
         try {
             Logger.setTraceabilityId(traceabilityId)
@@ -40,7 +40,7 @@ class OpenID4VP(private val traceabilityId: String) {
                 authorizationRequest,
                 trustedVerifiers,
                 ::updateAuthorizationRequest,
-                clientValidation
+                shouldValidateClient
             )
             return this.authorizationRequest
         } catch (exception: Exception) {

@@ -19,7 +19,7 @@ class ClientMetadataTest {
 	private lateinit var openID4VP: OpenID4VP
 	private lateinit var trustedVerifiers: List<Verifier>
 	private lateinit var encodedAuthorizationRequestUrl: String
-	private var clientValidation = true
+	private var shouldValidateClient = true
 
 	@Before
 	fun setUp() {
@@ -66,7 +66,7 @@ class ClientMetadataTest {
 		actualException =
 			Assert.assertThrows(AuthorizationRequestExceptions.InvalidInput::class.java) {
 				openID4VP.authenticateVerifier(
-					encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+					encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
 				)
 			}
 
@@ -88,7 +88,7 @@ class ClientMetadataTest {
 		actualException =
 			Assert.assertThrows(AuthorizationRequestExceptions.InvalidInput::class.java) {
 				openID4VP.authenticateVerifier(
-					encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+					encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
 				)
 			}
 
@@ -110,7 +110,7 @@ class ClientMetadataTest {
 		actualException =
 			Assert.assertThrows(AuthorizationRequestExceptions.InvalidInput::class.java) {
 				openID4VP.authenticateVerifier(
-					encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+					encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
 				)
 			}
 

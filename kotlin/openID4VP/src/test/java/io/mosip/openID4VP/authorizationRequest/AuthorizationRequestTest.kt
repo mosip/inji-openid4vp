@@ -26,7 +26,7 @@ class AuthorizationRequestTest {
     private lateinit var encodedAuthorizationRequestUrl: String
     private lateinit var actualException: Exception
     private lateinit var expectedExceptionMessage: String
-    private var clientValidation = true
+    private var shouldValidateClient = true
 
     @Before
     fun setUp() {
@@ -75,7 +75,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.MissingInput::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -93,7 +93,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidInput::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -111,7 +111,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidInput::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -128,7 +128,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidQueryParams::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -148,7 +148,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidQueryParams::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
         assertEquals(expectedExceptionMessage, actualException.message)
@@ -168,7 +168,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidVerifierClientID::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -191,7 +191,7 @@ class AuthorizationRequestTest {
         actualException =
             assertThrows(AuthorizationRequestExceptions.InvalidLimitDisclosure::class.java) {
                 openID4VP.authenticateVerifier(
-                    encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation
+                    encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient
                 )
             }
 
@@ -207,7 +207,7 @@ class AuthorizationRequestTest {
             )
         )
         val actualValue =
-            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation)
+            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient)
         assertTrue(actualValue is AuthorizationRequest)
     }
 
@@ -227,7 +227,7 @@ class AuthorizationRequestTest {
         )
 
         val actualValue =
-            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation)
+            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient)
         assertTrue(actualValue is AuthorizationRequest)
         mockWebServer.shutdown()
     }
@@ -240,10 +240,10 @@ class AuthorizationRequestTest {
                 "presentation_definition" to presentationDefinition
             )
         )
-        clientValidation = false
+        shouldValidateClient = false
 
         val actualValue =
-            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, clientValidation)
+            openID4VP.authenticateVerifier(encodedAuthorizationRequestUrl, trustedVerifiers, shouldValidateClient)
         assertTrue(actualValue is AuthorizationRequest)
     }
 }
@@ -255,9 +255,7 @@ fun createEncodedAuthorizationRequest(
     val nonce = "bMHvX1HGhbh8zqlSWf/fuQ=="
     val authorizationRequestUrl = StringBuilder("")
 
-    println("client_id::"+params["client_id"])
     if (params.containsKey("client_id")) authorizationRequestUrl.append("client_id=${params["client_id"]}&")
-    println("url::"+authorizationRequestUrl)
     if (params.containsKey("presentation_definition")) authorizationRequestUrl.append("presentation_definition=${params["presentation_definition"]}&")
     if (params.containsKey("presentation_definition_uri")) authorizationRequestUrl.append("presentation_definition_uri=${params["presentation_definition_uri"]}&")
     val responseUri: String? = if (params.containsKey("response_uri")) {
