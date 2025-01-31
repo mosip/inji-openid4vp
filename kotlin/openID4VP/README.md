@@ -1,6 +1,24 @@
 # INJI-openId4VP
 
-Description: Implementation of OpenID4VP protocols in Kotlin
+Description: Implementation of OpenID for Verifiable Presentations - draft 21 specifications in Kotlin
+
+## Specifications supported
+- The implementation follows OpenID for Verifiable Presentations - draft 21. [Specification](https://openid.net/specs/openid-4-verifiable-presentations-1_0-21.html).
+- Below are the fields we expect in the authorization request,
+   * client_id
+   * presentation_definition
+   * response_type
+   * response_mode
+   * nonce
+   * state
+   * response_uri
+   * client_metadata (Optional)
+- Request Uri is not supported as of now.
+- client_id_scheme is not mandatory. By default, we are validating the client based on pre-registered client id scheme, if passed as part of the authorization request it is ignored.
+- Same device flow is not supported, Hence redirect_uri is not supported in the authorization request. If passed as part of the authorization request it is ignored.
+- VC format supported is Ldp Vc as of now.
+
+**Note** : The pre-registered client id scheme validation can be toggled on/off based on the optional boolean which you can pass to the authenticateVerifier methods shouldValidateClient parameter. This is false by default.
 
 ## Functionalities
 
@@ -17,7 +35,7 @@ Description: Implementation of OpenID4VP protocols in Kotlin
 Snapshot builds are available - 
 
 ```
-implementation "io.mosip:inji-openID4VP:0.1.0-SNAPSHOT"
+implementation "io.mosip:inji-openid4vp:0.1.0-SNAPSHOT"
 ```
 
 ## Create instance of OpenId4VP library to invoke it's methods
@@ -27,11 +45,12 @@ val openID4VP = OpenID4VP()
 
 ### authenticateVerifier
 - Receives a list of trusted verifiers & Verifier's encoded Authorization request from consumer app(mobile wallet).
+- Takes an optional boolean to toggle the client validation. 
 - Decodes and parse the request, extracts the clientId and verifies it against trusted verifier's list clientId.
 - Returns the Authentication response which contains validated Presentation Definition of the Authorization request.
 
 ```
- val authenticationResponse = openID4VP.authenticateVerifier(encodedAuthenticationRequest: String, trustedVerifierJSON: List<Verifier>)
+ val authenticationResponse = openID4VP.authenticateVerifier(encodedAuthenticationRequest: String, trustedVerifierJSON: List<Verifier>, shouldValidateClient: Bool)
 ```
 
 ###### Parameters
@@ -40,7 +59,7 @@ val openID4VP = OpenID4VP()
 |------------------------------|----------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | encodedAuthenticationRequest | String         | Base64 encoded string containing the Verifier's authorization request                | `"T1BFTklENFZQOi8vYXV0"`                                                                   |
 | trustedVerifiers             | List<Verifier> | A list of trusted Verifier objects each containing a clientId and a responseUri list | `listOf(Verifier("https://verify.env1.net",listOf("https://verify.env1.net/responseUri"))` |
-
+| shouldValidateClient         | Bool?          | Optional Boolean to toggle client validation for pre-registered client id scheme     | `true`                                                                                     |
 
 ###### Exceptions
 
