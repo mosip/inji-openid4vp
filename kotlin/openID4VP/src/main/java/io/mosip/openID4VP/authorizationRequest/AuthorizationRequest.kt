@@ -1,29 +1,42 @@
 package io.mosip.openID4VP.authorizationRequest
 
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition
+import io.mosip.openID4VP.authorizationRequest.proofJwt.ProofJwtManager
+import io.mosip.openID4VP.authorizationRequest.proofJwt.didHandler.DidUtils.JwtPart.PAYLOAD
 import io.mosip.openID4VP.common.Decoder
 import io.mosip.openID4VP.common.Logger
-import io.mosip.openID4VP.common.validateField
-import io.mosip.openID4VP.networkManager.HTTP_METHOD
+import io.mosip.openID4VP.common.decodeBase64ToJSON
+import io.mosip.openID4VP.common.determineHttpMethod
+import io.mosip.openID4VP.common.extractDataJsonFromJwt
+import io.mosip.openID4VP.common.isJWT
+import io.mosip.openID4VP.dto.Verifier
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import java.net.URI
-import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 private val className = AuthorizationRequest::class.simpleName!!
 private val logTag = Logger.getLogTag(className)
 
+enum class ClientIdScheme(val value: String) {
+    PRE_REGISTERED("pre-registered"),
+    REDIRECT_URI("redirect_uri"),
+    DID("did")
+}
+
 data class AuthorizationRequest(
     val clientId: String,
+    val clientIdScheme: String,
     val responseType: String,
-    val responseMode: String,
+    val responseMode: String?,
     var presentationDefinition: Any,
-    val responseUri: String,
+    val responseUri: String?,
+    val redirectUri: String?,
     val nonce: String,
     val state: String,
     var clientMetadata: Any? = null
 ) {
+
 
     init {
         require(presentationDefinition is PresentationDefinition || presentationDefinition is String) {
@@ -39,27 +52,28 @@ data class AuthorizationRequest(
 
     companion object {
         fun validateAndGetAuthorizationRequest(
-            encodedAuthorizationRequest: String, setResponseUri: (String) -> Unit
+            encodedAuthorizationRequest: String,
+            setResponseUri: (String) -> Unit,
+            trustedVerifiers: List<Verifier>,
+            shouldValidateClient: Boolean
         ): AuthorizationRequest {
             try {
                 val queryStart = encodedAuthorizationRequest.indexOf('?') + 1
                 val encodedString = encodedAuthorizationRequest.substring(queryStart)
-                val decodedString =
-                    Decoder.decodeBase64ToString(encodedString)
-                val decodedAuthorizationRequest =
-                    encodedAuthorizationRequest.substring(0, queryStart) + decodedString
-                return parseAuthorizationRequest(decodedAuthorizationRequest, setResponseUri)
+                val decodedQueryString = Decoder.decodeBase64ToString(encodedString)
+                val authorizationRequestParams = parseAuthorizationRequest(decodedQueryString)
+                validateVerifier(trustedVerifiers, authorizationRequestParams, shouldValidateClient)
+                validateAuthorizationRequestParams(authorizationRequestParams, setResponseUri)
+                return createAuthorizationRequest(authorizationRequestParams)
             } catch (e: Exception) {
                 throw e
             }
         }
 
         private fun parseAuthorizationRequest(
-            decodedAuthorizationRequest: String, setResponseUri: (String) -> Unit
-        ): AuthorizationRequest {
+            queryString: String
+        ): MutableMap<String, Any> {
             try {
-                val queryStart = decodedAuthorizationRequest.indexOf('?') + 1
-                val queryString = decodedAuthorizationRequest.substring(queryStart)
                 val encodedQuery = URLEncoder.encode(queryString, StandardCharsets.UTF_8.toString())
                 val uriString = "?$encodedQuery"
                 val uri = URI(uriString)
@@ -70,165 +84,80 @@ data class AuthorizationRequest(
                         className = className
                     )
                 val params = extractQueryParams(query)
-                validateQueryParams(params, setResponseUri)
-                return createAuthorizationRequest(params)
+                return fetchAuthorizationRequestMap(params)
             } catch (exception: Exception) {
                 Logger.error(logTag, exception)
                 throw exception
             }
         }
 
-        private fun extractQueryParams(query: String): MutableMap<String, String> {
+        private fun fetchAuthorizationRequestMap(
+            params: MutableMap<String, Any>
+        ): MutableMap<String, Any> {
+            var authorizationRequestMap =  getValue(params,"request_uri")?.let { requestUri ->
+                 fetchAuthRequestObjectByReference(params, requestUri)
+            } ?: params
+
+            authorizationRequestMap = parseAndValidateClientMetadataInAuthorizationRequest(authorizationRequestMap)
+            authorizationRequestMap = parseAndValidatePresentationDefinitionInAuthorizationRequest(authorizationRequestMap)
+            return authorizationRequestMap
+        }
+
+        private fun fetchAuthRequestObjectByReference(
+            params: MutableMap<String, Any>,
+            requestUri: String,
+        ): MutableMap<String, Any> {
             try {
-                return query.split("&").map { it.split("=") }
-                    .associateByTo(mutableMapOf(), { it[0] }, {
-                    if (it.size > 1) URLDecoder.decode(
-                        it[1], StandardCharsets.UTF_8.toString()
-                    ) else ""
-                })
+                val requestUriMethod = getValue(params, "request_uri_method") ?: "get"
+                validateRootFieldInvalidScenario("request_uri", requestUri)
+                validateRootFieldInvalidScenario("request_uri_method", requestUriMethod)
+                val httpMethod = determineHttpMethod(requestUriMethod)
+                val response = sendHTTPRequest(requestUri, httpMethod)
+                val authorizationRequestObject = extractAuthorizationRequestData(response, params)
+                return authorizationRequestObject
             } catch (exception: Exception) {
-                throw Logger.handleException(
-                    exceptionType = "InvalidQueryParams",
-                    message = "Exception occurred when extracting the query params from Authorization Request : ${exception.message}",
-                    className = className
+                println("Exception is $exception")
+                throw exception
+            }
+        }
+
+        private fun extractAuthorizationRequestData(
+            response: String,
+            params: MutableMap<String, Any>
+        ): MutableMap<String, Any> {
+            val authorizationRequestObject: MutableMap<String, Any>
+            if (isJWT(response)) {
+                authorizationRequestObject = extractDataJsonFromJwt(response, PAYLOAD)
+                validateMatchOfAuthRequestObjectAndParams(params, authorizationRequestObject)
+                val proof = ProofJwtManager()
+                proof.verifyJWT(
+                    response,
+                    getValue(authorizationRequestObject,"client_id")!!,
+                    getValue(authorizationRequestObject,"client_id_scheme")!!,
                 )
+            } else {
+                authorizationRequestObject = decodeBase64ToJSON(response)
+                validateMatchOfAuthRequestObjectAndParams(params, authorizationRequestObject)
             }
+            return authorizationRequestObject
         }
 
-        private fun fetchPresentationDefinition(params: Map<String, String>): String {
-            val hasPresentationDefinition = params.containsKey("presentation_definition")
-            val hasPresentationDefinitionUri = params.containsKey("presentation_definition_uri")
-            var presentationDefinition = ""
-
-            when {
-                hasPresentationDefinition && hasPresentationDefinitionUri -> {
-                    throw Logger.handleException(
-                        exceptionType = "InvalidQueryParams",
-                        message = "Either presentation_definition or presentation_definition_uri request param can be provided but not both",
-                        className = className
-                    )
-                }
-
-                hasPresentationDefinition -> {
-                    val value = params["presentation_definition"]
-
-                    require(value != "null" && validateField(value, "String")) {
-                        throw Logger.handleException(
-                            exceptionType = "InvalidInput",
-                            fieldPath = listOf("presentation_definition"),
-                            className = className,
-                            fieldType = "String"
-                        )
-                    }
-                    presentationDefinition =
-                        params["presentation_definition"]!!
-                }
-
-                hasPresentationDefinitionUri -> {
-                    try {
-                        validateRootFieldInvalidScenario(
-                            "presentation_definition_uri",
-                            params["presentation_definition_uri"]
-                        )
-                        presentationDefinition =
-                            sendHTTPRequest(
-                                url = params["presentation_definition_uri"]!!,
-                                method = HTTP_METHOD.GET
-                            )
-                    } catch (exception: Exception) {
-                        throw exception
-                    }
-                }
-
-                else -> {
-                    throw Logger.handleException(
-                        exceptionType = "InvalidQueryParams",
-                        message = "Either presentation_definition or presentation_definition_uri request param must be present",
-                        className = className
-                    )
-                }
-            }
-            return presentationDefinition
-        }
-
-        private fun validateQueryParams(
-            params: MutableMap<String, String>, setResponseUri: (String) -> Unit
-        ) {
-            validateRootFieldMissingScenario(params, "response_uri")
-            validateRootFieldInvalidScenario("response_uri", params["response_uri"])
-            setResponseUri(params["response_uri"]!!)
-
-            val requiredRequestParams = mutableListOf(
-                "presentation_definition",
-                "client_id",
-                "response_type",
-                "response_mode",
-                "nonce",
-                "state",
-            )
-            requiredRequestParams.forEach { param ->
-                if (param == "presentation_definition") {
-                    try {
-                        params["presentation_definition"] = fetchPresentationDefinition(params)
-                    } catch (exception: Exception) {
-                        throw exception
-                    }
-                }
-                validateRootFieldMissingScenario(params, param)
-                validateRootFieldInvalidScenario(param, params[param])
-            }
-
-            val optionalRequestParams = mutableListOf("client_metadata")
-            optionalRequestParams.forEach { param ->
-                params[param]?.let { value ->
-                    require(value.isNotEmpty()) {
-                        throw Logger.handleException(
-                            exceptionType = "InvalidInput",
-                            fieldPath = listOf("client_metadata"),
-                            className = className,
-                            fieldType = value::class.simpleName
-                        )
-                    }
-                }
-            }
-        }
-
-        private fun createAuthorizationRequest(params: Map<String, String>): AuthorizationRequest {
+        private fun createAuthorizationRequest(
+            params: Map<String, Any>
+        ): AuthorizationRequest {
             return AuthorizationRequest(
-                clientId = params["client_id"]!!,
-                responseType = params["response_type"]!!,
-                responseMode = params["response_mode"]!!,
+                clientId = getValue(params, "client_id")!!,
+                clientIdScheme = getValue(params, "client_id_scheme")!!,
+                responseType = getValue(params, "response_type")!!,
+                responseMode = getValue(params, "response_mode"),
                 presentationDefinition = params["presentation_definition"]!!,
-                responseUri = params["response_uri"]!!,
-                nonce = params["nonce"]!!,
-                state = params["state"]!!,
-                clientMetadata = params["client_metadata"],
+                responseUri = getValue(params,"response_uri"),
+                redirectUri = getValue(params,"redirect_uri"),
+                nonce = getValue(params,"nonce")!!,
+                state = getValue(params, "state")!!,
+                clientMetadata = getValue(params, "client_metadata"),
             )
         }
 
-        private fun validateRootFieldMissingScenario(
-            params: MutableMap<String, String>,
-            param: String
-        ) {
-            val hasParam = params.containsKey(param)
-            if (!hasParam) {
-                throw Logger.handleException(
-                    exceptionType = "MissingInput",
-                    fieldPath = listOf(param),
-                    className = className
-                )
-            }
-        }
-
-        private fun validateRootFieldInvalidScenario(param: String, value: String?) {
-            require(value != "null" && validateField(value, "String")) {
-                throw Logger.handleException(
-                    exceptionType = "InvalidInput",
-                    fieldPath = listOf(param),
-                    className = className,
-                    fieldType = "String"
-                )
-            }
-        }
     }
 }

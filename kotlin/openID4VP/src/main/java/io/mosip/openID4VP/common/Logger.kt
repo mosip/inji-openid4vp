@@ -46,6 +46,9 @@ object Logger {
             "InvalidQueryParams" -> exception =
                 AuthorizationRequestExceptions.InvalidQueryParams(message = message ?: "")
 
+            "InvalidVerifierRedirectUri" -> exception =
+                AuthorizationRequestExceptions.InvalidVerifierRedirectUri(message = message ?: "")
+
             "JsonEncodingFailed" -> exception = AuthorizationRequestExceptions.JsonEncodingFailed(
                 fieldPath = fieldPathAsString, message = message ?: ""
             )

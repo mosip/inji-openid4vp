@@ -1,10 +1,16 @@
 [versions]
 agp = "8.4.2"
+bcprovJdk15on = "1.74"
+jacksonAnnotations = "2.15.2"
+jacksonModuleKotlin = "2.15.2"
 kotlin = "2.0.0"
 coreKtx = "1.9.0"
+bouncyCastle = "1.70"
 junit = "4.13.2"
+jupiterJunit = "5.10.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+nimbusJoseJwt = "9.22"
 serializationJson = "1.7.1"
 serialization = "2.0.0"
 okhttp3 = "4.12.0"
@@ -14,14 +20,22 @@ mockwebserver = "4.12.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprovJdk15on" }
+bouncyCastle = { group = "org.bouncycastle", name = "bcprov-jdk15to18", version.ref = "bouncyCastle" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jacksonAnnotations" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jacksonAnnotations" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonAnnotations" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 jetbrains-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref="serializationJson"}
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJoseJwt" }
 okhttp3 = {group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3"}
 commons-codec = {group = "commons-codec", name ="commons-codec", version.ref = "commonsCodecVersion"}
 mockk = {group = "io.mockk", name = "mockk", version.ref = "mockk"}
 mockwebserver = {group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver"}
+jupiter-junit = {group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "jupiterJunit"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

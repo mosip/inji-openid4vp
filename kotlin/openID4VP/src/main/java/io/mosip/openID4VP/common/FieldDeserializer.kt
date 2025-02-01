@@ -5,11 +5,18 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.intOrNull
 
 class FieldDeserializer(
 	private val jsonObject: JsonObject,
@@ -62,6 +69,9 @@ class FieldDeserializer(
 					data
 				) as T
 
+				fieldType.startsWith("Map") -> Json.decodeFromJsonElement<Map<String, JsonElement>>(data)
+					.mapValues { (_, value) -> parseDynamicValue(value) } as T
+
 				else -> throw SerializationException("Unsupported field type: $fieldType")
 			}
 			require(validateField(res, fieldType)) {
@@ -75,6 +85,17 @@ class FieldDeserializer(
 			return res
 		} else {
 			return null
+		}
+	}
+
+	fun parseDynamicValue(value: JsonElement): Any {
+		return when {
+			value is JsonPrimitive -> value.contentOrNull ?: value.booleanOrNull ?: value.intOrNull
+			?: value.floatOrNull ?: value.doubleOrNull ?: value
+
+			value is JsonArray -> value.map { parseDynamicValue(it) }
+			value is JsonObject -> value.mapValues { parseDynamicValue(it.value) }
+			else -> value
 		}
 	}
 

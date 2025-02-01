@@ -20,6 +20,9 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 	override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ClientMetadata") {
 		element<String>("client_name", isOptional = true)
 		element<String>("logo_uri", isOptional = true)
+		element<Map<String,String>>("vp_formats", isOptional = false)
+		element<String>("authorization_encrypted_response_alg", isOptional = true)
+		element<String>("authorization_encrypted_response_enc", isOptional = true)
 	}
 
 	override fun deserialize(decoder: Decoder): ClientMetadata {
@@ -44,9 +47,30 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 			deserializer.deserializeField(key = "client_name", fieldType = "String")
 		val logoUri: String? =
 			deserializer.deserializeField(key = "logo_uri", fieldType = "String")
+		val vpFormats: Map<String, String> =
+			deserializer.deserializeField<Map<String, String>>(
+				key = "vp_formats",
+				fieldType = "Map"
+			) ?: throw Logger.handleException(
+				exceptionType = "InvalidInput",
+				fieldPath = listOf("client_metadata", "vp_formats"),
+				className = className,
+				fieldType = "map"
+			)
+		val authorizationEncryptedResponseAlg: String? =
+			deserializer.deserializeField(key = "authorizationEncryptedResponseAlg", fieldType = "String")
+		val authorizationEncryptedResponseEnc: String? =
+			deserializer.deserializeField(key = "authorization_encrypted_response_enc", fieldType = "String")
 
-		return ClientMetadata(clientName = clientName, logoUri = logoUri)
-	}
+
+        return ClientMetadata(
+            clientName = clientName,
+            logoUri = logoUri,
+            vpFormats = vpFormats,
+            authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg,
+            authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc
+        )
+    }
 
 	@Generated
 	override fun serialize(encoder: Encoder, value: ClientMetadata) {
@@ -66,9 +90,12 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 @Serializable(with = ClientMetadataSerializer::class)
 class ClientMetadata(
 	@SerialName("client_name") val clientName: String?,
-	@SerialName("logo_uri") val logoUri: String?
-) :
-	Validatable {
+	@SerialName("logo_uri") val logoUri: String?,
+	@SerialName("vp_formats") val vpFormats: Map<String, String>,
+	@SerialName("authorization_encrypted_response_alg") val authorizationEncryptedResponseAlg: String?,
+	@SerialName("authorization_encrypted_response_enc") val authorizationEncryptedResponseEnc: String?,
+) : Validatable {
+
 	override fun validate() {
 	}
 }

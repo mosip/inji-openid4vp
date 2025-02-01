@@ -52,12 +52,19 @@ dependencies {
     implementation(libs.jetbrains.kotlinx.serialization.json)
     implementation(libs.okhttp3)
     implementation(libs.commons.codec)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.core)
+    implementation(libs.jackson.annotations)
+    implementation (libs.nimbus.jose.jwt)
+    implementation(libs.bouncyCastle)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.jupiter.junit)
 }
 
 tasks {

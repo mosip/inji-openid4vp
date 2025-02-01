@@ -60,7 +60,7 @@ class AuthorizationResponseTest {
         openID4VP = OpenID4VP("test-OpenID4VP")
         presentationDefinition =
             """{"id":"649d581c-f891-4969-9cd5-2c27385a348f","input_descriptors":[{"id":"id_123","format":{"ldp_vc":{"proof_type":["Ed25519Signature2018"]}},"constraints":{"fields":[{"path":["$.type"]}]}}]}"""
-        clientMetadata = """{"client_name": "verifier"}"""
+        clientMetadata = "{\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
         trustedVerifiers = listOf(
             Verifier(
                 "https://injiverify.dev2.mosip.net", listOf(
@@ -87,7 +87,9 @@ class AuthorizationResponseTest {
             nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
             state = "fsnC8ixCs6mWyV+00k23Qg==",
             responseUri = mockWebServer.url("/injiverify.dev2.mosip.net/redirect").toString(),
-            clientMetadata = deserializeAndValidate(clientMetadata, ClientMetadataSerializer)
+            clientMetadata = deserializeAndValidate(clientMetadata, ClientMetadataSerializer),
+            clientIdScheme = "did",
+            redirectUri = "ji"
         )
         openID4VP.constructVerifiablePresentationToken(selectedCredentialsList)
         mockkStatic(Log::class)
