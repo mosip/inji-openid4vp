@@ -17,6 +17,7 @@ okhttp3 = "4.12.0"
 commonsCodecVersion = "1.16.0"
 mockk = "1.13.10"
 mockwebserver = "4.12.0"
+sonarqube = "5.1.0.4872"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,3 +43,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serialization"}
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
