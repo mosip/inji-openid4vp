@@ -56,12 +56,13 @@ data class AuthorizationRequest(
             setResponseUri: (String) -> Unit,
             trustedVerifiers: List<Verifier>,
             shouldValidateClient: Boolean
+            walletMetadata: String?
         ): AuthorizationRequest {
             try {
                 val queryStart = encodedAuthorizationRequest.indexOf('?') + 1
                 val encodedString = encodedAuthorizationRequest.substring(queryStart)
                 val decodedQueryString = Decoder.decodeBase64ToString(encodedString)
-                val authorizationRequestParams = parseAuthorizationRequest(decodedQueryString)
+                val authorizationRequestParams = parseAuthorizationRequest(decodedQueryString,walletMetadata)
                 validateVerifier(trustedVerifiers, authorizationRequestParams, shouldValidateClient)
                 validateAuthorizationRequestParams(authorizationRequestParams, setResponseUri)
                 return createAuthorizationRequest(authorizationRequestParams)
@@ -72,6 +73,7 @@ data class AuthorizationRequest(
 
         private fun parseAuthorizationRequest(
             queryString: String
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             try {
                 val encodedQuery = URLEncoder.encode(queryString, StandardCharsets.UTF_8.toString())
@@ -84,7 +86,7 @@ data class AuthorizationRequest(
                         className = className
                     )
                 val params = extractQueryParams(query)
-                return fetchAuthorizationRequestMap(params)
+                return fetchAuthorizationRequestMap(params,walletMetadata)
             } catch (exception: Exception) {
                 Logger.error(logTag, exception)
                 throw exception
@@ -93,9 +95,10 @@ data class AuthorizationRequest(
 
         private fun fetchAuthorizationRequestMap(
             params: MutableMap<String, Any>
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             var authorizationRequestMap =  getValue(params,"request_uri")?.let { requestUri ->
-                 fetchAuthRequestObjectByReference(params, requestUri)
+                 fetchAuthRequestObjectByReference(params, requestUri,walletMetadata)
             } ?: params
 
             authorizationRequestMap = parseAndValidateClientMetadataInAuthorizationRequest(authorizationRequestMap)
@@ -106,13 +109,25 @@ data class AuthorizationRequest(
         private fun fetchAuthRequestObjectByReference(
             params: MutableMap<String, Any>,
             requestUri: String,
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             try {
                 val requestUriMethod = getValue(params, "request_uri_method") ?: "get"
                 validateRootFieldInvalidScenario("request_uri", requestUri)
                 validateRootFieldInvalidScenario("request_uri_method", requestUriMethod)
                 val httpMethod = determineHttpMethod(requestUriMethod)
-                val response = sendHTTPRequest(requestUri, httpMethod)
+                if(httpMethod == HTTP_METHOD.POST){
+                    if (!walletMetadata.isNullOrBlank()) {
+                        try {
+                            WalletMetadata.validate(walletMetadata)
+                        } catch (e: ValidationError) {
+                            throw IllegalArgumentException("Invalid walletMetadata: ${e.message}")
+                        }
+                    } else {
+                        throw IllegalArgumentException("walletMetadata cannot be null or empty for POST requests")
+                    }
+                }
+                val response = sendHTTPRequest(requestUri, httpMethod,walletMetadata)
                 val authorizationRequestObject = extractAuthorizationRequestData(response, params)
                 return authorizationRequestObject
             } catch (exception: Exception) {
