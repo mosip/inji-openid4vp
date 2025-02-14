@@ -18,13 +18,18 @@ import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createEncodedAuthorizationRequest
 import io.mosip.openID4VP.testData.didResponse
 import io.mosip.openID4VP.testData.presentationDefinition
+import io.mosip.openID4VP.testData.presentationDefinitionUri
+import io.mosip.openID4VP.testData.requestUri
 import io.mosip.openID4VP.testData.trustedVerifiers
+import io.mosip.openID4VP.testData.walletMetadata
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class AuthorizationRequestObjectObtainedByReference {
     private lateinit var openID4VP: OpenID4VP
@@ -34,10 +39,10 @@ class AuthorizationRequestObjectObtainedByReference {
         "client_id_scheme" to "pre-registered",
         "redirect_uri" to "https://mock-verifier.com",
         "response_uri" to "https://verifier.env1.net/responseUri",
-        "request_uri" to "https://mock-verifier/verifier/get-auth-request-obj",
+        "request_uri" to requestUri,
         "request_uri_method" to "get",
         "presentation_definition" to presentationDefinition,
-        "presentation_definition_uri" to "https://mock-verifier/verifier/get-presentation-definition",
+        "presentation_definition_uri" to presentationDefinitionUri,
         "response_type" to "vp_token",
         "response_mode" to "direct_post",
         "nonce" to "VbRRB/LTxLiXmVNZuyMO8A==",
@@ -52,7 +57,7 @@ class AuthorizationRequestObjectObtainedByReference {
         mockkObject(NetworkManagerClient.Companion)
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-presentation-definition",
+                presentationDefinitionUri,
                 HTTP_METHOD.GET
             )
         } returns presentationDefinition
@@ -89,7 +94,7 @@ class AuthorizationRequestObjectObtainedByReference {
         val authorizationRequestParamsMap = requestParams + clientIdAndSchemeOfDid
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, authorizationRequestParamsMap)
@@ -110,12 +115,11 @@ class AuthorizationRequestObjectObtainedByReference {
         }
     }
 
-
     @Test
     fun `should throw exception when the call to request_uri method fails in did client id scheme`() {
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 HTTP_METHOD.GET
             )
         } throws NetworkManagerClientExceptions.NetworkRequestTimeout()
@@ -130,7 +134,8 @@ class AuthorizationRequestObjectObtainedByReference {
                 encodedAuthorizationRequest,
                 { _: String -> },
                 trustedVerifiers,
-                false
+                false,
+                ""
             )
         }
 
@@ -145,7 +150,7 @@ class AuthorizationRequestObjectObtainedByReference {
         val authorizationRequestParamsMap = requestParams + clientIdAndSchemeOfDid
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, authorizationRequestParamsMap)
@@ -162,7 +167,7 @@ class AuthorizationRequestObjectObtainedByReference {
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 HTTP_METHOD.GET
             )
         }
@@ -173,7 +178,7 @@ class AuthorizationRequestObjectObtainedByReference {
         val authorizationRequestParamsMap = requestParams.minus("request_uri_method") + clientIdAndSchemeOfDid
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, authorizationRequestParamsMap)
@@ -192,7 +197,7 @@ class AuthorizationRequestObjectObtainedByReference {
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 HTTP_METHOD.GET
             )
         }
@@ -202,7 +207,7 @@ class AuthorizationRequestObjectObtainedByReference {
     fun `should throw exception when the client_id validation fails while obtaining Authorization request object by reference in did client id scheme`() {
        every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, requestParams + mapOf(
@@ -233,7 +238,7 @@ class AuthorizationRequestObjectObtainedByReference {
     fun `should throw exception when the client_id_scheme validation fails while obtaining Authorization request object by reference in did client id scheme`() {
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, requestParams + mapOf(
@@ -266,7 +271,7 @@ class AuthorizationRequestObjectObtainedByReference {
         val authorizationRequestParamsMap = requestParams + clientIdAndSchemeOfPreRegistered
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 HTTP_METHOD.GET
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.PRE_REGISTERED, authorizationRequestParamsMap)
@@ -280,7 +285,8 @@ class AuthorizationRequestObjectObtainedByReference {
                 encodedAuthorizationRequest,
                 { _: String -> },
                 trustedVerifiers,
-                false
+                false,
+                null
             )
         }
     }
@@ -290,7 +296,7 @@ class AuthorizationRequestObjectObtainedByReference {
     fun `should validate client_id when authorization request is obtained by reference in pre-registered client id scheme`() {
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, requestParams + mapOf(
@@ -322,7 +328,7 @@ class AuthorizationRequestObjectObtainedByReference {
     fun `should validate client_id_scheme when authorization request is obtained by reference in pre-registered client id scheme`() {
         every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-auth-request-obj",
+                requestUri,
                 any()
             )
         } returns createAuthorizationRequestObject(ClientIdScheme.DID, requestParams + mapOf(
@@ -348,5 +354,83 @@ class AuthorizationRequestObjectObtainedByReference {
             invalidClientIsSchemeException.message
         )
     }
+
+    @Test
+    fun `should send wallet metadata to the verifier when the request_uri_method is post`() {
+        val authorizationRequestParamsMap = requestParams + clientIdAndSchemeOfDid + mapOf(
+            "request_uri_method" to "post"
+        )
+        val encodedAuthorizationRequest =
+            createEncodedAuthorizationRequest(authorizationRequestParamsMap,true , ClientIdScheme.DID)
+        val walletMetadataMap = mapOf(
+            "wallet_metadata" to URLEncoder.encode(
+                walletMetadata,
+                StandardCharsets.UTF_8.toString()
+            )
+        )
+        println(walletMetadataMap)
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                requestUri,
+                HTTP_METHOD.POST,
+                walletMetadataMap,
+                any()
+            )
+        } returns createAuthorizationRequestObject(ClientIdScheme.DID, authorizationRequestParamsMap)
+
+        openID4VP.authenticateVerifier(
+            encodedAuthorizationRequest,
+            trustedVerifiers,
+            shouldValidateClient = true,
+            walletMetadata
+        )
+
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                requestUri,
+                HTTP_METHOD.POST,
+                walletMetadataMap,
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `should throw error if vp_formats_supported is not present in wallet metadata`() {
+        val authorizationRequestParamsMap = requestParams + clientIdAndSchemeOfDid + mapOf(
+            "request_uri_method" to "post"
+        )
+        val walletMetadata = """
+            {
+              "presentation_definition_uri_supported": true,
+              "client_id_schemes_supported": [
+                "redirect_uri"
+              ]
+            }
+            """.trimIndent()
+
+        val encodedAuthorizationRequest =
+            createEncodedAuthorizationRequest(
+                authorizationRequestParamsMap,
+                true,
+                ClientIdScheme.DID
+            )
+
+        val missingInputException =
+            assertThrows(AuthorizationRequestExceptions.MissingInput::class.java) {
+                openID4VP.authenticateVerifier(
+                    encodedAuthorizationRequest,
+                    trustedVerifiers,
+                    shouldValidateClient = true,
+                    walletMetadata
+                )
+            }
+
+        assertEquals(
+            "Missing Input: wallet_metadata->vp_formats_supported param is required",
+            missingInputException.message
+        )
+    }
+
 }
 

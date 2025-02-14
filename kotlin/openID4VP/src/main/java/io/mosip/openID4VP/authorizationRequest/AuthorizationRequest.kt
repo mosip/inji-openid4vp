@@ -10,7 +10,10 @@ import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.common.extractDataJsonFromJwt
 import io.mosip.openID4VP.common.isJWT
 import io.mosip.openID4VP.dto.Verifier
+import io.mosip.openID4VP.dto.WalletMetadata
+import io.mosip.openID4VP.networkManager.HTTP_METHOD
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import kotlinx.serialization.json.Json
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -55,13 +58,14 @@ data class AuthorizationRequest(
             encodedAuthorizationRequest: String,
             setResponseUri: (String) -> Unit,
             trustedVerifiers: List<Verifier>,
-            shouldValidateClient: Boolean
+            shouldValidateClient: Boolean,
+            walletMetadata: String?
         ): AuthorizationRequest {
             try {
                 val queryStart = encodedAuthorizationRequest.indexOf('?') + 1
                 val encodedString = encodedAuthorizationRequest.substring(queryStart)
                 val decodedQueryString = Decoder.decodeBase64ToString(encodedString)
-                val authorizationRequestParams = parseAuthorizationRequest(decodedQueryString)
+                val authorizationRequestParams = parseAuthorizationRequest(decodedQueryString, walletMetadata)
                 validateVerifier(trustedVerifiers, authorizationRequestParams, shouldValidateClient)
                 validateAuthorizationRequestParams(authorizationRequestParams, setResponseUri)
                 return createAuthorizationRequest(authorizationRequestParams)
@@ -71,7 +75,8 @@ data class AuthorizationRequest(
         }
 
         private fun parseAuthorizationRequest(
-            queryString: String
+            queryString: String,
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             try {
                 val encodedQuery = URLEncoder.encode(queryString, StandardCharsets.UTF_8.toString())
@@ -84,7 +89,7 @@ data class AuthorizationRequest(
                         className = className
                     )
                 val params = extractQueryParams(query)
-                return fetchAuthorizationRequestMap(params)
+                return fetchAuthorizationRequestMap(params, walletMetadata)
             } catch (exception: Exception) {
                 Logger.error(logTag, exception)
                 throw exception
@@ -92,10 +97,11 @@ data class AuthorizationRequest(
         }
 
         private fun fetchAuthorizationRequestMap(
-            params: MutableMap<String, Any>
+            params: MutableMap<String, Any>,
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             var authorizationRequestMap =  getValue(params,"request_uri")?.let { requestUri ->
-                 fetchAuthRequestObjectByReference(params, requestUri)
+                 fetchAuthRequestObjectByReference(params, requestUri, walletMetadata)
             } ?: params
 
             authorizationRequestMap = parseAndValidateClientMetadataInAuthorizationRequest(authorizationRequestMap)
@@ -106,13 +112,34 @@ data class AuthorizationRequest(
         private fun fetchAuthRequestObjectByReference(
             params: MutableMap<String, Any>,
             requestUri: String,
+            walletMetadata: String?
         ): MutableMap<String, Any> {
             try {
                 val requestUriMethod = getValue(params, "request_uri_method") ?: "get"
                 validateRootFieldInvalidScenario("request_uri", requestUri)
                 validateRootFieldInvalidScenario("request_uri_method", requestUriMethod)
                 val httpMethod = determineHttpMethod(requestUriMethod)
-                val response = sendHTTPRequest(requestUri, httpMethod)
+                var headers : Map<String, String>? = null
+                var body : Map<String, String>? = null
+
+                if (httpMethod == HTTP_METHOD.POST) {
+                    walletMetadata?.let {
+                        Json.decodeFromString<WalletMetadata>(walletMetadata)
+
+                        body = mapOf(
+                            "wallet_metadata" to URLEncoder.encode(
+                                walletMetadata,
+                                StandardCharsets.UTF_8.toString()
+                            )
+                        )
+                        headers = mapOf(
+                            "content-type" to "application/x-www-form-urlencoded",
+                            "accept" to "application/oauth-authz-req+jwt"
+                        )
+                    }
+                }
+
+                val response = sendHTTPRequest(requestUri, httpMethod, body, headers)
                 val authorizationRequestObject = extractAuthorizationRequestData(response, params)
                 return authorizationRequestObject
             } catch (exception: Exception) {

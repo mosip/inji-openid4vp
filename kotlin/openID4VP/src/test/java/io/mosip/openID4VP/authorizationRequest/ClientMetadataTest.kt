@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExc
 import io.mosip.openID4VP.testData.clientMetadata
 import io.mosip.openID4VP.testData.createEncodedAuthorizationRequest
 import io.mosip.openID4VP.testData.presentationDefinition
+import io.mosip.openID4VP.testData.requestUri
 import io.mosip.openID4VP.testData.trustedVerifiers
 import org.junit.After
 import org.junit.Assert
@@ -20,12 +21,12 @@ class ClientMetadataTest {
 	private lateinit var actualException: Exception
 	private lateinit var openID4VP: OpenID4VP
 	private var shouldValidateClient = true
-	val requestParams: Map<String, String> = mapOf(
+	private val requestParams: Map<String, String> = mapOf(
 		"client_id" to "https://mock-verifier.com",
 		"client_id_scheme" to "redirect_uri",
 		"redirect_uri" to "https://mock-verifier.com",
 		"response_uri" to "https://mock-verifier.com",
-		"request_uri" to "https://mock-verifier/verifier/get-auth-request-obj",
+		"request_uri" to requestUri,
 		"request_uri_method" to "get",
 		"presentation_definition" to presentationDefinition,
 		"response_type" to "vp_token",
@@ -145,7 +146,7 @@ class ClientMetadataTest {
 		val authorizationRequestParamsMap = requestParams + mapOf(
 			"client_id" to "https://verifier.env1.net",
 			"client_id_scheme" to "pre-registered",
-			"client_metadata" to "{\"client_name\":\"\",\"client_name\":\"verifier\",\"logo_uri\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
+			"client_metadata" to "{\"client_name\":\"verifier\",\"logo_uri\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 
 		)
 		val encodedAuthorizationRequest =

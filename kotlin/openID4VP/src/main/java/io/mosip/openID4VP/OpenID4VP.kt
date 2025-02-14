@@ -22,12 +22,13 @@ class OpenID4VP(private val traceabilityId: String) {
     fun authenticateVerifier(
         encodedAuthorizationRequest: String,
         trustedVerifiers: List<Verifier>,
-        shouldValidateClient: Boolean = false
+        shouldValidateClient: Boolean = false,
+        walletMetadata: String? = null
     ): AuthorizationRequest {
         try {
             Logger.setTraceabilityId(traceabilityId)
             authorizationRequest = AuthorizationRequest.validateAndGetAuthorizationRequest(
-                encodedAuthorizationRequest, ::setResponseUri, trustedVerifiers, shouldValidateClient
+                encodedAuthorizationRequest, ::setResponseUri, trustedVerifiers, shouldValidateClient, walletMetadata
             )
             return this.authorizationRequest
         } catch (exception: Exception) {
