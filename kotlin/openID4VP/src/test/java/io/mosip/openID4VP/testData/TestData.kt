@@ -3,6 +3,10 @@ package io.mosip.openID4VP.testData
 import io.mosip.openID4VP.authorizationRequest.ClientIdScheme
 import io.mosip.openID4VP.dto.Verifier
 
+const val requestUri = "https://mock-verifier/verifier/get-auth-request-obj"
+
+const val presentationDefinitionUri = "https://mock-verifier/verifier/get-presentation-definition"
+
 val clientMetadata = """
     {
   "client_name": "Requester name",
@@ -25,6 +29,34 @@ val clientMetadata = """
     }
   }
 }
+""".trimIndent()
+
+val walletMetadata = """
+    {
+      "presentation_definition_uri_supported": true,
+      "vp_formats_supported": {
+        "jwt_vc_json": {
+          "alg_values_supported": [
+            "ES256K",
+            "ES256"
+          ]
+        },
+        "jwt_vp_json": {
+          "alg_values_supported": [
+            "RSA",
+            "Ed25519"
+          ]
+        }
+      },
+      "client_id_schemes_supported": [
+        "redirect_uri",
+        "https",
+        "did"
+      ],
+      "request_object_signing_alg_values_supported": ["EdDSA"],
+      "authorization_encryption_alg_values_supported": ["ECDH-ES"],
+      "authorization_encryption_enc_values_supported": ["A256GCM"] 
+    }
 """.trimIndent()
 
 val presentationDefinition = """

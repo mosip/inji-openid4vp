@@ -15,6 +15,8 @@ import io.mosip.openID4VP.testData.clientIdAndSchemeOfReDirectUri
 import io.mosip.openID4VP.testData.clientMetadata
 import io.mosip.openID4VP.testData.createEncodedAuthorizationRequest
 import io.mosip.openID4VP.testData.presentationDefinition
+import io.mosip.openID4VP.testData.presentationDefinitionUri
+import io.mosip.openID4VP.testData.requestUri
 import io.mosip.openID4VP.testData.trustedVerifiers
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -36,10 +38,10 @@ class AuthorizationRequestTest {
         "client_id_scheme" to "pre-registered",
         "redirect_uri" to "https://mock-verifier.com",
         "response_uri" to "https://verifier.env1.net/responseUri",
-        "request_uri" to "https://mock-verifier/verifier/get-auth-request-obj",
+        "request_uri" to requestUri,
         "request_uri_method" to "get",
         "presentation_definition" to presentationDefinition,
-        "presentation_definition_uri" to "https://mock-verifier/verifier/get-presentation-definition",
+        "presentation_definition_uri" to presentationDefinitionUri,
         "response_type" to "vp_token",
         "response_mode" to "direct_post",
         "nonce" to "VbRRB/LTxLiXmVNZuyMO8A==",
@@ -309,7 +311,7 @@ class AuthorizationRequestTest {
     fun `should return Authorization Request as Authentication Response if presentation_definition_uri & all the other fields are present and valid in Authorization Request`() {
          every {
             NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier/verifier/get-presentation-definition",
+                presentationDefinitionUri,
                 HTTP_METHOD.GET
             )
         } returns presentationDefinition
