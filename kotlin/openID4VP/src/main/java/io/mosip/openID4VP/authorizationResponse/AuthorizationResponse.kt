@@ -125,12 +125,13 @@ class AuthorizationResponse {
                     "state" to state
                 )
 
-                return sendHTTPRequest(
+                 val response = sendHTTPRequest(
                     url = responseUri,
                     method = HTTP_METHOD.POST,
                     bodyParams = bodyParams,
-                    headers = mapOf("Content-Type" to "application/x-www-form-urlencoded")
+                    headers = mapOf("content-type" to "application/x-www-form-urlencoded")
                 )
+                return response["body"].toString()
             } catch (exception: Exception) {
                 throw exception
             }

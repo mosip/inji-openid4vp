@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.authorizationRequest.presentationDefinition
 
 import Generated
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.Validatable
 import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
 import io.mosip.openID4VP.common.FieldDeserializer
@@ -36,14 +37,14 @@ object PresentationDefinitionSerializer : KSerializer<PresentationDefinition> {
 		} catch (e: ClassCastException) {
 			throw Logger.handleException(
 				exceptionType = "DeserializationFailure",
-				fieldPath = listOf("presentation_definition"),
+				fieldPath = listOf(PRESENTATION_DEFINITION.value),
 				message = e.message!!,
 				className = className
 			)
 		}
 		val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
 		val deserializer = FieldDeserializer(
-			jsonObject = jsonObject, className = className, parentField = "presentation_definition"
+			jsonObject = jsonObject, className = className, parentField = PRESENTATION_DEFINITION.value
 		)
 
 		val id: String? =

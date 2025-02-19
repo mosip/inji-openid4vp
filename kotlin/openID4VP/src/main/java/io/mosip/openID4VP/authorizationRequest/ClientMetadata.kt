@@ -8,6 +8,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -31,7 +32,7 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 		} catch (e: ClassCastException) {
 			throw Logger.handleException(
 				exceptionType = "DeserializationFailure",
-				fieldPath = listOf("client_metadata"),
+				fieldPath = listOf(CLIENT_METADATA.value),
 				message = e.message!!,
 				className = className
 			)
@@ -40,7 +41,7 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 		val deserializer = FieldDeserializer(
 			jsonObject = jsonObject,
 			className = className,
-			parentField = "client_metadata"
+			parentField = CLIENT_METADATA.value
 		)
 
         val clientName: String? =
@@ -53,7 +54,7 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
                 fieldType = "Map"
             ) ?: throw Logger.handleException(
                 exceptionType = "InvalidInput",
-                fieldPath = listOf("client_metadata", "vp_formats"),
+                fieldPath = listOf(CLIENT_METADATA.value, "vp_formats"),
                 className = className,
                 fieldType = "map"
             )

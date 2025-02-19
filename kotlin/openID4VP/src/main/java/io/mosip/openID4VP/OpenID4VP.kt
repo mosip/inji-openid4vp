@@ -26,8 +26,8 @@ class OpenID4VP(private val traceabilityId: String) {
     ): AuthorizationRequest {
         try {
             Logger.setTraceabilityId(traceabilityId)
-            authorizationRequest = AuthorizationRequest.validateAndGetAuthorizationRequest(
-                encodedAuthorizationRequest, ::setResponseUri, trustedVerifiers, shouldValidateClient
+            authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
+                encodedAuthorizationRequest, trustedVerifiers, ::setResponseUri,shouldValidateClient
             )
             return this.authorizationRequest
         } catch (exception: Exception) {

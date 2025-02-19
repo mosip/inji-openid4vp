@@ -14,7 +14,9 @@ import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Presentati
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.dto.VPResponseMetadata
 import io.mosip.openID4VP.dto.Verifier
+import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions
+import okhttp3.Headers
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -57,6 +59,7 @@ class AuthorizationResponseTest {
 
     @Before
     fun setUp() {
+        mockkObject(NetworkManagerClient.Companion)
         openID4VP = OpenID4VP("test-OpenID4VP")
         presentationDefinition =
             """{"id":"649d581c-f891-4969-9cd5-2c27385a348f","input_descriptors":[{"id":"id_123","format":{"ldp_vc":{"proof_type":["Ed25519Signature2018"]}},"constraints":{"fields":[{"path":["$.type"]}]}}]}"""
@@ -86,7 +89,7 @@ class AuthorizationResponseTest {
             ),
             nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
             state = "fsnC8ixCs6mWyV+00k23Qg==",
-            responseUri = mockWebServer.url("/injiverify.dev2.mosip.net/redirect").toString(),
+            responseUri = "http://localhost:8080/injiverify.dev2.mosip.net/redirect",
             clientMetadata = deserializeAndValidate(clientMetadata, ClientMetadataSerializer),
             clientIdScheme = "did",
             redirectUri = "ji"
@@ -174,8 +177,17 @@ class AuthorizationResponseTest {
 
     @Test
     fun `should get response if Verifiable Presentation is shared successfully to the Verifier`() {
-        val mockResponse: MockResponse = MockResponse().setResponseCode(200).setBody("Verifiable Presentation is shared successfully")
-        mockWebServer.enqueue(mockResponse)
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "http://localhost:8080/injiverify.dev2.mosip.net/redirect",
+                any(),
+                any(),
+                any()
+            )
+        } returns  mapOf(
+            "header" to Headers.Builder().add("content-type", "application/json").build(),
+            "body" to "Verifiable Presentation is shared successfully"
+        )
         vpResponseMetadata = VPResponseMetadata(
             "eyJiweyrtwegrfwwaBKCGSwxjpa5suaMtgnQ",
             "RsaSignature2018",

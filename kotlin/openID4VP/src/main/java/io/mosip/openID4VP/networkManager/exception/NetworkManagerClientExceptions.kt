@@ -6,4 +6,9 @@ sealed class NetworkManagerClientExceptions {
 
     class NetworkRequestFailed(error: String) :
         Exception("Network request failed with error response - $error")
+
+    class UrlValidationFailed(error: String) :
+        Exception("Network request failed with error response - $error")
+
+
 }

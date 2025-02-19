@@ -3,13 +3,6 @@ package io.mosip.openID4VP.authorizationRequest.exception
 
 sealed class AuthorizationRequestExceptions {
 
-    class InvalidVerifierClientID :
-        Exception("VP sharing failed: Verifier authentication was unsuccessful")
-
-    class DecodingException(message: String) : Exception(message)
-
-    class MissingInput(fieldPath: String) : Exception("Missing Input: $fieldPath param is required")
-
     class InvalidInput(fieldPath: String, fieldType: Any?) :
         Exception(
             "Invalid Input: ${
@@ -20,6 +13,12 @@ sealed class AuthorizationRequestExceptions {
                 }
             }"
         )
+
+    class InvalidVerifier :
+    Exception("VP sharing failed: Verifier authentication was unsuccessful")
+
+    class MissingInput(fieldPath: String) :
+        Exception("Missing Input: $fieldPath param is required")
 
     class InvalidInputPattern(fieldPath: String) :
         Exception("Invalid Input Pattern: $fieldPath pattern is not matching with OpenId4VP specification")
@@ -33,9 +32,18 @@ sealed class AuthorizationRequestExceptions {
     class InvalidLimitDisclosure :
         Exception("Invalid Input: constraints->limit_disclosure value should be either required or preferred")
 
+    class DecodingException(message: String) : Exception(message)
+
     class InvalidQueryParams(message: String) : Exception(message)
+
+    class InvalidClientIdScheme(message: String) : Exception(message)
+
+    class InvalidResponseMode(message: String) : Exception(message)
 
     class InvalidVerifierRedirectUri(message: String) : Exception(message)
 
     class InvalidData(message: String) : Exception(message)
 }
+
+
+

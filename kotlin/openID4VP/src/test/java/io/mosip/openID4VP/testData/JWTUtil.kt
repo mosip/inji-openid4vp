@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.testData
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -14,11 +15,16 @@ class JWTUtil {
         private const val ed25519PrivateKey = "vlo/0lVUn4oCEFo/PiPi3FyqSBSdZ2JDSBJJcvbf6o0="
         private const val didDocumentUrl = "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs"
         private const val publicKeyId = "$didDocumentUrl#key-0"
-        private val jwtHeader = buildJsonObject {
+        val jwtHeader = buildJsonObject {
             put("typ", "oauth-authz-req+jwt")
             put("alg", "EdDSA")
             put("kid", publicKeyId)
         }
+        val jwtPayload = mutableMapOf(
+            "userId" to "b07f85be",
+            "iss" to  "https://mock-verifier.com",
+            "exp" to "153452683"
+        )
 
         private fun replaceCharactersInB64(encodedB64: String): String {
             return encodedB64.replace('+', '-')
@@ -42,11 +48,11 @@ class JWTUtil {
         }
 
         fun createJWT(
-            mapper: ObjectMapper,
             authorizationRequestParam: Any?,
             addValidSignature: Boolean,
             jwtHeader: JsonObject?
         ): String {
+            val mapper = jacksonObjectMapper()
             val header = jwtHeader ?: this.jwtHeader
             val header64 = encodeB64(header.toString())
             val payload64 = encodeB64(mapper.writeValueAsString(authorizationRequestParam))

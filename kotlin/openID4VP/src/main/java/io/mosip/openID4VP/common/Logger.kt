@@ -2,6 +2,7 @@ package io.mosip.openID4VP.common
 
 import android.util.Log
 import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
+import io.mosip.openID4VP.jwt.exception.JWTVerificationException
 
 object Logger {
     private var traceabilityId: String? = null
@@ -25,48 +26,48 @@ object Logger {
         className: String,
         fieldType: Any? = null
     ): Exception {
-        var fieldPathAsString: String = ""
+        var fieldPathAsString = ""
         fieldPath?.let {
             fieldPathAsString = fieldPath.joinToString("->")
         }
-        var exception = Exception()
-        when (exceptionType) {
-            "MissingInput" -> exception =
-                AuthorizationRequestExceptions.MissingInput(fieldPath = fieldPathAsString)
+        val exception: Exception = when (exceptionType) {
 
-            "InvalidInput" -> exception =
-                AuthorizationRequestExceptions.InvalidInput(
-                    fieldPath = fieldPathAsString,
-                    fieldType = fieldType
-                )
-
-            "InvalidInputPattern" -> exception =
-                AuthorizationRequestExceptions.InvalidInputPattern(fieldPath = fieldPathAsString)
-
-            "InvalidQueryParams" -> exception =
-                AuthorizationRequestExceptions.InvalidQueryParams(message = message ?: "")
-
-            "InvalidVerifierRedirectUri" -> exception =
-                AuthorizationRequestExceptions.InvalidVerifierRedirectUri(message = message ?: "")
-
-            "JsonEncodingFailed" -> exception = AuthorizationRequestExceptions.JsonEncodingFailed(
+            "InvalidInput" -> AuthorizationRequestExceptions.InvalidInput(
+                fieldPath = fieldPathAsString,
+                fieldType = fieldType
+            )
+            "DeserializationFailure" -> AuthorizationRequestExceptions.DeserializationFailure(
+                fieldPath = fieldPathAsString,
+                message = message ?: ""
+            )
+            "JsonEncodingFailed" -> AuthorizationRequestExceptions.JsonEncodingFailed(
                 fieldPath = fieldPathAsString, message = message ?: ""
             )
+            "MissingInput" -> AuthorizationRequestExceptions.MissingInput(fieldPath = fieldPathAsString)
 
-            "InvalidVerifierClientID" -> exception =
-                AuthorizationRequestExceptions.InvalidVerifierClientID()
+            "InvalidInputPattern" -> AuthorizationRequestExceptions.InvalidInputPattern(fieldPath = fieldPathAsString)
 
-            "InvalidLimitDisclosure" -> exception =
-                AuthorizationRequestExceptions.InvalidLimitDisclosure()
+            "InvalidQueryParams" -> AuthorizationRequestExceptions.InvalidQueryParams(message = message ?: "")
 
-            "DeserializationFailure" -> exception =
-                AuthorizationRequestExceptions.DeserializationFailure(
-                    fieldPath = fieldPathAsString,
-                    message = message ?: ""
-                )
-                
-            "" -> exception =
-                Exception("An unexpected exception occurred: exception type: $exceptionType")
+            "InvalidVerifierRedirectUri" -> AuthorizationRequestExceptions.InvalidVerifierRedirectUri(message = message ?: "")
+
+            "InvalidVerifier" -> AuthorizationRequestExceptions.InvalidVerifier()
+
+            "InvalidLimitDisclosure" -> AuthorizationRequestExceptions.InvalidLimitDisclosure()
+
+            "InvalidClientIdScheme" -> AuthorizationRequestExceptions.InvalidClientIdScheme(message = message ?: "")
+
+            "InvalidResponseMode" -> AuthorizationRequestExceptions.InvalidResponseMode(message = message ?: "")
+
+            "InvalidData" -> AuthorizationRequestExceptions.InvalidData(message = message ?: "")
+
+            "KidExtractionFailed" -> JWTVerificationException.KidExtractionFailed(message = message ?: "")
+
+            "PublicKeyExtractionFailed" -> JWTVerificationException.PublicKeyExtractionFailed(message = message ?: "")
+
+            "InvalidSignature" -> JWTVerificationException.InvalidSignature(message = message ?: "")
+
+            else -> Exception("An unexpected exception occurred: exception type: $exceptionType")
         }
         this.error(getLogTag(className), exception)
         return exception

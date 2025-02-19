@@ -6,7 +6,8 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
-import io.mosip.openID4VP.testData.createEncodedAuthorizationRequest
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.testData.createUrlEncodedData
 import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.trustedVerifiers
 import org.junit.After
@@ -40,12 +41,12 @@ class ClientMetadataTest {
 	@Test
 	fun `should parse client metadata successfully`() {
 		val authorizationRequestParamsMap = requestParams + mapOf(
-			"client_id" to "https://verifier.env1.net",
-			"client_id_scheme" to "pre-registered",
-			"response_uri" to "https://verifier.env1.net/responseUri"
+			CLIENT_ID.value to "https://verifier.env1.net",
+			CLIENT_ID_SCHEME.value to "pre-registered",
+			RESPONSE_URI.value to "https://verifier.env1.net/responseUri"
 		)
 		val encodedAuthorizationRequest =
-			createEncodedAuthorizationRequest(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
+			createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
 		assertDoesNotThrow {
 			 openID4VP.authenticateVerifier(
 				 encodedAuthorizationRequest, trustedVerifiers, shouldValidateClient
@@ -56,13 +57,13 @@ class ClientMetadataTest {
 	@Test
 	fun `should throw invalid input exception if vp_formats field is not available`() {
 		val authorizationRequestParamsMap = requestParams + mapOf(
-			"client_id" to "https://verifier.env1.net",
-			"client_id_scheme" to "pre-registered",
-			"response_uri" to "https://verifier.env1.net/responseUri",
-			"client_metadata" to "{\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\"}"
+			CLIENT_ID.value to "https://verifier.env1.net",
+			CLIENT_ID_SCHEME.value to "pre-registered",
+			RESPONSE_URI.value to "https://verifier.env1.net/responseUri",
+			CLIENT_METADATA.value to "{\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\"}"
 		)
 		val encodedAuthorizationRequest =
-			createEncodedAuthorizationRequest(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
+			createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
 
 
 		val expectedExceptionMessage =
@@ -81,12 +82,12 @@ class ClientMetadataTest {
 	@Test
 	fun `should throw invalid input exception if name field is available in client_metadata but the value is empty`() {
 		val authorizationRequestParamsMap = requestParams + mapOf(
-			"client_id" to "https://verifier.env1.net",
-			"client_id_scheme" to "pre-registered",
-			"client_metadata" to "{\"client_name\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
+			CLIENT_ID.value to "https://verifier.env1.net",
+			CLIENT_ID_SCHEME.value to "pre-registered",
+			CLIENT_METADATA.value to "{\"client_name\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 		)
 		val encodedAuthorizationRequest =
-			createEncodedAuthorizationRequest(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
+			createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
 
 		val expectedExceptionMessage =
 			"Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
@@ -104,13 +105,13 @@ class ClientMetadataTest {
 	@Test
 	fun `should throw invalid input exception if name field is available in client_metadata but the value is null`() {
 		val authorizationRequestParamsMap = requestParams + mapOf(
-			"client_id" to "https://verifier.env1.net",
-			"client_id_scheme" to "pre-registered",
-			"response_uri" to "https://verifier.env1.net/responseUri",
-			"client_metadata" to "{\"client_name\":null,\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
+			CLIENT_ID.value to "https://verifier.env1.net",
+			CLIENT_ID_SCHEME.value to "pre-registered",
+			RESPONSE_URI.value to "https://verifier.env1.net/responseUri",
+			CLIENT_METADATA.value to "{\"client_name\":null,\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 		)
 		val encodedAuthorizationRequest =
-			createEncodedAuthorizationRequest(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
+			createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
 
 		val expectedExceptionMessage =
 			"Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
@@ -128,13 +129,13 @@ class ClientMetadataTest {
 	@Test
 	fun `should throw invalid input exception if log_url field is available in client_metadata but the value is empty`() {
 		val authorizationRequestParamsMap = requestParams + mapOf(
-			"client_id" to "https://verifier.env1.net",
-			"client_id_scheme" to "pre-registered",
-			"client_metadata" to "{\"client_name\":\"\",\"client_name\":\"verifier\",\"logo_uri\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
+			CLIENT_ID.value to "https://verifier.env1.net",
+			CLIENT_ID_SCHEME.value to "pre-registered",
+			CLIENT_METADATA.value to "{\"client_name\":\"\",\"client_name\":\"verifier\",\"logo_uri\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 
 		)
 		val encodedAuthorizationRequest =
-			createEncodedAuthorizationRequest(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
+			createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.PRE_REGISTERED)
 
 		val expectedExceptionMessage =
 			"Invalid Input: client_metadata->logo_uri value cannot be an empty string, null, or an integer"
