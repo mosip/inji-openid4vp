@@ -2,7 +2,6 @@ package io.mosip.openID4VP
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponseHandler
-import io.mosip.openID4VP.authorizationResponse.models.vpTokenForSigning.VPTokenForSigning
 import io.mosip.openID4VP.common.FormatType
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.toJson
@@ -14,11 +13,10 @@ import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTP
 private val logTag = Logger.getLogTag(OpenID4VP::class.simpleName!!)
 
 class OpenID4VP(private val traceabilityId: String) {
-    private lateinit var credentialsMap: Map<String, Map<FormatType, List<String>>>
     lateinit var authorizationRequest: AuthorizationRequest
-    private lateinit var authorizationResponseHandler: AuthorizationResponseHandler
+    private var authorizationResponseHandler: AuthorizationResponseHandler =
+        AuthorizationResponseHandler()
     private var responseUri: String? = null
-    private lateinit var vpTokensForSigning: Map<FormatType, VPTokenForSigning>
 
     private fun setResponseUri(responseUri: String) {
         this.responseUri = responseUri
@@ -47,16 +45,13 @@ class OpenID4VP(private val traceabilityId: String) {
 
     fun constructVerifiablePresentationToken(verifiableCredentials: Map<String, Map<FormatType, List<String>>>): Map<String, String> {
         try {
-            this.authorizationResponseHandler = AuthorizationResponseHandler()
-            this.credentialsMap = verifiableCredentials
-
-            this.vpTokensForSigning =
+            val vpTokensForSigning =
                 authorizationResponseHandler.constructVPTokenForSigning(
                     credentialsMap = verifiableCredentials,
                     holder = ""
                 )
 
-            return this.vpTokensForSigning.toJson()
+            return vpTokensForSigning.toJson()
         } catch (exception: Exception) {
             sendErrorToVerifier(exception)
             throw exception
@@ -68,10 +63,7 @@ class OpenID4VP(private val traceabilityId: String) {
             return this.authorizationResponseHandler.shareVP(
                 authorizationRequest = this.authorizationRequest,
                 vpResponsesMetadata = vpResponsesMetadata,
-                credentialsMap = this.credentialsMap,
-                vpTokensForSigning = vpTokensForSigning,
-                //TODO: Change this to response uri that is setup
-                responseUri = authorizationRequest.responseUri!!
+                responseUri = this.responseUri!!
             )
         } catch (exception: Exception) {
             sendErrorToVerifier(exception)

@@ -2,8 +2,6 @@ package io.mosip.openID4VP.authorizationResponse
 
 import android.util.Log
 import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.verify
@@ -12,23 +10,16 @@ import io.mosip.openID4VP.authorizationRequest.ClientMetadataSerializer
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinitionSerializer
 import io.mosip.openID4VP.authorizationResponse.exception.AuthorizationResponseExceptions
-import io.mosip.openID4VP.authorizationResponse.models.vpToken.VPToken
-import io.mosip.openID4VP.authorizationResponse.models.vpTokenForSigning.VPTokenForSigning
 import io.mosip.openID4VP.authorizationResponse.models.vpTokenForSigning.types.LdpVPTokenForSigning
-import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenFactory
-import io.mosip.openID4VP.authorizationResponse.vpToken.builder.VPTokenBuilder
 import io.mosip.openID4VP.common.DateUtil
 import io.mosip.openID4VP.common.FormatType
 import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.dto.VPResponseMetadata.VPResponseMetadata
 import io.mosip.openID4VP.networkManager.HTTP_METHOD
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.authorizationRequest
 import io.mosip.openID4VP.testData.clientMetadataMap
-import io.mosip.openID4VP.testData.ldpVPResponseMetadata
 import io.mosip.openID4VP.testData.presentationDefinitionMap
 import io.mosip.openID4VP.testData.vpResponsesMetadata
-import io.mosip.vercred.vcverifier.constants.CredentialFormat
 import org.junit.Assert
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -91,8 +82,6 @@ class AuthorizationResponseHandlerTest {
         AuthorizationResponseHandler().shareVP(
             authorizationRequest = authorizationRequest,
             vpResponsesMetadata = vpResponsesMetadata,
-            credentialsMap = credentialsMap,
-            vpTokensForSigning = vpTokensForSigning,
             responseUri = authorizationRequest.responseUri!!
         )
 
@@ -140,8 +129,6 @@ class AuthorizationResponseHandlerTest {
         AuthorizationResponseHandler().shareVP(
             authorizationRequest = authorizationRequestWithoutStateProperty,
             vpResponsesMetadata = vpResponsesMetadata,
-            credentialsMap = credentialsMap,
-            vpTokensForSigning = vpTokensForSigning,
             responseUri = authorizationRequest.responseUri!!
         )
 
@@ -194,8 +181,6 @@ class AuthorizationResponseHandlerTest {
                 AuthorizationResponseHandler().shareVP(
                     authorizationRequest = authorizationRequestWithNonVPTokenResponseType,
                     vpResponsesMetadata = vpResponsesMetadata,
-                    credentialsMap = credentialsMap,
-                    vpTokensForSigning = vpTokensForSigning,
                     responseUri = authorizationRequest.responseUri!!
                 )
             }

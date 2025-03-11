@@ -27,10 +27,14 @@ import okhttp3.internal.toImmutableMap
 private val className = AuthorizationResponseHandler::class.java.simpleName
 
 class AuthorizationResponseHandler {
+    private lateinit var credentialsMap: Map<String, Map<FormatType, List<String>>>
+    private lateinit var vpTokensForSigning: Map<FormatType, VPTokenForSigning>
+
     fun constructVPTokenForSigning(
         credentialsMap: Map<String, Map<FormatType, List<String>>>,
         holder: String
     ): Map<FormatType, VPTokenForSigning> {
+        this.credentialsMap = credentialsMap
         if (credentialsMap.isEmpty()) {
             throw Logger.handleException(
                 exceptionType = "EmptyCredentialsList",
@@ -38,21 +42,20 @@ class AuthorizationResponseHandler {
                 message = "The Wallet did not have the requested Credentials to satisfy the Authorization Request."
             )
         }
-        return createVPTokenForSigning(credentialsMap, holder)
+        this.vpTokensForSigning = createVPTokenForSigning(credentialsMap, holder)
+        return this.vpTokensForSigning
     }
 
     fun shareVP(
         authorizationRequest: AuthorizationRequest,
         vpResponsesMetadata: Map<FormatType, VPResponseMetadata>,
-        credentialsMap: Map<String, Map<FormatType, List<String>>>,
-        vpTokensForSigning: Map<FormatType, VPTokenForSigning>,
         responseUri: String,
     ): String {
         val authorizationResponse: Map<String, String> = createAuthorizationResponse(
             authorizationRequest = authorizationRequest,
             vpResponsesMetadata = vpResponsesMetadata,
-            credentialsMap = credentialsMap,
-            vpTokensForSigning = vpTokensForSigning
+            credentialsMap = this.credentialsMap,
+            vpTokensForSigning = this.vpTokensForSigning
         )
 
         return sendAuthorizationResponse(
@@ -168,7 +171,6 @@ class AuthorizationResponseHandler {
         //In case of only single VP, presentation_submission -> path = $, path_nest = $.<credentialPathIdentifier - internalPath>[n]
         //and in case of multiple VPs, presentation_submission -> path = $[i], path_nest = $[i].<credentialPathIdentifier - internalPath>[n]
         val multipleVpTokens: Boolean = credentialFormatIndex.keys.size > 1
-
         val formatTypeToCredentialIndex: MutableMap<FormatType, Int> = mutableMapOf()
 
         val descriptorMappings =
