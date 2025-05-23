@@ -225,7 +225,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "No jwk matching the specified algorithm found"
+            "No jwk matching the specified algorithm found for encryption"
 
         actualException =
             Assert.assertThrows(InvalidData::class.java) {

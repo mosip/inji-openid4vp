@@ -108,7 +108,19 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"enc\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "No jwk matching the specified algorithm found"
+        val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
+        val exception =assertThrows<InvalidData>{
+            DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
+        }
+        assertEquals(exceptionMessage, exception.message)
+    }
+
+    @Test
+    fun `should thrown error if no jwk matching the use key is found` (){
+        val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"sign\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH-ES\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\"]}}}"
+        val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
+
+        val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
         val exception =assertThrows<InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }

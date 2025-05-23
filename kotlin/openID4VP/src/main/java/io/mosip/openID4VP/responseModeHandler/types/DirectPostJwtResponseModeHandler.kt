@@ -41,8 +41,8 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
             )
         }
 
-        if (jwks.keys.none { it.alg == alg }) {
-            throwInvalidDataException("No jwk matching the specified algorithm found")
+        if (jwks.keys.none { it.alg == alg && it.use == "enc" }) {
+            throwInvalidDataException("No jwk matching the specified algorithm found for encryption")
         }
     }
 
@@ -96,7 +96,7 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
         val clientMetadata = authorizationRequest.clientMetadata!!
 
         val jwk =
-            clientMetadata.jwks?.keys?.find { it.alg == clientMetadata.authorizationEncryptedResponseAlg }!!
+            clientMetadata.jwks?.keys?.find { it.alg == clientMetadata.authorizationEncryptedResponseAlg && it.use == "enc" }!!
 
         val jweHandler = JWEHandler(
             keyEncryptionAlg = clientMetadata.authorizationEncryptedResponseAlg!!,
