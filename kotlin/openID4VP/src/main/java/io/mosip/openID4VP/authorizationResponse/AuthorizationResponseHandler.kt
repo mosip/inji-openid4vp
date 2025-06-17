@@ -102,7 +102,7 @@ internal class AuthorizationResponseHandler {
             else -> throw Logger.handleException(
                 exceptionType = "InvalidData",
                 className = className,
-                message = "Provided response_type - ${authorizationRequest.responseType} is not supported"
+                message = "vp_formats_not_supported: Provided response_type - ${authorizationRequest.responseType} is not supported"
             )
         }
     }

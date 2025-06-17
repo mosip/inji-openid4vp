@@ -27,7 +27,7 @@ fun determineHttpMethod(method: String): HttpMethod {
     return when (method.lowercase()) {
         "get" -> HttpMethod.GET
         "post" -> HttpMethod.POST
-        else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
+        else -> throw IllegalArgumentException("invalid_request_uri_method: Unsupported HTTP method: $method")
     }
 }
 

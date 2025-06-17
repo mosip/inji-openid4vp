@@ -27,7 +27,7 @@ fun parseAndValidatePresentationDefinition(
         hasPresentationDefinition && hasPresentationDefinitionUri -> {
             throw Logger.handleException(
                 exceptionType = "InvalidData",
-                message = "Either presentation_definition or presentation_definition_uri request param can be provided but not both",
+                message = "invalid_request: Either presentation_definition or presentation_definition_uri request param can be provided but not both",
                 className = className
             )
         }
@@ -42,7 +42,7 @@ fun parseAndValidatePresentationDefinition(
                 throw Logger.handleException(
                     exceptionType = "InvalidData",
                     className = className,
-                    message = "presentation_definition_uri is not support"
+                    message = "invalid_presentation_definition_reference: presentation_definition_uri is not support"
                 )
             }
 
@@ -55,7 +55,7 @@ fun parseAndValidatePresentationDefinition(
                 throw Logger.handleException(
                     exceptionType = "InvalidData",
                     className = className,
-                    message = "${PRESENTATION_DEFINITION_URI.value} data is not valid"
+                    message = "invalid_presentation_definition_uri: ${PRESENTATION_DEFINITION_URI.value} data is not valid"
                 )
             }
             val response =
@@ -69,7 +69,7 @@ fun parseAndValidatePresentationDefinition(
         else -> {
             throw Logger.handleException(
                 exceptionType = "InvalidData",
-                message = "Either presentation_definition or presentation_definition_uri request param must be present",
+                message = "invalid_request: Either presentation_definition or presentation_definition_uri request param must be present",
                 className = className
             )
         }
@@ -88,7 +88,7 @@ fun parseAndValidatePresentationDefinition(
 
         else -> throw Logger.handleException(
             exceptionType = "InvalidData",
-            message = "presentation_definition must be of type String or Map ",
+            message = "invalid_request: presentation_definition must be of type String or Map ",
             className = className
         )
     }

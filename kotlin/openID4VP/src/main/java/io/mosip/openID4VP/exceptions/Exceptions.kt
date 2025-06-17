@@ -5,7 +5,7 @@ sealed class Exceptions {
 
     class MissingInput(fieldPath: String, message: String) :  Exception(
         if (fieldPath.isNotEmpty()) {
-            "Missing Input: $fieldPath param is required"
+            "invalid_request: $fieldPath param is required"
         } else {
             message
         }
@@ -13,7 +13,7 @@ sealed class Exceptions {
 
     class InvalidInput(fieldPath: String, fieldType: Any?) :
         Exception(
-            "Invalid Input: ${
+            "invalid_request: ${
                 when (fieldType) {
                     "String" -> "$fieldPath value cannot be an empty string, null, or an integer"
                     "Boolean" -> "$fieldPath value must be either true or false"

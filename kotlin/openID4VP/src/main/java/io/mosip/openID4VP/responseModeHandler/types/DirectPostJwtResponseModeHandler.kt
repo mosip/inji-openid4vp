@@ -82,7 +82,7 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
         throw Logger.handleException(
             exceptionType = "InvalidData",
             className = className,
-            message = message
+            message = "invalid_request: $message"
         )
     }
 

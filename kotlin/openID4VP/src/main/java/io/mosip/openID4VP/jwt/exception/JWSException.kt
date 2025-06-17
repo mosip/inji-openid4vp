@@ -2,13 +2,13 @@ package io.mosip.openID4VP.jwt.exception
 
 sealed class JWSException {
 
-    class PublicKeyExtractionFailed(message: String) : Exception(message)
+    class PublicKeyExtractionFailed(message: String) : Exception("invalid_request: $message")
 
-    class KidExtractionFailed(message: String) : Exception(message)
+    class KidExtractionFailed(message: String) : Exception("invalid_request: $message")
 
-    class PublicKeyResolutionFailed(message: String) : Exception(message)
+    class PublicKeyResolutionFailed(message: String) : Exception("invalid_request: $message")
 
-    class InvalidSignature(message: String) : Exception(message)
+    class InvalidSignature(message: String) : Exception("invalid_request: $message")
 
-    class VerificationFailure(message: String) : Exception(message)
+    class VerificationFailure(message: String) : Exception("invalid_request: $message")
 }

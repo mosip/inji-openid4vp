@@ -38,7 +38,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 throw Logger.handleException(
                     exceptionType = "InvalidData",
                     className = className,
-                    message = "${REQUEST_URI.value} data is not valid"
+                    message = "invalid_request: ${REQUEST_URI.value} data is not valid"
                 )
             val requestUriMethod =
                 getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?: "get"

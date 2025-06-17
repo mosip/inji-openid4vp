@@ -3,8 +3,8 @@ package io.mosip.openID4VP.jwt.exception
 sealed class JWEException {
 
     class UnsupportedKeyExchangeAlgorithm :
-        Exception("Required Key exchange algorithm is not supported")
+        Exception("invalid_request: Required Key exchange algorithm is not supported")
 
     class JweEncryptionFailure :
-        Exception("JWE Encryption failed")
+        Exception("encryption_failed: JWE Encryption failed")
 }

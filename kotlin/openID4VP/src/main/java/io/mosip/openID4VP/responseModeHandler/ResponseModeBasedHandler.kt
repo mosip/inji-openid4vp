@@ -39,7 +39,7 @@ abstract class ResponseModeBasedHandler {
             throw Logger.handleException(
                 exceptionType = "InvalidData",
                 className = className,
-                message = "${RESPONSE_URI.value} data is not valid"
+                message = "invalid_request: ${RESPONSE_URI.value} data is not valid"
             )
         }
         setResponseUri(responseUri)

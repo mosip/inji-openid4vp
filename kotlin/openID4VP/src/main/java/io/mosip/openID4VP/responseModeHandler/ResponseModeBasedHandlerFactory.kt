@@ -16,7 +16,7 @@ object ResponseModeBasedHandlerFactory {
                 throw Logger.handleException(
                     exceptionType = "InvalidData",
                     className = className,
-                    message = "Given response_mode is not supported"
+                    message = "invalid_request: Given response_mode is not supported"
                 )
         }
 }
