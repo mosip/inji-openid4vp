@@ -61,7 +61,7 @@ class EncryptionProviderTest {
             EncryptionProvider.getEncrypter(jwk)
         }
 
-        assertEquals("Required Key exchange algorithm is not supported", exception.message)
+        assertEquals("invalid_request: Required Key exchange algorithm is not supported", exception.message)
     }
 
 }

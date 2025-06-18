@@ -35,7 +35,7 @@ class ConstraintsTest {
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","format":{"ldp_vc":{"proof_type":["RsaSignature2018"]}},"constraints":{"fields":[{"path":["$.type"]}],"limit_disclosure": "not preferred"}}]}"""
 
 		val expectedExceptionMessage =
-			"Invalid Input: constraints->limit_disclosure value should be preferred"
+			"invalid_request: constraints->limit_disclosure value should be preferred"
 
 		val actualException =
 			Assert.assertThrows(AuthorizationRequestExceptions.InvalidLimitDisclosure::class.java) {

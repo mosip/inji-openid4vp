@@ -126,7 +126,7 @@ class FieldDeserializerTest {
         val exception = assertThrows(MissingInput::class.java) {
             deserializer.deserializeField<String>("mandatoryField", "String", isMandatory = true)
         }
-        assertEquals("Missing Input: parentField->mandatoryField param is required", exception.message)
+        assertEquals("invalid_request: parentField->mandatoryField param is required", exception.message)
     }
 
     @Test
@@ -139,7 +139,7 @@ class FieldDeserializerTest {
         val exception = assertThrows(InvalidInput::class.java) {
             deserializer.deserializeField<String>("nullField", "String")
         }
-        assertEquals("Invalid Input: parentField->nullField value cannot be an empty string, null, or an integer", exception.message)
+        assertEquals("invalid_request: parentField->nullField value cannot be an empty string, null, or an integer", exception.message)
     }
 
     @Test
@@ -152,7 +152,7 @@ class FieldDeserializerTest {
         val exception = assertThrows(InvalidInput::class.java) {
             deserializer.deserializeField<String>("stringField", "String")
         }
-        assertEquals("Invalid Input: parentField->stringField value cannot be an empty string, null, or an integer", exception.message)
+        assertEquals("invalid_request: parentField->stringField value cannot be an empty string, null, or an integer", exception.message)
     }
 
     @Test
@@ -165,7 +165,7 @@ class FieldDeserializerTest {
         val exception = assertThrows(InvalidInput::class.java) {
             deserializer.deserializeField<Boolean>("booleanField", "Boolean")
         }
-        assertEquals("Invalid Input: parentField->booleanField value must be either true or false", exception.message)
+        assertEquals("invalid_request: parentField->booleanField value must be either true or false", exception.message)
     }
 
     @Test

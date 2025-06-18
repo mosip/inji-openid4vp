@@ -75,7 +75,7 @@ class DidPublicKeyResolverTest {
             resolver.resolveKey(emptyMap())
         }
         assertEquals(
-            "KID extraction from DID document failed",
+            "invalid_request: KID extraction from DID document failed",
             exception.message
         )
     }
@@ -88,7 +88,7 @@ class DidPublicKeyResolverTest {
             resolver.resolveKey(emptyMap())
         }
         assertEquals(
-            "Did document could not be fetched",
+            "invalid_request: Did document could not be fetched",
             exception.message
         )
     }
@@ -112,7 +112,7 @@ class DidPublicKeyResolverTest {
                 resolver.resolveKey(header)
             }
         assertEquals(
-            "Public key extraction failed",
+            "invalid_request: Public key extraction failed",
             exception.message
         )
     }

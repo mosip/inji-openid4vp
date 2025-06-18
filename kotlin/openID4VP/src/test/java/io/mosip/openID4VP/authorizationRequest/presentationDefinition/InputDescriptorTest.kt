@@ -34,10 +34,10 @@ class InputDescriptorTest {
     }
 
     @Test
-    fun `should throw missing input exception if id param is missing`(){
+    fun `should throw invalid_request exception if id param is missing`(){
         presentationDefinition =
             """{"id":"id_123","input_descriptors":[{"constraints":{"fields":[{"path":["$.type"]}]}}]}"""
-        expectedExceptionMessage = "Missing Input: input_descriptor->id param is required"
+        expectedExceptionMessage = "invalid_request: input_descriptor->id param is required"
 
         val actualException =
             Assert.assertThrows(MissingInput::class.java) {
@@ -48,10 +48,10 @@ class InputDescriptorTest {
     }
 
     @Test
-    fun `should throw missing input exception if constraints param is missing`(){
+    fun `should throw invalid_request exception if constraints param is missing`(){
         presentationDefinition =
             """{"id":"pd_123","input_descriptors":[{"id":"id_123"}]}"""
-        expectedExceptionMessage = "Missing Input: input_descriptor->constraints param is required"
+        expectedExceptionMessage = "invalid_request: input_descriptor->constraints param is required"
 
         val actualException =
             Assert.assertThrows(MissingInput::class.java) {
@@ -62,10 +62,10 @@ class InputDescriptorTest {
     }
 
     @Test
-    fun `should throw invalid input exception if id param value is empty`(){
+    fun `should throw invalid_request exception if id param value is empty`(){
         presentationDefinition =
             """{"id":"pd_123","input_descriptors":[{"id":"","constraints":{"fields":[{"path":["$.type"]}]}}]}"""
-        expectedExceptionMessage = "Invalid Input: input_descriptor->id value cannot be an empty string, null, or an integer"
+        expectedExceptionMessage = "invalid_request: input_descriptor->id value cannot be an empty string, null, or an integer"
 
         val actualException =
             Assert.assertThrows(Exceptions.InvalidInput::class.java) {
@@ -76,10 +76,10 @@ class InputDescriptorTest {
     }
 
     @Test
-    fun `should throw invalid input exception if id param value is present but it's value is null`(){
+    fun `should throw invalid_request exception if id param value is present but it's value is null`(){
         presentationDefinition =
             """{"id":"pd_123","input_descriptors":[{"id":null,"constraints":{"fields":[{"path":["$.type"]}]}}]}"""
-        expectedExceptionMessage = "Invalid Input: input_descriptor->id value cannot be an empty string, null, or an integer"
+        expectedExceptionMessage = "invalid_request: input_descriptor->id value cannot be an empty string, null, or an integer"
 
         val actualException =
             Assert.assertThrows(Exceptions.InvalidInput::class.java) {

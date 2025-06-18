@@ -44,10 +44,10 @@ class PresentationDefinitionTest {
     }
 
     @Test
-    fun `should throw missing input exception if id param is missing`() {
+    fun `should throw invalid_request exception if id param is missing`() {
         presentationDefinition =
             """{"input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"]}]}}]}"""
-        expectedExceptionMessage = "Missing Input: presentation_definition->id param is required"
+        expectedExceptionMessage = "invalid_request: presentation_definition->id param is required"
 
         val actualException =
             assertThrows(MissingInput::class.java) {
@@ -61,10 +61,10 @@ class PresentationDefinitionTest {
     }
 
     @Test
-    fun `should throw missing input exception if input_descriptors param is missing`() {
+    fun `should throw invalid_request exception if input_descriptors param is missing`() {
         presentationDefinition = """{"id":"pd_123"}"""
         expectedExceptionMessage =
-            "Missing Input: presentation_definition->input_descriptors param is required"
+            "invalid_request: presentation_definition->input_descriptors param is required"
 
         val actualException =
             assertThrows(MissingInput::class.java) {
@@ -75,11 +75,11 @@ class PresentationDefinitionTest {
     }
 
     @Test
-    fun `should throw invalid input exception if id param value is empty`() {
+    fun `should throw invalid_request exception if id param value is empty`() {
         presentationDefinition =
             """{"id":"","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"]}]}}]}"""
         expectedExceptionMessage =
-            "Invalid Input: presentation_definition->id value cannot be an empty string, null, or an integer"
+            "invalid_request: presentation_definition->id value cannot be an empty string, null, or an integer"
 
         val actualException =
             assertThrows(InvalidInput::class.java) {
@@ -90,10 +90,10 @@ class PresentationDefinitionTest {
     }
 
     @Test
-    fun `should throw invalid input exception if input_descriptor param value is empty`() {
+    fun `should throw invalid_request exception if input_descriptor param value is empty`() {
         presentationDefinition = """{"id":"pd_123","input_descriptors":[]}"""
         expectedExceptionMessage =
-            "Invalid Input: presentation_definition->input_descriptors value cannot be empty or null"
+            "invalid_request: presentation_definition->input_descriptors value cannot be empty or null"
 
         val actualException =
             assertThrows(InvalidInput::class.java) {
@@ -104,10 +104,10 @@ class PresentationDefinitionTest {
     }
 
     @Test
-    fun `should throw invalid input exception if input_descriptor param value is present but it's value is null`() {
+    fun `should throw invalid_request exception if input_descriptor param value is present but it's value is null`() {
         presentationDefinition = """{"id":"pd_123","input_descriptors":null}"""
         expectedExceptionMessage =
-            "Invalid Input: presentation_definition->input_descriptors value cannot be empty or null"
+            "invalid_request: presentation_definition->input_descriptors value cannot be empty or null"
 
         val actualException =
             assertThrows(InvalidInput::class.java) {
@@ -125,7 +125,7 @@ class PresentationDefinitionTest {
         )
 
         val expectedExceptionMessage =
-            "presentation_definition_uri is not support"
+            "invalid_presentation_definition_reference: presentation_definition_uri is not support"
 
         val exception = assertThrows<InvalidData> {
             parseAndValidatePresentationDefinition(authorizationRequestParam, false)

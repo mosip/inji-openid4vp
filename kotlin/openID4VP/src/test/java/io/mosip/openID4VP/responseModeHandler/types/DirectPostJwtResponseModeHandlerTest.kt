@@ -72,7 +72,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "Missing Input: client_metadata->jwks param is required"
+        val exceptionMessage = "invalid_request: client_metadata->jwks param is required"
         val exception =assertThrows<MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
@@ -84,7 +84,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"vp_formats\":{\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "Missing Input: client_metadata->authorization_encrypted_response_enc param is required"
+        val exceptionMessage = "invalid_request: client_metadata->authorization_encrypted_response_enc param is required"
         val exception =assertThrows<MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
@@ -96,7 +96,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "Missing Input: client_metadata->authorization_encrypted_response_alg param is required"
+        val exceptionMessage = "invalid_request: client_metadata->authorization_encrypted_response_alg param is required"
         val exception =assertThrows<MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
@@ -108,7 +108,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"enc\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
+        val exceptionMessage = "invalid_request: No jwk matching the specified algorithm found for encryption"
         val exception =assertThrows<InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
@@ -120,7 +120,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadataStr = "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"sign\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH-ES\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\"]}}}"
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
-        val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
+        val exceptionMessage = "invalid_request: No jwk matching the specified algorithm found for encryption"
         val exception =assertThrows<InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
@@ -143,7 +143,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
 
         val expectedExceptionMessage =
-            "authorization_encrypted_response_alg is not supported"
+            "invalid_request: authorization_encrypted_response_alg is not supported"
 
         val exception = assertThrows<InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
@@ -172,7 +172,7 @@ class DirectPostJwtResponseModeHandlerTest {
         )
         val clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
         val expectedExceptionMessage =
-            "authorization_encryption_alg_values_supported must be present in wallet_metadata"
+            "invalid_request: authorization_encryption_alg_values_supported must be present in wallet_metadata"
 
         val exception = assertThrows<InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
@@ -189,7 +189,7 @@ class DirectPostJwtResponseModeHandlerTest {
 
 
         val expectedExceptionMessage =
-            "authorization_encrypted_response_enc is not supported"
+            "invalid_request: authorization_encrypted_response_enc is not supported"
 
         val exception = assertThrows<InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
@@ -218,7 +218,7 @@ class DirectPostJwtResponseModeHandlerTest {
             authorizationEncryptionEncValuesSupported = null
         )
         val expectedExceptionMessage =
-            "authorization_encryption_enc_values_supported must be present in wallet_metadata"
+            "invalid_request: authorization_encryption_enc_values_supported must be present in wallet_metadata"
 
         val exception = assertThrows<InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)

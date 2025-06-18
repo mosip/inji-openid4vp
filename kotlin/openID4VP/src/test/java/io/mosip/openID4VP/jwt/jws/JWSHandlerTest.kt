@@ -75,7 +75,7 @@ class JWSHandlerTest {
             assertThrows(Exception::class.java) { JWSHandler(jwt, publicKeyResolver).verify() }
 
         assertEquals(
-            "JWS signature verification failed",
+            "invalid_request: JWS signature verification failed",
             exception.message
         )
     }

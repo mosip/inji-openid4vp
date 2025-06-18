@@ -130,7 +130,7 @@ class JWEHandlerTest {
         val exception = assertThrows(Exception::class.java) {
             jweHandler.generateEncryptedResponse(payload)
         }
-        assertEquals("JWE Encryption failed", exception.message)
+        assertEquals("encryption_failed: JWE Encryption failed", exception.message)
 
         verify {
             anyConstructed<EncryptedJWT>().encrypt(any())

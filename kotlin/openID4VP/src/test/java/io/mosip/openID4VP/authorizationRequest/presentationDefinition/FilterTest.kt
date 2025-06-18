@@ -35,10 +35,10 @@ class FilterTest {
 	}
 
 	@Test
-	fun `should throw missing input pattern exception if type param is missing`() {
+	fun `should throw invalid_request pattern exception if type param is missing`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"], "filter":{}}]}}]}"""
-		expectedExceptionMessage = "Missing Input: filter->type param is required"
+		expectedExceptionMessage = "invalid_request: filter->type param is required"
 
 		val actualException =
 			Assert.assertThrows(MissingInput::class.java) {
@@ -49,10 +49,10 @@ class FilterTest {
 	}
 
 	@Test
-	fun `should throw missing input exception if pattern param is missing`() {
+	fun `should throw invalid_request exception if pattern param is missing`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"], "filter":{"type":"string"}}]}}]}"""
-		expectedExceptionMessage = "Missing Input: filter->pattern param is required"
+		expectedExceptionMessage = "invalid_request: filter->pattern param is required"
 
 		val actualException =
 			Assert.assertThrows(MissingInput::class.java) {
@@ -63,10 +63,10 @@ class FilterTest {
 	}
 
 	@Test
-	fun `should throw invalid input pattern exception if type param is empty`() {
+	fun `should throw invalid_request pattern exception if type param is empty`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"], "filter":{"type":"","pattern":"MosipCredential"}}]}}]}"""
-		expectedExceptionMessage = "Invalid Input: filter->type value cannot be an empty string, null, or an integer"
+		expectedExceptionMessage = "invalid_request: filter->type value cannot be an empty string, null, or an integer"
 
 		val actualException =
 			Assert.assertThrows(Exceptions.InvalidInput::class.java) {
@@ -77,10 +77,10 @@ class FilterTest {
 	}
 
 	@Test
-	fun `should throw invalid input exception if pattern param is empty`() {
+	fun `should throw invalid_request exception if pattern param is empty`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"], "filter":{"type":"string","pattern":""}}]}}]}"""
-		expectedExceptionMessage = "Invalid Input: filter->pattern value cannot be an empty string, null, or an integer"
+		expectedExceptionMessage = "invalid_request: filter->pattern value cannot be an empty string, null, or an integer"
 
 		val actualException =
 			Assert.assertThrows(Exceptions.InvalidInput::class.java) {
@@ -91,10 +91,10 @@ class FilterTest {
 	}
 
 	@Test
-	fun `should throw invalid input exception if pattern param is present but it's value is null`() {
+	fun `should throw invalid_request exception if pattern param is present but it's value is null`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$.type"], "filter":{"type":"string","pattern":null}}]}}]}"""
-		expectedExceptionMessage = "Invalid Input: filter->pattern value cannot be an empty string, null, or an integer"
+		expectedExceptionMessage = "invalid_request: filter->pattern value cannot be an empty string, null, or an integer"
 
 		val actualException =
 			Assert.assertThrows(Exceptions.InvalidInput::class.java) {

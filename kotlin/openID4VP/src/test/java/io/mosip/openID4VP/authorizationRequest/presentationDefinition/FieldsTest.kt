@@ -39,7 +39,7 @@ class FieldsTest {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":["$-type"]}]}}]}"""
 		expectedExceptionMessage =
-			"Invalid Input Pattern: fields->path pattern is not matching with OpenId4VP specification"
+			"invalid_request: fields->path pattern is not matching with OpenId4VP specification"
 
 		val actualException =
 			Assert.assertThrows(InvalidInputPattern::class.java) {
@@ -50,10 +50,10 @@ class FieldsTest {
 	}
 
 	@Test
-	fun `should throw missing input exception if path param is missing`() {
+	fun `should throw invalid_request exception if path param is missing`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{}]}}]}"""
-		expectedExceptionMessage = "Missing Input: fields->path param is required"
+		expectedExceptionMessage = "invalid_request: fields->path param is required"
 
 		val actualException =
 			Assert.assertThrows(MissingInput::class.java) {
@@ -67,7 +67,7 @@ class FieldsTest {
 	fun `should throw invalid input exception if path param is empty`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":[]}]}}]}"""
-		expectedExceptionMessage = "Invalid Input: fields->path value cannot be empty or null"
+		expectedExceptionMessage = "invalid_request: fields->path value cannot be empty or null"
 
 		val actualException =
 			Assert.assertThrows(Exceptions.InvalidInput::class.java) {
@@ -81,7 +81,7 @@ class FieldsTest {
 	fun `should throw invalid input exception if path param is present but it's value is null`() {
 		presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","constraints":{"fields":[{"path":null}]}}]}"""
-		expectedExceptionMessage = "Invalid Input: fields->path value cannot be empty or null"
+		expectedExceptionMessage = "invalid_request: fields->path value cannot be empty or null"
 
 		val actualException =
 			Assert.assertThrows(Exceptions.InvalidInput::class.java) {

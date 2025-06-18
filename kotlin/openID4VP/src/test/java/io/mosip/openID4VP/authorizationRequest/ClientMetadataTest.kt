@@ -59,7 +59,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw invalid input exception if vp_formats field is not available`() {
+    fun `should throw invalid_request exception if vp_formats field is not available`() {
         val invalidClientMetadata =
             "{\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\"}"
 
@@ -68,7 +68,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST.value
         )
         val expectedExceptionMessage =
-            "Invalid Input: client_metadata->vp_formats value cannot be empty or null"
+            "invalid_request: client_metadata->vp_formats value cannot be empty or null"
 
         actualException =
             Assert.assertThrows(InvalidInput::class.java) {
@@ -78,7 +78,7 @@ class ClientMetadataTest {
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
     @Test
-    fun `should throw invalid input exception if vp_formats field is empty map`() {
+    fun `should throw invalid_request exception if vp_formats field is empty map`() {
         val invalidClientMetadata =
             "{\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\", \"vp_formats\":{}}"
 
@@ -87,7 +87,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST.value
         )
         val expectedExceptionMessage =
-            "Invalid Input: client_metadata->vp_formats value cannot be empty or null"
+            "invalid_request: client_metadata->vp_formats value cannot be empty or null"
 
         actualException =
             Assert.assertThrows(InvalidInput::class.java) {
@@ -98,7 +98,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw invalid input exception if name field is available in client_metadata but the value is empty`() {
+    fun `should throw invalid_request exception if name field is available in client_metadata but the value is empty`() {
         val invalidClientMetadata =
             "{\"client_name\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 
@@ -108,7 +108,7 @@ class ClientMetadataTest {
         )
 
         val expectedExceptionMessage =
-            "Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
+            "invalid_request: client_metadata->client_name value cannot be an empty string, null, or an integer"
 
         actualException =
             Assert.assertThrows(InvalidInput::class.java) {
@@ -119,7 +119,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw invalid input exception if name field is available in client_metadata but the value is null`() {
+    fun `should throw invalid_request exception if name field is available in client_metadata but the value is null`() {
 
         val invalidClientMetadata =
             "{\"client_name\":null,\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
@@ -130,7 +130,7 @@ class ClientMetadataTest {
         )
 
         val expectedExceptionMessage =
-            "Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
+            "invalid_request: client_metadata->client_name value cannot be an empty string, null, or an integer"
 
         actualException =
             Assert.assertThrows(InvalidInput::class.java) {
@@ -141,7 +141,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw invalid input exception if log_url field is available in client_metadata but the value is empty`() {
+    fun `should throw invalid_request exception if log_url field is available in client_metadata but the value is empty`() {
         val invalidClientMetadata =
             "{\"client_name\":\"\",\"client_name\":\"verifier\",\"logo_uri\":\"\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"ES256\",\"EdDSA\"]},\"ldp_vp\":{\"proof_type\":[\"Ed25519Signature2018\",\"Ed25519Signature2020\",\"RsaSignature2018\"]}}}"
 
@@ -151,7 +151,7 @@ class ClientMetadataTest {
         )
 
         val expectedExceptionMessage =
-            "Invalid Input: client_metadata->logo_uri value cannot be an empty string, null, or an integer"
+            "invalid_request: client_metadata->logo_uri value cannot be an empty string, null, or an integer"
 
         actualException =
             Assert.assertThrows(InvalidInput::class.java) {
@@ -162,7 +162,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw missing input exception if encryption algorithm is missing for response mode is direct_post jwt`() {
+    fun `should throw invalid_request exception if encryption algorithm is missing for response mode is direct_post jwt`() {
         val invalidClientMetadata =
             "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"enc\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH-ES\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"EdDSA\"]}}}"
         val authorizationRequestParam: MutableMap<String, Any> = mutableMapOf(
@@ -170,7 +170,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "Missing Input: client_metadata->authorization_encrypted_response_alg param is required"
+            "invalid_request: client_metadata->authorization_encrypted_response_alg param is required"
 
         actualException =
             Assert.assertThrows(MissingInput::class.java) {
@@ -181,7 +181,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw missing input exception if encryption encoding value is missing for response mode is direct_post jwt`() {
+    fun `should throw invalid_request exception if encryption encoding value is missing for response mode is direct_post jwt`() {
         val invalidClientMetadata =
             "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"enc\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH-ES\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"EdDSA\"]}}}"
         val authorizationRequestParam: MutableMap<String, Any> = mutableMapOf(
@@ -189,7 +189,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "Missing Input: client_metadata->authorization_encrypted_response_enc param is required"
+            "invalid_request: client_metadata->authorization_encrypted_response_enc param is required"
 
         actualException =
             Assert.assertThrows(MissingInput::class.java) {
@@ -199,7 +199,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw missing input exception if jwks field is missing for response mode is direct_post jwt`() {
+    fun `should throw invalid_request exception if jwks field is missing for response mode is direct_post jwt`() {
         val invalidClientMetadata =
             "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_alg\":\"ECDH-ES\",\"authorization_encrypted_response_enc\":\"AES256GCM\",\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"EdDSA\"]}}}"
         val authorizationRequestParam: MutableMap<String, Any> = mutableMapOf(
@@ -207,7 +207,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "Missing Input: client_metadata->jwks param is required"
+            "invalid_request: client_metadata->jwks param is required"
 
         actualException =
             Assert.assertThrows(MissingInput::class.java) {
@@ -217,7 +217,7 @@ class ClientMetadataTest {
     }
 
     @Test
-    fun `should throw missing input exception if jwk matching the algorithm field is missing in jwks for response mode is direct_post jwt`() {
+    fun `should throw invalid_request exception if jwk matching the algorithm field is missing in jwks for response mode is direct_post jwt`() {
         val invalidClientMetadata =
             "{\"client_name\":\"Requestername\",\"logo_uri\":\"<logo_uri>\",\"authorization_encrypted_response_enc\":\"A256GCM\",\"authorization_encrypted_response_alg\":\"ECDH\",\"jwks\":{\"keys\":[{\"kty\":\"OKP\",\"crv\":\"X25519\",\"use\":\"enc\",\"x\":\"BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4\",\"alg\":\"ECDH-ES\",\"kid\":\"ed-key1\"}]},\"vp_formats\":{\"mso_mdoc\":{\"alg\":[\"EdDSA\"]}}}"
         val authorizationRequestParam: MutableMap<String, Any> = mutableMapOf(
@@ -225,7 +225,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "No jwk matching the specified algorithm found for encryption"
+            "invalid_request: No jwk matching the specified algorithm found for encryption"
 
         actualException =
             Assert.assertThrows(InvalidData::class.java) {
@@ -257,7 +257,7 @@ class ClientMetadataTest {
             RESPONSE_MODE.value to DIRECT_POST_JWT.value
         )
         val expectedExceptionMessage =
-            "client_metadata must be present for given response mode"
+            "invalid_request: client_metadata must be present for given response mode"
 
         actualException =
             Assert.assertThrows(InvalidData::class.java) {
@@ -295,7 +295,7 @@ class ClientMetadataTest {
         )
 
         val expectedExceptionMessage =
-            "authorization_encrypted_response_alg is not supported"
+            "invalid_request: authorization_encrypted_response_alg is not supported"
 
         val exception = assertThrows<InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true,walletMetadata)
@@ -328,7 +328,7 @@ class ClientMetadataTest {
             authorizationEncryptionEncValuesSupported = listOf("A256GCM")
         )
         val expectedExceptionMessage =
-            "authorization_encryption_alg_values_supported must be present in wallet_metadata"
+            "invalid_request: authorization_encryption_alg_values_supported must be present in wallet_metadata"
 
         val exception = assertThrows<InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, invalidWalletMetadata)
@@ -347,7 +347,7 @@ class ClientMetadataTest {
         )
 
         val expectedExceptionMessage =
-            "authorization_encrypted_response_enc is not supported"
+            "invalid_request: authorization_encrypted_response_enc is not supported"
 
         val exception = assertThrows<InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, walletMetadata)
@@ -380,7 +380,7 @@ class ClientMetadataTest {
             authorizationEncryptionEncValuesSupported = null
         )
         val expectedExceptionMessage =
-            "authorization_encryption_enc_values_supported must be present in wallet_metadata"
+            "invalid_request: authorization_encryption_enc_values_supported must be present in wallet_metadata"
 
         val exception = assertThrows<InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam,true, invalidWalletMetadata)

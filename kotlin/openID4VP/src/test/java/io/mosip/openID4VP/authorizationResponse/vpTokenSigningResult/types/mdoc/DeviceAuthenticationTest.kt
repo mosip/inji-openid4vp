@@ -43,7 +43,7 @@ class DeviceAuthenticationTest {
         val exception = assertThrows<InvalidInput> {
             deviceAuth.validate()
         }
-        assertEquals("Invalid Input: mdoc_vp_token_signing_result->device_authentication->signature value cannot be empty or null", exception.message)
+        assertEquals("invalid_request: mdoc_vp_token_signing_result->device_authentication->signature value cannot be empty or null", exception.message)
     }
 
     @Test
@@ -53,7 +53,7 @@ class DeviceAuthenticationTest {
         val exception = assertThrows<InvalidInput> {
             deviceAuth.validate()
         }
-        assertEquals("Invalid Input: mdoc_vp_token_signing_result->device_authentication->algorithm value cannot be empty or null", exception.message)
+        assertEquals("invalid_request: mdoc_vp_token_signing_result->device_authentication->algorithm value cannot be empty or null", exception.message)
     }
 
 }
