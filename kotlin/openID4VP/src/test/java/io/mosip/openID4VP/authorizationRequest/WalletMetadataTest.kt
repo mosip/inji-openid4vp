@@ -5,7 +5,7 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.*
@@ -46,7 +46,7 @@ class WalletMetadataTest {
             authorizationEncryptionAlgValuesSupported = listOf("ECDH-ES"),
             authorizationEncryptionEncValuesSupported = listOf("A256GCM")
         )
-        assertEquals(walletMetadata.presentationDefinitionURISupported, true)
+        assertEquals(true, walletMetadata.presentationDefinitionURISupported)
     }
 
     @Test
@@ -63,11 +63,11 @@ class WalletMetadataTest {
             authorizationEncryptionAlgValuesSupported = listOf("ECDH-ES"),
             authorizationEncryptionEncValuesSupported = listOf("A256GCM")
         )
-        assertEquals(walletMetadata.clientIdSchemesSupported, listOf(PRE_REGISTERED.value))
+        assertEquals(listOf(PRE_REGISTERED.value), walletMetadata.clientIdSchemesSupported)
     }
 
     @Test
-    fun `should keep null value for authorization_encryption_enc_values_supported and authorization_encryption_alg_values_supported if provided` () {
+    fun `should keep null value for authorization_encryption_enc_values_supported and authorization_encryption_alg_values_supported if provided`() {
         val walletMetadata = WalletMetadata(
             presentationDefinitionURISupported = true,
             vpFormatsSupported = mapOf(
@@ -80,12 +80,12 @@ class WalletMetadataTest {
             authorizationEncryptionAlgValuesSupported = null,
             authorizationEncryptionEncValuesSupported = null
         )
-        assertEquals(walletMetadata.clientIdSchemesSupported, listOf(PRE_REGISTERED.value))
+        assertEquals(listOf(PRE_REGISTERED.value), walletMetadata.clientIdSchemesSupported)
     }
 
     @Test
     fun `should throw error if vp_formats_supported is empty map`() {
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             WalletMetadata(
                 presentationDefinitionURISupported = true,
                 vpFormatsSupported = emptyMap(),
@@ -103,9 +103,10 @@ class WalletMetadataTest {
             exception.message
         )
     }
+
     @Test
     fun `should throw error if vp_formats_supported has empty key`() {
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             WalletMetadata(
                 presentationDefinitionURISupported = true,
                 vpFormatsSupported = mapOf(
@@ -127,13 +128,14 @@ class WalletMetadataTest {
             exception.message
         )
     }
+
     @Test
     fun `should throw error if vp_formats_supported has just empty space`() {
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             WalletMetadata(
                 presentationDefinitionURISupported = true,
                 vpFormatsSupported = mapOf(
-                    " "  to VPFormatSupported(
+                    " " to VPFormatSupported(
                         algValuesSupported = null
                     )
                 ),

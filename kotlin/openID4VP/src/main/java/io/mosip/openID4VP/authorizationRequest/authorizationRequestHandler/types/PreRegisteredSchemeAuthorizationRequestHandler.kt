@@ -12,6 +12,7 @@ import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.extractClientIdentifier
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
 import okhttp3.Headers
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = PreRegisteredSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -27,11 +28,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
 
         val clientId =  getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
         if (trustedVerifiers.none { it.clientId == clientId }) {
-            throw Logger.handleException(
-                exceptionType = "InvalidVerifier",
-                className = className,
-                message = "Verifier is not trusted by the wallet"
-            )
+            throw  OpenID4VPExceptions.InvalidVerifier("Verifier is not trusted by the wallet", className)
         }
     }
 
@@ -53,11 +50,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                 )
                 authorizationRequestObject
             } else {
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "Authorization Request must not be signed for given client_id_scheme"
-                )
+                throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)
             }
         }
     }
@@ -84,11 +77,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         val responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value)!!
 
         if (trustedVerifiers.none { it.clientId == clientId && it.responseUris.contains(responseUri) }) {
-            throw Logger.handleException(
-                exceptionType = "InvalidVerifier",
-                className = className,
-                message = "Verifier is not trusted by the wallet"
-            )
+            throw OpenID4VPExceptions.InvalidVerifier("Verifier is not trusted by the wallet", className)
         }
 
     }

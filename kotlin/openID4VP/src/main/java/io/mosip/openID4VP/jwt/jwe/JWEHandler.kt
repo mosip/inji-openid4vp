@@ -6,6 +6,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = JWEHandler::class.simpleName!!
 
@@ -39,11 +40,7 @@ class JWEHandler(
             jwt.encrypt(encrypter)
             return jwt.serialize()
         } catch (exception: Exception) {
-            throw Logger.handleException(
-                exceptionType = "JweEncryptionFailure",
-                message = exception.message,
-                className = className
-            )
+            throw  OpenID4VPExceptions.JweEncryptionFailure(className)
         }
     }
 }

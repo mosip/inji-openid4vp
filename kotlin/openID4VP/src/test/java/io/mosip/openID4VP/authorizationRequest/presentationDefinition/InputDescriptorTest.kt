@@ -5,9 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
-import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
-import io.mosip.openID4VP.exceptions.Exceptions
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -40,7 +38,7 @@ class InputDescriptorTest {
         expectedExceptionMessage = "Missing Input: input_descriptor->id param is required"
 
         val actualException =
-            Assert.assertThrows(MissingInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
 
@@ -54,7 +52,7 @@ class InputDescriptorTest {
         expectedExceptionMessage = "Missing Input: input_descriptor->constraints param is required"
 
         val actualException =
-            Assert.assertThrows(MissingInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
 
@@ -68,7 +66,7 @@ class InputDescriptorTest {
         expectedExceptionMessage = "Invalid Input: input_descriptor->id value cannot be an empty string, null, or an integer"
 
         val actualException =
-            Assert.assertThrows(Exceptions.InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
 
@@ -82,7 +80,7 @@ class InputDescriptorTest {
         expectedExceptionMessage = "Invalid Input: input_descriptor->id value cannot be an empty string, null, or an integer"
 
         val actualException =
-            Assert.assertThrows(Exceptions.InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
 

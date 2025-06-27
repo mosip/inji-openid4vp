@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 
 private val logTag = Logger.getLogTag(OpenID4VP::class.simpleName!!)
@@ -69,17 +70,26 @@ class OpenID4VP(private val traceabilityId: String) {
     }
 
     fun sendErrorToVerifier(exception: Exception) {
-        responseUri?.let {
+        responseUri?.let { uri ->
             try {
+                val errorPayload: Map<String, String> = when (exception) {
+                    is OpenID4VPExceptions -> exception.toErrorResponse()
+                    else -> OpenID4VPExceptions.GeneralFailure(
+                        message = exception.message ?: "Unknown internal error",
+                        className = "OpenID4VP.kt"
+                    ).toErrorResponse()
+                }
                 sendHTTPRequest(
-                    url = it, method = HttpMethod.POST, mapOf("error" to exception.message!!)
+                    url = uri,
+                    method = HttpMethod.POST,
+                    bodyParams = errorPayload
                 )
-            } catch (exception: Exception) {
+            } catch (e: Exception) {
                 Logger.error(
                     logTag,
-                    Exception("Unexpected error occurred while sending the error to verifier: ${exception.message}")
+                    Exception("Unexpected error occurred while sending the error to verifier: ${e.message}")
                 )
             }
         }
     }
-}
+    }

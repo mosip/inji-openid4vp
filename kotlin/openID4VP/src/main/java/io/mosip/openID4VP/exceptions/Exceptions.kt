@@ -11,7 +11,7 @@ sealed class Exceptions {
         }
     )
 
-    class InvalidInput(fieldPath: String, fieldType: Any?) :
+    class InvalidInput(fieldPath: Any, fieldType: Any?) :
         Exception(
             "Invalid Input: ${
                 when (fieldType) {

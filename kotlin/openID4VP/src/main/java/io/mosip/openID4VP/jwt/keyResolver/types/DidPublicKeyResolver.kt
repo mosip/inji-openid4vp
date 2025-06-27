@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.jwt.keyResolver.types
 
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
 import io.mosip.vercred.vcverifier.DidWebResolver
 
@@ -13,25 +14,15 @@ class DidPublicKeyResolver(private val didUrl: String) : PublicKeyResolver {
         val didResponse = try {
             DidWebResolver(didUrl).resolve()
         }catch (e: Exception){
-            throw Logger.handleException(
-                exceptionType = "PublicKeyResolutionFailed",
-                className = className,
-                message = e.message
-            )
+            throw OpenID4VPExceptions.PublicKeyResolutionFailed(e.message.toString(), className)
         }
 
         val kid = header["kid"]?.toString()
-            ?: throw Logger.handleException(
-                exceptionType = "KidExtractionFailed",
-                className = className,
-                message = "KID extraction from DID document failed"
-            )
+            ?: throw OpenID4VPExceptions.KidExtractionFailed("KID extraction from DID document failed",
+                className)
+
         return extractPublicKeyMultibase(kid, didResponse)
-            ?: throw Logger.handleException(
-                exceptionType = "PublicKeyExtractionFailed",
-                className = className,
-                message = "Public key extraction failed"
-            )
+            ?: throw  OpenID4VPExceptions.PublicKeyExtractionFailed("Public key extraction failed", className)
     }
 
     private fun extractPublicKeyMultibase(kid: String, didDocument: Map<String, Any>): String? {

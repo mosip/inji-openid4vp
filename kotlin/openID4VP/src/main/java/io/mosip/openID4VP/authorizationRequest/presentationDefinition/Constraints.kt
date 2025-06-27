@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationRequest.presentationDefinition
 import Generated
 import io.mosip.openID4VP.common.FieldDeserializer
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -26,12 +27,8 @@ object ConstraintsSerializer : KSerializer<Constraints> {
 		val jsonDecoder = try {
 			decoder as JsonDecoder
 		} catch (e: ClassCastException) {
-			throw Logger.handleException(
-				exceptionType = "DeserializationFailure",
-				fieldPath = listOf("constraints"),
-				message = e.message!!,
-				className = className
-			)
+			throw OpenID4VPExceptions.DeserializationFailure( listOf("constraints"),e.message!!,
+				className)
 		}
 
 		val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
@@ -83,10 +80,7 @@ class Constraints(
 
 			limitDisclosure?.let {
 				LimitDisclosure.entries.firstOrNull { it.value == limitDisclosure }
-					?: throw Logger.handleException(
-						exceptionType = "InvalidLimitDisclosure",
-						className = className
-					)
+					?: throw OpenID4VPExceptions.InvalidLimitDisclosure(className)
 			}
 		} catch (exception: Exception) {
 			throw exception

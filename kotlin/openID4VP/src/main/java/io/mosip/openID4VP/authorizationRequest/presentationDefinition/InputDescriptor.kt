@@ -4,6 +4,7 @@ import Generated
 import io.mosip.openID4VP.common.FieldDeserializer
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.exceptions.Exceptions
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -31,12 +32,8 @@ object InputDescriptorSerializer : KSerializer<InputDescriptor> {
 		val jsonDecoder = try {
 			decoder as JsonDecoder
 		} catch (e: ClassCastException) {
-			throw Logger.handleException(
-				exceptionType = "DeserializationFailure",
-				fieldPath = listOf("input_descriptor"),
-				message = e.message!!,
-				className = className
-			)
+			throw  OpenID4VPExceptions.DeserializationFailure(listOf("input_descriptor"),e.message!!,
+				className)
 		}
 		val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
 		val deserializer = FieldDeserializer(

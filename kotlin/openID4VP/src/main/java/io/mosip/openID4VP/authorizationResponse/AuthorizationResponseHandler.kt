@@ -20,6 +20,7 @@ import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
@@ -35,11 +36,7 @@ internal class AuthorizationResponseHandler {
         responseUri: String,
     ): Map<FormatType, UnsignedVPToken> {
         if (credentialsMap.isEmpty()) {
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "Empty credentials list - The Wallet did not have the requested Credentials to satisfy the Authorization Request."
-            )
+            throw OpenID4VPExceptions.InvalidData("Empty credentials list - The Wallet did not have the requested Credentials to satisfy the Authorization Request.", className)
         }
         this.credentialsMap = credentialsMap
         this.unsignedVPTokens = createUnsignedVPTokens(authorizationRequest, responseUri)
@@ -87,11 +84,7 @@ internal class AuthorizationResponseHandler {
                 )
             }
 
-            else -> throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "Provided response_type - ${authorizationRequest.responseType} is not supported"
-            )
+            else -> throw  OpenID4VPExceptions.InvalidData("Provided response_type - ${authorizationRequest.responseType} is not supported", className)
         }
     }
 
@@ -128,11 +121,7 @@ internal class AuthorizationResponseHandler {
                 VPTokenFactory(
                     vpTokenSigningResult = vpTokenSigningResult,
                     unsignedVPToken = unsignedVPTokens[credentialFormat]
-                        ?: throw Logger.handleException(
-                            exceptionType = "InvalidData",
-                            message = "unable to find the related credential format - $credentialFormat in the unsignedVPTokens map",
-                            className = className
-                        ),
+                        ?: throw OpenID4VPExceptions.InvalidData("unable to find the related credential format - $credentialFormat in the unsignedVPTokens map", className),
                     credentials = groupedVcs[credentialFormat],
                     nonce = authorizationRequest.nonce
                 ).getVPTokenBuilder(credentialFormat).build()

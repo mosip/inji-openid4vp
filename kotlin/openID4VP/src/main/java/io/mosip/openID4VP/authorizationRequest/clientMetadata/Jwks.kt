@@ -4,6 +4,7 @@ import Generated
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.FieldsSerializer
 import io.mosip.openID4VP.common.FieldDeserializer
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -26,12 +27,7 @@ object JwksSerializer : KSerializer<Jwks> {
         val jsonDecoder = try {
             decoder as JsonDecoder
         } catch (e: ClassCastException) {
-            throw Logger.handleException(
-                exceptionType = "DeserializationFailure",
-                fieldPath = listOf("jwk"),
-                message = e.message!!,
-                className = className
-            )
+            throw OpenID4VPExceptions.DeserializationFailure( listOf("jwk"),e.message!!, className )
         }
         val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
         val deserializer = FieldDeserializer(

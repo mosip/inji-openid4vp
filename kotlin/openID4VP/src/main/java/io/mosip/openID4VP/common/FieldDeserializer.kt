@@ -1,5 +1,6 @@
 package io.mosip.openID4VP.common
 
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -33,18 +34,10 @@ class FieldDeserializer(
 
 		//field is mandatory but it is not present in the input
 		if (data == null && isMandatory) {
-			throw Logger.handleException(
-				exceptionType = "MissingInput",
-				fieldPath = listOf(parentField, key),
-				className = className
-			)
+			throw  OpenID4VPExceptions.MissingInput("listOf(parentField, key)","",className)
 		} else if (data == JsonNull) {
-			throw Logger.handleException(
-				exceptionType = "InvalidInput",
-				fieldPath = listOf(parentField, key),
-				className = className,
-				fieldType = fieldType
-			)
+			throw OpenID4VPExceptions.InvalidInput(listOf(parentField, key),fieldType,className)
+
 		}
 		//field is mandatory or optional and it is present in the input
 		if (data != null) {
@@ -75,12 +68,7 @@ class FieldDeserializer(
 				else -> throw SerializationException("Unsupported field type: $fieldType")
 			}
 			require(validateField(res, fieldType)) {
-				throw Logger.handleException(
-					exceptionType = "InvalidInput",
-					fieldPath = listOf(parentField, key),
-					className = className,
-					fieldType = fieldType
-				)
+				throw OpenID4VPExceptions.InvalidInput(listOf(parentField, key),fieldType,className)
 			}
 			return res
 		} else {
@@ -111,12 +99,7 @@ class FieldDeserializer(
 				else -> true
 			}
 		) {
-			throw Logger.handleException(
-				exceptionType = "InvalidInput",
-				fieldPath = listOf(parentField, key),
-				className = className,
-				fieldType = fieldType
-			)
+			throw  OpenID4VPExceptions.InvalidInput(listOf(parentField, key),fieldType,className)
 		}
 	}
 }

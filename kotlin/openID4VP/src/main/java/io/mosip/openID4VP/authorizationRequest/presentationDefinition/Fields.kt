@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationRequest.presentationDefinition
 import Generated
 import io.mosip.openID4VP.common.FieldDeserializer
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -31,12 +32,7 @@ object FieldsSerializer : KSerializer<Fields> {
 		val jsonDecoder = try {
 			decoder as JsonDecoder
 		} catch (e: ClassCastException) {
-			throw Logger.handleException(
-				exceptionType = "DeserializationFailure",
-				fieldPath = listOf("fields"),
-				message = e.message!!,
-				className = className
-			)
+			throw OpenID4VPExceptions.DeserializationFailure(listOf("fields"),e.message!!, className)
 		}
 		val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
 		val deserializer = FieldDeserializer(
@@ -112,11 +108,7 @@ class Fields(
 			path.forEach { p ->
 				val isNotValidPrefix = !(pathPrefixes.any { p.startsWith(it) })
 				if (isNotValidPrefix) {
-					throw Logger.handleException(
-						exceptionType = "InvalidInputPattern",
-						fieldPath = listOf("fields", "path"),
-						className = className,
-					)
+					throw OpenID4VPExceptions.InvalidInputPattern(listOf("fields","path"), className)
 				}
 			}
 		} catch (exception: Exception) {

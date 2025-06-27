@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationRequest
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.constants.ClientIdScheme
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = WalletMetadata::class.simpleName!!
 
@@ -18,18 +19,10 @@ data class WalletMetadata(
 ){
     init {
         require(vpFormatsSupported.isNotEmpty()) {
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "vp_formats_supported should at least have one supported vp_format"
-            )
+            throw OpenID4VPExceptions.InvalidData("vp_formats_supported should at least have one supported vp_format", className)
         }
         require(vpFormatsSupported.keys.all { it.trim().isNotEmpty() }) {
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "vp_formats_supported cannot have empty keys"
-            )
+            throw OpenID4VPExceptions.InvalidData("vp_formats_supported cannot have empty keys", className)
         }
     }
     constructor(

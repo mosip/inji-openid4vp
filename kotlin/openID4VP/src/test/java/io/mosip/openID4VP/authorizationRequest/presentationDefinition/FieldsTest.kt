@@ -8,6 +8,7 @@ import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions.InvalidInputPattern
 import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 import org.junit.After
 import org.junit.Assert
@@ -42,7 +43,7 @@ class FieldsTest {
 			"Invalid Input Pattern: fields->path pattern is not matching with OpenId4VP specification"
 
 		val actualException =
-			Assert.assertThrows(InvalidInputPattern::class.java) {
+			Assert.assertThrows(OpenID4VPExceptions.InvalidInputPattern::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
 
@@ -56,7 +57,7 @@ class FieldsTest {
 		expectedExceptionMessage = "Missing Input: fields->path param is required"
 
 		val actualException =
-			Assert.assertThrows(MissingInput::class.java) {
+			Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
 
@@ -70,7 +71,7 @@ class FieldsTest {
 		expectedExceptionMessage = "Invalid Input: fields->path value cannot be empty or null"
 
 		val actualException =
-			Assert.assertThrows(Exceptions.InvalidInput::class.java) {
+			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
 
@@ -84,7 +85,7 @@ class FieldsTest {
 		expectedExceptionMessage = "Invalid Input: fields->path value cannot be empty or null"
 
 		val actualException =
-			Assert.assertThrows(Exceptions.InvalidInput::class.java) {
+			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
 

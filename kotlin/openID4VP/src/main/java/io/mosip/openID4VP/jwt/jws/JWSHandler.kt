@@ -3,6 +3,7 @@ package io.mosip.openID4VP.jwt.jws
 import io.mosip.openID4VP.common.Decoder.decodeBase64Data
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.convertJsonToMap
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.*
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
@@ -38,19 +39,11 @@ class JWSHandler(private val jws: String, private val publicKeyResolver: PublicK
             verificationResult = signer.verifySignature(signature)
 
         } catch (ex: Exception) {
-            throw Logger.handleException(
-                exceptionType = "VerificationFailure",
-                className = className,
-                message = "An unexpected exception occurred during verification: ${ex.message}",
-
-            )
+            throw  OpenID4VPExceptions.VerificationFailure("An unexpected exception occurred during verification: ${ex.message}", className)
         }
         if (!verificationResult)
-            throw Logger.handleException(
-                exceptionType = "InvalidSignature",
-                className = className,
-                message = "JWS signature verification failed"
-            )
+            throw  OpenID4VPExceptions.VerificationFailure("WS signature verification failed",
+                className)
     }
 
     fun extractDataJsonFromJws(part: JwsPart): MutableMap<String, Any> {

@@ -8,6 +8,7 @@ import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -41,11 +42,7 @@ fun getAuthorizationRequestHandler(
             walletMetadata,
             setResponseUri
         )
-        else -> throw Logger.handleException(
-            exceptionType = "InvalidData",
-            className = className,
-            message = "Given client_id_scheme is not supported"
-        )
+        else -> throw OpenID4VPExceptions.InvalidData("Given client_id_scheme is not supported", className)
     }
 }
 
@@ -55,11 +52,7 @@ fun extractQueryParameters(query: String): MutableMap<String, Any> {
         return urlDecodedQueryString.split("&").map { it.split("=") }
             .associateByTo(mutableMapOf(), { it[0] }, { it[1] })
     } catch (exception: Exception) {
-        throw Logger.handleException(
-            exceptionType = "InvalidQueryParams",
-            message = "Exception occurred when extracting the query params from Authorization Request : ${exception.message}",
-            className = className
-        )
+        throw  OpenID4VPExceptions.InvalidQueryParams("Exception occurred when extracting the query params from Authorization Request : ${exception.message}", className)
     }
 }
 
@@ -68,18 +61,11 @@ fun validateAuthorizationRequestObjectAndParameters(
     authorizationRequestObject: Map<String, Any>,
 ) {
     if (params[CLIENT_ID.value] != authorizationRequestObject[CLIENT_ID.value]) {
-        throw Logger.handleException(
-            exceptionType = "InvalidData",
-            message = "Client Id mismatch in Authorization Request parameter and the Request Object",
-            className = className
-        )
+        throw  OpenID4VPExceptions.InvalidData("Client Id mismatch in Authorization Request parameter and the Request Object",
+            className)
     }
     if(params.containsKey(CLIENT_ID_SCHEME.value) && params[CLIENT_ID_SCHEME.value] != authorizationRequestObject[CLIENT_ID_SCHEME.value]) {
-        throw Logger.handleException(
-            exceptionType = "InvalidData",
-            message = "Client Id Scheme mismatch in Authorization Request parameter and the Request Object",
-            className = className
-        )
+        throw  OpenID4VPExceptions.InvalidData("Client Id Scheme mismatch in Authorization Request parameter and the Request Object", className)
     }
 }
 

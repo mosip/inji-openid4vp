@@ -6,6 +6,7 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.getStringValue
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
 private val className = ClientMetadata::class.simpleName!!
@@ -22,11 +23,7 @@ fun parseAndValidateClientMetadata(
                 ClientMetadataSerializer
             )
 
-            else -> throw Logger.handleException(
-                exceptionType = "InvalidData",
-                message = "client_metadata must be of type String or Map",
-                className = className
-            )
+            else -> throw OpenID4VPExceptions.InvalidData("client_metadata must be of type String or Map", className)
         }
     }
     val responseMode = getStringValue(

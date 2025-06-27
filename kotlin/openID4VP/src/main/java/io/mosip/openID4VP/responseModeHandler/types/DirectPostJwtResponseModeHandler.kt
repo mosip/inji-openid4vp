@@ -9,6 +9,7 @@ import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 
@@ -71,19 +72,11 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
     }
 
     private fun throwMissingInputException(fieldName: String): Nothing {
-        throw Logger.handleException(
-            exceptionType = "MissingInput",
-            className = className,
-            fieldPath = listOf("client_metadata", fieldName)
-        )
+        throw  OpenID4VPExceptions.MissingInput(listOf("client_metadata", fieldName), "",className)
     }
 
     private fun throwInvalidDataException(message: String): Nothing {
-        throw Logger.handleException(
-            exceptionType = "InvalidData",
-            className = className,
-            message = message
-        )
+        throw  OpenID4VPExceptions.InvalidData(message, className)
     }
 
     override fun sendAuthorizationResponse(

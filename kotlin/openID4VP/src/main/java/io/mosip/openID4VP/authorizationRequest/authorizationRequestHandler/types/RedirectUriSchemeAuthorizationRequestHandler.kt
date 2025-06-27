@@ -14,6 +14,7 @@ import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import okhttp3.Headers
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = RedirectUriSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -40,11 +41,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
                 )
                 authorizationRequestObject
             } else {
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "Authorization Request must not be signed for given client_id_scheme"
-                )
+                throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)
             }
         }
     }
@@ -65,11 +62,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     override fun validateAndParseRequestFields(){
         super.validateAndParseRequestFields()
         val responseMode = getStringValue(authorizationRequestParameters, RESPONSE_MODE.value) ?:
-        throw Logger.handleException(
-            exceptionType = "MissingInput",
-            className = className,
-            fieldPath = listOf(RESPONSE_MODE.value)
-        )
+        throw OpenID4VPExceptions.MissingInput(listOf(RESPONSE_MODE.value),"", className)
          when (responseMode) {
             DIRECT_POST.value, DIRECT_POST_JWT.value -> {
                 validateUriCombinations(
@@ -78,11 +71,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
                     REDIRECT_URI.value
                 )
             }
-            else -> throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "Given response_mode is not supported"
-            )
+            else -> throw OpenID4VPExceptions.InvalidData("Given response_mode is not supported", className)
         }
     }
 
@@ -93,11 +82,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     )  {
         when {
             authRequestParam.containsKey(inValidAttribute) -> {
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "$inValidAttribute should not be present for given response_mode"
-                )
+                throw OpenID4VPExceptions.InvalidData("$inValidAttribute should not be present for given response_mode", className)
             }
             else -> {
                 val data = getStringValue(authRequestParam, validAttribute)
@@ -105,11 +90,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
             }
         }
         if(authRequestParam[validAttribute] != extractClientIdentifier(authRequestParam))
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "$validAttribute should be equal to client_id for given client_id_scheme"
-            )
+            throw OpenID4VPExceptions.InvalidData("$validAttribute should be equal to client_id for given client_id_scheme", className)
 
     }
 

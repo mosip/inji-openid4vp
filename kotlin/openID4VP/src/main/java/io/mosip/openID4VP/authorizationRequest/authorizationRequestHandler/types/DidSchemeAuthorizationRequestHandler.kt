@@ -8,6 +8,7 @@ import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.isJWS
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
@@ -48,26 +49,15 @@ class DidSchemeAuthorizationRequestHandler(
                 authorizationRequestParameters = authorizationRequestObject
 
             } else
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "Authorization Request must be signed for given client_id_scheme"
-                )
+                throw OpenID4VPExceptions.InvalidData("Authorization Request must be signed for given client_id_scheme",
+                    className)
+        } else  throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value),"", className)
 
-        } else  throw Logger.handleException(
-            exceptionType = "MissingInput",
-            className = className,
-            fieldPath = listOf(REQUEST_URI.value),
-        )
     }
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {
         if(walletMetadata.requestObjectSigningAlgValuesSupported.isNullOrEmpty())
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                className = className,
-                message = "request_object_signing_alg_values_supported is not present in wallet metadata"
-            )
+            throw  OpenID4VPExceptions.InvalidData("request_object_signing_alg_values_supported is not present in wallet metadata",className)
         return walletMetadata
     }
 
@@ -86,11 +76,7 @@ class DidSchemeAuthorizationRequestHandler(
             val alg = headers["alg"]
             walletMetadata?.let {
                 if (!it.requestObjectSigningAlgValuesSupported!!.contains(alg))
-                    throw Logger.handleException(
-                        exceptionType = "InvalidData",
-                        className = className,
-                        message = "request_object_signing_alg is not support by wallet"
-                    )
+                    throw OpenID4VPExceptions.InvalidData("request_object_signing_alg is not support by wallet", className)
             }
         }
     }

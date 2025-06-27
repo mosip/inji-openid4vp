@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -34,15 +35,14 @@ class ConstraintsTest {
 		val presentationDefinition =
 			"""{"id":"pd_123","input_descriptors":[{"id":"id_123","format":{"ldp_vc":{"proof_type":["RsaSignature2018"]}},"constraints":{"fields":[{"path":["$.type"]}],"limit_disclosure": "not preferred"}}]}"""
 
-		val expectedExceptionMessage =
-			"Invalid Input: constraints->limit_disclosure value should be preferred"
-
 		val actualException =
-			Assert.assertThrows(AuthorizationRequestExceptions.InvalidLimitDisclosure::class.java) {
+			Assert.assertThrows(OpenID4VPExceptions.InvalidLimitDisclosure::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
 
-		Assert.assertEquals(expectedExceptionMessage, actualException.message)
+		val expectedExceptionMessage =
+			"Invalid Input: constraints->limit_disclosure value should be preferred"
 
+		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 }

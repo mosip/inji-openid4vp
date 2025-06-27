@@ -15,6 +15,7 @@ import io.mosip.openID4VP.common.getDecodedMdocCredential
 import io.mosip.openID4VP.common.mapSigningAlgorithmToProtectedAlg
 import io.mosip.openID4VP.common.tagEncodedCbor
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = MdocVPTokenBuilder::class.java.simpleName
 
@@ -72,11 +73,7 @@ class MdocVPTokenBuilder(
     }
 
     private fun throwMissingInput(message: String): Nothing {
-        throw Logger.handleException(
-            exceptionType = "MissingInput",
-            message = message,
-            className = className
-        )
+        throw OpenID4VPExceptions.MissingInput("",message, className)
     }
 }
 

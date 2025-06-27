@@ -5,11 +5,13 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.isValidUrl
 import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.ResponseMode
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 
 private val className = PresentationDefinition::class.simpleName!!
@@ -25,11 +27,8 @@ fun parseAndValidatePresentationDefinition(
 
     when {
         hasPresentationDefinition && hasPresentationDefinitionUri -> {
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                message = "Either presentation_definition or presentation_definition_uri request param can be provided but not both",
-                className = className
-            )
+            throw OpenID4VPExceptions.InvalidData("Either presentation_definition or presentation_definition_uri request param can be provided but not both",
+                className)
         }
 
         hasPresentationDefinition -> {
@@ -39,11 +38,7 @@ fun parseAndValidatePresentationDefinition(
 
         hasPresentationDefinitionUri -> {
             if (!isPresentationDefinitionUriSupported) {
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "presentation_definition_uri is not support"
-                )
+                throw  OpenID4VPExceptions.InvalidData("presentation_definition_uri is not support",OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI)
             }
 
             val presentationDefinitionUri = getStringValue(
@@ -52,11 +47,7 @@ fun parseAndValidatePresentationDefinition(
             )
             validate(PRESENTATION_DEFINITION_URI.value, presentationDefinitionUri, className)
             if (!isValidUrl(presentationDefinitionUri!!)) {
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "${PRESENTATION_DEFINITION_URI.value} data is not valid"
-                )
+                throw OpenID4VPExceptions.InvalidData("${PRESENTATION_DEFINITION_URI.value} data is not valid", className,OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_REFERENCE)
             }
             val response =
                 sendHTTPRequest(
@@ -67,11 +58,7 @@ fun parseAndValidatePresentationDefinition(
         }
 
         else -> {
-            throw Logger.handleException(
-                exceptionType = "InvalidData",
-                message = "Either presentation_definition or presentation_definition_uri request param must be present",
-                className = className
-            )
+            throw  OpenID4VPExceptions.InvalidData("Either presentation_definition or presentation_definition_uri request param must be present", className)
         }
     }
 
@@ -86,11 +73,8 @@ fun parseAndValidatePresentationDefinition(
             PresentationDefinitionSerializer
         )
 
-        else -> throw Logger.handleException(
-            exceptionType = "InvalidData",
-            message = "presentation_definition must be of type String or Map ",
-            className = className
-        )
+        else -> throw  OpenID4VPExceptions.InvalidData("presentation_definition must be of type String or Map",
+            className)
     }
 
     authorizationRequestParameters[PRESENTATION_DEFINITION.value] = presentationDefinitionObj
@@ -112,10 +96,7 @@ private fun validateResponseModeForMsoMdocFormat(presentationDefinitionObj: Pres
             }
 
     if (hasMsoMdocFormat && responseMode != ResponseMode.DIRECT_POST_JWT.value) {
-        throw Logger.handleException(
-            exceptionType = "InvalidData",
-            className = className,
-            message = "When mso_mdoc format is present in presentation definition, response_mode must be direct_post.jwt"
-        )
+        throw OpenID4VPExceptions.InvalidData("When mso_mdoc format is present in presentation definition, response_mode must be direct_post.jwt", className)
+
     }
 }

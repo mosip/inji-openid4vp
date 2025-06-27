@@ -2,6 +2,7 @@ package io.mosip.openID4VP.responseModeHandler
 
 import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.constants.ResponseMode.*
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.responseModeHandler.types.DirectPostJwtResponseModeHandler
 import io.mosip.openID4VP.responseModeHandler.types.DirectPostResponseModeHandler
 
@@ -13,10 +14,6 @@ object ResponseModeBasedHandlerFactory {
             DIRECT_POST.value -> DirectPostResponseModeHandler()
             DIRECT_POST_JWT.value -> DirectPostJwtResponseModeHandler()
             else ->
-                throw Logger.handleException(
-                    exceptionType = "InvalidData",
-                    className = className,
-                    message = "Given response_mode is not supported"
-                )
+                throw  OpenID4VPExceptions.InvalidData("Given response_mode is not supported", className)
         }
 }

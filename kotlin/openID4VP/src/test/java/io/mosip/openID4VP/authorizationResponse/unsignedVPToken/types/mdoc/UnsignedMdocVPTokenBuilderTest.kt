@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.mdocCredential
 import io.mosip.openID4VP.testData.responseUrl
 import org.junit.After
@@ -68,7 +69,7 @@ class UnsignedMdocVPTokenBuilderTest {
         val mdocCredentials = listOf(mdocCredential, mdocCredential)
 
         val actualException =
-            assertThrows(InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 UnsignedMdocVPTokenBuilder(
                     mdocCredentials,
                     clientId,

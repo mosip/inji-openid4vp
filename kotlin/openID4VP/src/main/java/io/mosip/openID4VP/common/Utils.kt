@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import java.security.SecureRandom
 
 private const val URL_PATTERN = "^https://(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w\\-.~!$&'()*+,;=:@%]+)*/?(?:\\?[^#\\s]*)?(?:#.*)?$"
@@ -53,12 +54,11 @@ fun validate(
     className: String
 ) {
     if (value == null || value == "null" || value.isEmpty()) {
-        throw Logger.handleException(
-            exceptionType = if (value == null) "MissingInput" else "InvalidInput",
-            fieldPath = listOf(key),
-            className = className,
-            fieldType = "String"
-        )
+        throw if(value == null) {
+            OpenID4VPExceptions.MissingInput(listOf(key),"",className)
+        } else {
+            OpenID4VPExceptions.InvalidInput(listOf(key), "String", className)
+        }
     }
 }
 
@@ -67,12 +67,7 @@ inline fun <reified T> encodeToJsonString(data: T, fieldName: String, className:
         val objectMapper = jacksonObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
         return objectMapper.writeValueAsString(data)
     } catch (exception: Exception) {
-        throw Logger.handleException(
-            exceptionType = "JsonEncodingFailed",
-            message = exception.message,
-            fieldPath = listOf(fieldName),
-            className = className
-        )
+        throw  OpenID4VPExceptions.JsonEncodingFailed(listOf(fieldName), exception.message.toString(),className)
     }
 }
 
