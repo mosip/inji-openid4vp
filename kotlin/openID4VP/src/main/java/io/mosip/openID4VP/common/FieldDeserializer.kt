@@ -34,7 +34,7 @@ class FieldDeserializer(
 
 		//field is mandatory but it is not present in the input
 		if (data == null && isMandatory) {
-			throw  OpenID4VPExceptions.MissingInput("listOf(parentField, key)","",className)
+			throw  OpenID4VPExceptions.MissingInput(listOf(parentField,key),"",className)
 		} else if (data == JsonNull) {
 			throw OpenID4VPExceptions.InvalidInput(listOf(parentField, key),fieldType,className)
 

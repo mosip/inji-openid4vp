@@ -42,7 +42,7 @@ class JWSHandler(private val jws: String, private val publicKeyResolver: PublicK
             throw  OpenID4VPExceptions.VerificationFailure("An unexpected exception occurred during verification: ${ex.message}", className)
         }
         if (!verificationResult)
-            throw  OpenID4VPExceptions.VerificationFailure("WS signature verification failed",
+            throw  OpenID4VPExceptions.VerificationFailure("JWS signature verification failed",
                 className)
     }
 

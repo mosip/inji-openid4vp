@@ -15,8 +15,8 @@ import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.ClientIdScheme.*
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.authorizationRequestForResponseModeJWT
@@ -73,7 +73,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
         val exceptionMessage = "Missing Input: client_metadata->jwks param is required"
-        val exception =assertThrows<MissingInput>{
+        val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
         assertEquals(exceptionMessage, exception.message)
@@ -85,7 +85,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
         val exceptionMessage = "Missing Input: client_metadata->authorization_encrypted_response_enc param is required"
-        val exception =assertThrows<MissingInput>{
+        val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
         assertEquals(exceptionMessage, exception.message)
@@ -97,7 +97,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
         val exceptionMessage = "Missing Input: client_metadata->authorization_encrypted_response_alg param is required"
-        val exception =assertThrows<MissingInput>{
+        val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
         assertEquals(exceptionMessage, exception.message)
@@ -109,7 +109,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
         val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
-        val exception =assertThrows<InvalidData>{
+        val exception =assertThrows<OpenID4VPExceptions.InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
         assertEquals(exceptionMessage, exception.message)
@@ -121,7 +121,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val clientMetadata = deserializeAndValidate(clientMetadataStr, ClientMetadataSerializer)
 
         val exceptionMessage = "No jwk matching the specified algorithm found for encryption"
-        val exception =assertThrows<InvalidData>{
+        val exception =assertThrows<OpenID4VPExceptions.InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
         assertEquals(exceptionMessage, exception.message)
@@ -145,7 +145,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val expectedExceptionMessage =
             "authorization_encrypted_response_alg is not supported"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
         }
 
@@ -174,7 +174,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val expectedExceptionMessage =
             "authorization_encryption_alg_values_supported must be present in wallet_metadata"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
         }
 
@@ -191,7 +191,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val expectedExceptionMessage =
             "authorization_encrypted_response_enc is not supported"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
         }
 
@@ -220,7 +220,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val expectedExceptionMessage =
             "authorization_encryption_enc_values_supported must be present in wallet_metadata"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
         }
 

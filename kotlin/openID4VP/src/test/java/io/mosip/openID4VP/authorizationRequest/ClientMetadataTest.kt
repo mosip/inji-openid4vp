@@ -16,6 +16,7 @@ import io.mosip.openID4VP.constants.ResponseMode.*
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.walletMetadata
 import kotlinx.serialization.json.Json
@@ -71,7 +72,7 @@ class ClientMetadataTest {
             "Invalid Input: client_metadata->vp_formats value cannot be empty or null"
 
         actualException =
-            Assert.assertThrows(InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -90,7 +91,7 @@ class ClientMetadataTest {
             "Invalid Input: client_metadata->vp_formats value cannot be empty or null"
 
         actualException =
-            Assert.assertThrows(InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -111,7 +112,7 @@ class ClientMetadataTest {
             "Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
 
         actualException =
-            Assert.assertThrows(InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -133,7 +134,7 @@ class ClientMetadataTest {
             "Invalid Input: client_metadata->client_name value cannot be an empty string, null, or an integer"
 
         actualException =
-            Assert.assertThrows(InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -154,7 +155,7 @@ class ClientMetadataTest {
             "Invalid Input: client_metadata->logo_uri value cannot be an empty string, null, or an integer"
 
         actualException =
-            Assert.assertThrows(InvalidInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -173,7 +174,7 @@ class ClientMetadataTest {
             "Missing Input: client_metadata->authorization_encrypted_response_alg param is required"
 
         actualException =
-            Assert.assertThrows(MissingInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
 
@@ -192,7 +193,7 @@ class ClientMetadataTest {
             "Missing Input: client_metadata->authorization_encrypted_response_enc param is required"
 
         actualException =
-            Assert.assertThrows(MissingInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
@@ -210,7 +211,7 @@ class ClientMetadataTest {
             "Missing Input: client_metadata->jwks param is required"
 
         actualException =
-            Assert.assertThrows(MissingInput::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
@@ -228,7 +229,7 @@ class ClientMetadataTest {
             "No jwk matching the specified algorithm found for encryption"
 
         actualException =
-            Assert.assertThrows(InvalidData::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
@@ -245,7 +246,7 @@ class ClientMetadataTest {
             "client_metadata must be of type String or Map"
 
         actualException =
-            Assert.assertThrows(InvalidData::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
@@ -260,7 +261,7 @@ class ClientMetadataTest {
             "client_metadata must be present for given response mode"
 
         actualException =
-            Assert.assertThrows(InvalidData::class.java) {
+            Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
@@ -297,7 +298,7 @@ class ClientMetadataTest {
         val expectedExceptionMessage =
             "authorization_encrypted_response_alg is not supported"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true,walletMetadata)
         }
 
@@ -330,7 +331,7 @@ class ClientMetadataTest {
         val expectedExceptionMessage =
             "authorization_encryption_alg_values_supported must be present in wallet_metadata"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, invalidWalletMetadata)
         }
 
@@ -349,7 +350,7 @@ class ClientMetadataTest {
         val expectedExceptionMessage =
             "authorization_encrypted_response_enc is not supported"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, walletMetadata)
         }
 
@@ -382,7 +383,7 @@ class ClientMetadataTest {
         val expectedExceptionMessage =
             "authorization_encryption_enc_values_supported must be present in wallet_metadata"
 
-        val exception = assertThrows<InvalidData> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam,true, invalidWalletMetadata)
         }
 

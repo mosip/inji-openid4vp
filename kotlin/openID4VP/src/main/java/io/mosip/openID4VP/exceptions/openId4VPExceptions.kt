@@ -26,7 +26,14 @@ sealed class OpenID4VPExceptions(
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
 
     class InvalidInputPattern(fieldPath: Any, className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Invalid Input Pattern: $fieldPath pattern is not matching with OpenID4VP specification", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Invalid Input Pattern: ${
+                if (fieldPath is List<*> && fieldPath.isNotEmpty()) fieldPath.joinToString("->") else fieldPath
+            } pattern is not matching with OpenId4VP specification",
+            className
+        )
+
 
     class JsonEncodingFailed(fieldPath: Any, errorMessage: String, className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Json encoding failed for $fieldPath due to this error: $errorMessage", className)
@@ -57,8 +64,10 @@ sealed class OpenID4VPExceptions(
         OpenID4VPExceptions(
             OpenID4VPErrorCodes.INVALID_REQUEST,
             when {
-                fieldPath is String && fieldPath.isNotEmpty() -> "Missing Input: $fieldPath param is required"
-                fieldPath is List<*> && fieldPath.isNotEmpty() -> "Missing Input: ${fieldPath.joinToString(".")} param is required"
+                fieldPath is String && fieldPath.isNotEmpty() ->
+                    "Missing Input: $fieldPath param is required"
+                fieldPath is List<*> && fieldPath.isNotEmpty() ->
+                    "Missing Input: ${fieldPath.joinToString("->")} param is required"
                 else -> message
             },
             className
@@ -69,9 +78,9 @@ sealed class OpenID4VPExceptions(
             OpenID4VPErrorCodes.INVALID_REQUEST,
             "Invalid Input: ${
                 when (fieldType) {
-                    "String" -> "$fieldPath value cannot be an empty string, null, or an integer"
-                    "Boolean" -> "$fieldPath value must be either true or false"
-                    else -> "$fieldPath value cannot be empty or null"
+                    "String" -> "${if (fieldPath is List<*> && fieldPath.isNotEmpty()) fieldPath.joinToString("->") else fieldPath} value cannot be an empty string, null, or an integer"
+                    "Boolean" -> "${if (fieldPath is List<*> && fieldPath.isNotEmpty()) fieldPath.joinToString("->") else fieldPath} value must be either true or false"
+                    else -> "${if (fieldPath is List<*> && fieldPath.isNotEmpty()) fieldPath.joinToString("->") else fieldPath} value cannot be empty or null"
                 }
             }",
             className

@@ -27,6 +27,7 @@ import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.authorizationRequest
@@ -149,7 +150,7 @@ class AuthorizationResponseHandlerTest {
     @Test
     fun `should throw error during construction of data for signing when selected Credentials is empty`() {
         val actualException =
-            assertThrows(Exceptions.InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 authorizationResponseHandler.constructUnsignedVPToken(
                     credentialsMap = mapOf(),
                     authorizationRequest = authorizationRequest,
@@ -397,7 +398,7 @@ class AuthorizationResponseHandlerTest {
         )
 
         val actualException =
-            assertThrows(Exceptions.InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 authorizationResponseHandler.shareVP(
                     authorizationRequest = authorizationRequestWithNonVPTokenResponseType,
                     vpTokenSigningResults = ldpvpTokenSigningResults,
@@ -419,7 +420,7 @@ class AuthorizationResponseHandlerTest {
             emptyMap<FormatType, UnsignedVPToken>()
         )
         val actualException =
-            assertThrows(Exceptions.InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 authorizationResponseHandler.shareVP(
                     authorizationRequest = authorizationRequest,
                     vpTokenSigningResults = ldpvpTokenSigningResults,

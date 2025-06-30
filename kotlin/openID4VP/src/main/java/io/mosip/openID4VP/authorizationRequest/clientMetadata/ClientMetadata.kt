@@ -55,7 +55,7 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 			deserializer.deserializeField<Map<String, Map<String, List<String>>>>(
 				key = "vp_formats",
 				fieldType = "Map"
-			) ?: throw  OpenID4VPExceptions.InvalidInput(listOf(CLIENT_METADATA.value),"map",className)
+			) ?: throw  OpenID4VPExceptions.InvalidInput(listOf(CLIENT_METADATA.value,"vp_formats"),"map",className)
 		val authorizationEncryptedResponseAlg: String? =
 			deserializer.deserializeField(key = "authorization_encrypted_response_alg", fieldType = "String")
 		val authorizationEncryptedResponseEnc: String? =
@@ -124,7 +124,8 @@ class ClientMetadata(
 ) : Validatable {
 	override fun validate() {
 		if(vpFormats.isEmpty())	{
-			throw OpenID4VPExceptions.InvalidInput(listOf(CLIENT_METADATA.value,"vp_formats"),"map",
+			throw OpenID4VPExceptions.InvalidInput(
+				listOf(CLIENT_METADATA.value,"vp_formats"),"map",
 				className)
 		}
 		return

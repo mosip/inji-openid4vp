@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -55,7 +56,7 @@ class LdpVPTokenSigningResultTest {
             domain = "example.com"
         )
 
-        val exception = assertThrows<InvalidInput> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
 
@@ -71,7 +72,7 @@ class LdpVPTokenSigningResultTest {
             domain = "example.com"
         )
 
-        val exception = assertThrows<InvalidInput> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
 
@@ -88,7 +89,7 @@ class LdpVPTokenSigningResultTest {
             domain = "example.com"
         )
 
-        val exception = assertThrows<InvalidInput> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
 
@@ -104,7 +105,7 @@ class LdpVPTokenSigningResultTest {
             domain = "null"
         )
 
-        val exception = assertThrows<InvalidInput> {
+        val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
 

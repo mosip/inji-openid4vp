@@ -7,6 +7,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.exception.JWEException.*
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
 import org.junit.After
@@ -57,7 +58,7 @@ class EncryptionProviderTest {
             kid = "ed-key1"
         )
 
-        val exception = assertThrows(UnsupportedKeyExchangeAlgorithm::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.UnsupportedKeyExchangeAlgorithm::class.java) {
             EncryptionProvider.getEncrypter(jwk)
         }
 

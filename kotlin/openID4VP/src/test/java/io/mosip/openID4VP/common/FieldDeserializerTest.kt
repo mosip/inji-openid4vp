@@ -5,6 +5,7 @@ import io.mockk.*
 import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.*
@@ -123,7 +124,7 @@ class FieldDeserializerTest {
         val jsonObject = buildJsonObject {}
         val deserializer = FieldDeserializer(jsonObject, "TestClass", "parentField")
 
-        val exception = assertThrows(MissingInput::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
             deserializer.deserializeField<String>("mandatoryField", "String", isMandatory = true)
         }
         assertEquals("Missing Input: parentField->mandatoryField param is required", exception.message)
@@ -136,7 +137,7 @@ class FieldDeserializerTest {
         }
         val deserializer = FieldDeserializer(jsonObject, "TestClass", "parentField")
 
-        val exception = assertThrows(InvalidInput::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
             deserializer.deserializeField<String>("nullField", "String")
         }
         assertEquals("Invalid Input: parentField->nullField value cannot be an empty string, null, or an integer", exception.message)
@@ -149,7 +150,7 @@ class FieldDeserializerTest {
         }
         val deserializer = FieldDeserializer(jsonObject, "TestClass", "parentField")
 
-        val exception = assertThrows(InvalidInput::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
             deserializer.deserializeField<String>("stringField", "String")
         }
         assertEquals("Invalid Input: parentField->stringField value cannot be an empty string, null, or an integer", exception.message)
@@ -162,7 +163,7 @@ class FieldDeserializerTest {
         }
         val deserializer = FieldDeserializer(jsonObject, "TestClass", "parentField")
 
-        val exception = assertThrows(InvalidInput::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
             deserializer.deserializeField<Boolean>("booleanField", "Boolean")
         }
         assertEquals("Invalid Input: parentField->booleanField value must be either true or false", exception.message)

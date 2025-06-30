@@ -13,6 +13,7 @@ import io.mosip.openID4VP.common.encodeCbor
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.DeviceAuthentication
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.mdocCredential
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -100,7 +101,7 @@ class MdocVPTokenBuilderTest {
     fun `should throw exception when device authentication signature is missing`() {
         val emptyMetadata = MdocVPTokenSigningResult(docTypeToDeviceAuthentication = mapOf())
 
-        val exception = assertThrows(MissingInput::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
             MdocVPTokenBuilder(emptyMetadata, mdocCredentials).build()
         }
 
@@ -109,5 +110,6 @@ class MdocVPTokenBuilderTest {
             exception.message
         )
     }
+
 
 }

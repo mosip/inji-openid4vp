@@ -16,6 +16,7 @@ import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
 import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions.NetworkRequestFailed
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
@@ -86,7 +87,7 @@ class AuthorizationRequestTest {
         expectedExceptionMessage = "Missing Input: client_id param is required"
 
         actualException =
-            assertThrows(MissingInput::class.java) {
+            assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
@@ -109,7 +110,7 @@ class AuthorizationRequestTest {
         expectedExceptionMessage = "Invalid Input: client_id value cannot be an empty string, null, or an integer"
 
         actualException =
-            assertThrows(InvalidInput::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
@@ -129,7 +130,7 @@ class AuthorizationRequestTest {
         expectedExceptionMessage = "Invalid Input: client_id value cannot be an empty string, null, or an integer"
 
         actualException =
-            assertThrows(InvalidInput::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
@@ -152,7 +153,7 @@ class AuthorizationRequestTest {
             "Either presentation_definition or presentation_definition_uri request param must be present"
 
         actualException =
-            assertThrows(InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -184,7 +185,7 @@ class AuthorizationRequestTest {
         val expectedExceptionMessage =
             "Either presentation_definition or presentation_definition_uri request param can be provided but not both"
         actualException =
-            assertThrows(InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -204,7 +205,7 @@ class AuthorizationRequestTest {
             "Verifier is not trusted by the wallet"
 
         actualException =
-            assertThrows(InvalidVerifier::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidVerifier::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -222,7 +223,7 @@ class AuthorizationRequestTest {
             "Exception occurred when extracting the query params from Authorization Request : Index: 1, Size: 1"
 
         actualException =
-            assertThrows(AuthorizationRequestExceptions.InvalidQueryParams::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidQueryParams::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -246,7 +247,7 @@ class AuthorizationRequestTest {
             "Invalid Input: constraints->limit_disclosure value should be preferred"
 
         actualException =
-            assertThrows(AuthorizationRequestExceptions.InvalidLimitDisclosure::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidLimitDisclosure::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -291,7 +292,7 @@ class AuthorizationRequestTest {
         )
 
         actualException =
-        assertThrows(MissingInput::class.java) {
+        assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
             )
@@ -311,7 +312,7 @@ class AuthorizationRequestTest {
 
         val expectedExceptionMessage = "response_uri should be equal to client_id for given client_id_scheme"
         actualException =
-            assertThrows(InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
@@ -367,7 +368,7 @@ class AuthorizationRequestTest {
             )
 
         actualException =
-            assertThrows(InvalidData::class.java) {
+            assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 openID4VP.authenticateVerifier(encodedAuthorizationRequest, trustedVerifiers, null,false)
             }
 
@@ -491,7 +492,7 @@ class AuthorizationRequestTest {
             createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.REDIRECT_URI,)
 
         expectedExceptionMessage = "Missing Input: response_mode param is required"
-        actualException = assertThrows<MissingInput> {
+        actualException = assertThrows<OpenID4VPExceptions.MissingInput> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -509,7 +510,7 @@ class AuthorizationRequestTest {
             createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.REDIRECT_URI,)
 
         expectedExceptionMessage = "Given response_mode is not supported"
-        actualException = assertThrows<InvalidData> {
+        actualException = assertThrows<OpenID4VPExceptions.InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -540,7 +541,7 @@ class AuthorizationRequestTest {
             createUrlEncodedData(authorizationRequestParamsMap,false , ClientIdScheme.REDIRECT_URI,applicableFields)
 
         expectedExceptionMessage = "redirect_uri should not be present for given response_mode"
-        actualException = assertThrows<InvalidData> {
+        actualException = assertThrows<OpenID4VPExceptions.InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -617,7 +618,7 @@ class AuthorizationRequestTest {
         val encodedAuthorizationRequest =
             createUrlEncodedData(authorizationRequestParamsMap,false , PRE_REGISTERED, applicationFields)
 
-        assertThrows<InvalidVerifier> {
+        assertThrows<OpenID4VPExceptions.InvalidVerifier> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 emptyList(),

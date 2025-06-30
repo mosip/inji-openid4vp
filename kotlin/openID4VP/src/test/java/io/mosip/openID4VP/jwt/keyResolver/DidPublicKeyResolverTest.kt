@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.exception.JWSException
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.vercred.vcverifier.DidWebResolver
@@ -71,7 +72,7 @@ class DidPublicKeyResolverTest {
     fun `should throw exception when kid is missing`() {
         every { anyConstructed<DidWebResolver>().resolve()} returns mapOf("didDocument" to "mockResponse")
 
-        val exception = assertThrows(JWSException.KidExtractionFailed::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.KidExtractionFailed::class.java) {
             resolver.resolveKey(emptyMap())
         }
         assertEquals(
@@ -84,7 +85,7 @@ class DidPublicKeyResolverTest {
     fun `should throw exception did resolution fails`() {
         every { anyConstructed<DidWebResolver>().resolve()} throws DidResolutionFailed("Did document could not be fetched")
 
-        val exception = assertThrows(JWSException.PublicKeyResolutionFailed::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions.PublicKeyResolutionFailed::class.java) {
             resolver.resolveKey(emptyMap())
         }
         assertEquals(
@@ -108,7 +109,7 @@ class DidPublicKeyResolverTest {
         val header = mapOf("kid" to "did:example:123456789#keys-1")
 
         val exception =
-            assertThrows(JWSException.PublicKeyExtractionFailed::class.java) {
+            assertThrows(OpenID4VPExceptions.PublicKeyExtractionFailed::class.java) {
                 resolver.resolveKey(header)
             }
         assertEquals(
