@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Assert
@@ -41,7 +42,7 @@ class FilterTest {
 			Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -55,7 +56,7 @@ class FilterTest {
 			Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -69,7 +70,7 @@ class FilterTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -83,7 +84,7 @@ class FilterTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -97,7 +98,7 @@ class FilterTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 }

@@ -23,8 +23,9 @@ import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.common.Decoder
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.convertJsonToMap
-import io.mosip.openID4VP.exceptions.Exceptions
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
 import io.mosip.openID4VP.testData.clientMetadataString
@@ -109,9 +110,9 @@ class JWEHandlerTest {
         val payload = mapOf("key1" to "value1")
 
         mockkObject(EncryptionProvider)
-        every { EncryptionProvider.getEncrypter(any()) } throws Exception("Encryption failed")
+        every { EncryptionProvider.getEncrypter(any()) } throws OpenID4VPExceptions.JweEncryptionFailure("JWEHandler.kt")
 
-        val exception = assertThrows(Exception::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions::class.java) {
             jweHandler.generateEncryptedResponse(payload)
         }
 
@@ -127,22 +128,15 @@ class JWEHandlerTest {
         mockkConstructor(EncryptedJWT::class)
         every { anyConstructed<EncryptedJWT>().encrypt(any()) } throws Exception("JWT encryption failed")
 
-        val exception = assertThrows(Exception::class.java) {
+        val exception = assertThrows(OpenID4VPExceptions::class.java) {
             jweHandler.generateEncryptedResponse(payload)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("JWE Encryption failed", exception.message)
 
         verify {
             anyConstructed<EncryptedJWT>().encrypt(any())
         }
-
-//        verify {
-//            Logger.handleException(
-//                exceptionType = "JweEncryptionFailure",
-//                message = any(),
-//                className = "JWEHandler"
-//            )
-//        }
     }
 
 

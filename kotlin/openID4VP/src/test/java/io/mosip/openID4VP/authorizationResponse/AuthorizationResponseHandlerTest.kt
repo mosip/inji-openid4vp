@@ -23,9 +23,9 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPTokenBuilder
 import io.mosip.openID4VP.common.DateUtil
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
@@ -157,7 +157,7 @@ class AuthorizationResponseHandlerTest {
                     responseUri = "https://mock-verifier.com",
                 )
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(
             "Empty credentials list - The Wallet did not have the requested Credentials to satisfy the Authorization Request.",
             actualException.message
@@ -405,7 +405,7 @@ class AuthorizationResponseHandlerTest {
                     responseUri = authorizationRequest.responseUri!!
                 )
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.VP_FORMATS_NOT_SUPPORTED, actualException.errorCode)
         Assert.assertEquals(
             "Provided response_type - code is not supported",
             actualException.message
@@ -427,7 +427,7 @@ class AuthorizationResponseHandlerTest {
                     responseUri = authorizationRequest.responseUri!!
                 )
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(
             "unable to find the related credential format - LDP_VC in the unsignedVPTokens map",
             actualException.message

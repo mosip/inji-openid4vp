@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.exception.JWSException
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
@@ -75,6 +76,7 @@ class DidPublicKeyResolverTest {
         val exception = assertThrows(OpenID4VPExceptions.KidExtractionFailed::class.java) {
             resolver.resolveKey(emptyMap())
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "KID extraction from DID document failed",
             exception.message
@@ -88,6 +90,7 @@ class DidPublicKeyResolverTest {
         val exception = assertThrows(OpenID4VPExceptions.PublicKeyResolutionFailed::class.java) {
             resolver.resolveKey(emptyMap())
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "Did document could not be fetched",
             exception.message
@@ -112,6 +115,7 @@ class DidPublicKeyResolverTest {
             assertThrows(OpenID4VPExceptions.PublicKeyExtractionFailed::class.java) {
                 resolver.resolveKey(header)
             }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "Public key extraction failed",
             exception.message

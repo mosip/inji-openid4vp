@@ -4,7 +4,7 @@ import android.util.Log
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Before
@@ -59,7 +59,7 @@ class LdpVPTokenSigningResultTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: ldp_vp_token_signing_result->jws value cannot be an empty string, null, or an integer", exception.message)
     }
 
@@ -75,7 +75,7 @@ class LdpVPTokenSigningResultTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: ldp_vp_token_signing_result->signatureAlgorithm value cannot be an empty string, null, or an integer", exception.message)
 
     }
@@ -92,7 +92,7 @@ class LdpVPTokenSigningResultTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: ldp_vp_token_signing_result->publicKey value cannot be an empty string, null, or an integer", exception.message)
     }
 
@@ -108,7 +108,7 @@ class LdpVPTokenSigningResultTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             ldpVPTokenSigningResult.validate()
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: ldp_vp_token_signing_result->domain value cannot be an empty string, null, or an integer", exception.message)
     }
 }

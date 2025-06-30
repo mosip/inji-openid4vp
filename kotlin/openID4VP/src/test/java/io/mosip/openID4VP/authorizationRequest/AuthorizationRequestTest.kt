@@ -7,15 +7,11 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
-import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
-import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions.InvalidVerifier
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.HttpMethod
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions.NetworkRequestFailed
@@ -40,7 +36,7 @@ import org.junit.jupiter.api.assertThrows
 
 class AuthorizationRequestTest {
     private lateinit var openID4VP: OpenID4VP
-    private lateinit var actualException: Exception
+    private lateinit var actualException: OpenID4VPExceptions
     private lateinit var expectedExceptionMessage: String
     private var shouldValidateClient = true
 
@@ -92,7 +88,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -115,7 +111,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -135,7 +131,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null, shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -158,7 +154,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -190,6 +186,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -210,7 +207,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -228,7 +225,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -252,7 +249,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -297,6 +294,7 @@ class AuthorizationRequestTest {
                 encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -317,7 +315,7 @@ class AuthorizationRequestTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,shouldValidateClient
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -371,7 +369,7 @@ class AuthorizationRequestTest {
             assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 openID4VP.authenticateVerifier(encodedAuthorizationRequest, trustedVerifiers, null,false)
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_REFERENCE, actualException.errorCode)
         assertEquals("presentation_definition_uri data is not valid",actualException.message)
     }
 
@@ -499,6 +497,7 @@ class AuthorizationRequestTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -517,6 +516,7 @@ class AuthorizationRequestTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -548,6 +548,7 @@ class AuthorizationRequestTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 

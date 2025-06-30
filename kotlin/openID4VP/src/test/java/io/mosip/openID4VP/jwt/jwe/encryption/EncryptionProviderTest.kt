@@ -7,6 +7,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.exception.JWEException.*
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
@@ -61,7 +62,7 @@ class EncryptionProviderTest {
         val exception = assertThrows(OpenID4VPExceptions.UnsupportedKeyExchangeAlgorithm::class.java) {
             EncryptionProvider.getEncrypter(jwk)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Required Key exchange algorithm is not supported", exception.message)
     }
 

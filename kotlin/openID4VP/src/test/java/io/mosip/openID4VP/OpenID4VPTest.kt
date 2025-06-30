@@ -9,7 +9,6 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
@@ -188,24 +187,28 @@ class OpenID4VPTest {
         assertEquals(expectedValue, actualResponse)
     }
 
-//    @Test
-//    fun `should send the error to verifier when sendErrorToVerifier is called`() {
-//        every {
-//            NetworkManagerClient.sendHTTPRequest(
-//                "https://mock-verifier.com/response-uri",
-//                HttpMethod.POST,
-//                any()
-//            )
-//        } returns mapOf("body" to "VP share success")
-//
-//        openID4VP.sendErrorToVerifier(OpenID4VPExceptions.InvalidData("Unsupported response_mode",""))
-//
-//        verify {
-//            NetworkManagerClient.sendHTTPRequest(
-//                url = "https://mock-verifier.com/response-uri",
-//                method = HttpMethod.POST,
-//                bodyParams = mapOf("error" to "Unsupported response_mode"),
-//            )
-//        }
-//    }
+    @Test
+    fun `should send the error to verifier when sendErrorToVerifier is called`() {
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                any()
+            )
+        } returns mapOf("body" to "VP share success")
+
+        openID4VP.sendErrorToVerifier(OpenID4VPExceptions.InvalidData("Unsupported response_mode","OpenID4VP.kt"))
+
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                match {
+                    it["error"] == "invalid_request" &&
+                            it["error_description"] == "Unsupported response_mode"
+                },
+                null
+            )
+        }
+    }
 }

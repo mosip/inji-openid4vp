@@ -9,12 +9,11 @@ import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REDIRECT_URI
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.*
 import io.mosip.openID4VP.constants.HttpMethod
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions
@@ -155,6 +154,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("client_id_scheme is not support by wallet", exception.message)
     }
 
@@ -202,6 +202,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,exception.errorCode)
         assertEquals("request_object_signing_alg is not support by wallet", exception.message)
     }
 
@@ -249,6 +250,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 shouldValidateClient = true
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST,exception.errorCode)
         assertEquals("request_object_signing_alg_values_supported is not present in wallet metadata", exception.message)
     }
 
@@ -436,7 +438,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 false
             )
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, missingInputException.errorCode)
         assertEquals(
             "Missing Input: request_uri param is required",
             missingInputException.message
@@ -491,7 +493,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 shouldValidateClient = true
             )
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("request_uri data is not valid", exception.message)
     }
 
@@ -593,7 +595,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 shouldValidateClient = true
             )
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "Client Id mismatch in Authorization Request parameter and the Request Object",
             exception.message
@@ -641,6 +643,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                     encodedAuthorizationRequest, trustedVerifiers, null,true
                 )
             }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -772,7 +775,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                     shouldValidateClient = true
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, invalidClientIdException.errorCode)
         assertEquals(
             "Client Id mismatch in Authorization Request parameter and the Request Object",
             invalidClientIdException.message

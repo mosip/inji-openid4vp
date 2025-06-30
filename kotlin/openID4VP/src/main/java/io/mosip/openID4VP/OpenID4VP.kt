@@ -74,7 +74,7 @@ class OpenID4VP(private val traceabilityId: String) {
             try {
                 val errorPayload: Map<String, String> = when (exception) {
                     is OpenID4VPExceptions -> exception.toErrorResponse()
-                    else -> OpenID4VPExceptions.GeneralFailure(
+                    else -> OpenID4VPExceptions.GenericFailure(
                         message = exception.message ?: "Unknown internal error",
                         className = "OpenID4VP.kt"
                     ).toErrorResponse()

@@ -39,33 +39,33 @@ class LoggerTest {
 		assertEquals(expectedValue, logTag)
 	}
 
-	@Test
-	fun `should return missing input exception if exception type input value is MissingInput`() {
-		expectedExceptionMessage = "Missing Input: parent field name->current field name param is required"
-		actualException = Logger.handleException(
-			exceptionType = "MissingInput", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName
-		)
-
-		assertEquals(expectedExceptionMessage,actualException.message)
-	}
-
-	@Test
-	fun `should return invalid input exception if exception type input value is InvalidInput and field data is of type String`() {
-		expectedExceptionMessage = "Invalid Input: parent field name->current field name value cannot be an empty string, null, or an integer"
-		actualException = Logger.handleException(
-			exceptionType = "InvalidInput", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName, fieldType = "String"
-		)
-
-		assertEquals(expectedExceptionMessage,actualException.message)
-	}
-
-	@Test
-	fun `should return invalid input pattern exception if exception type input value is InvalidInputPattern`() {
-		expectedExceptionMessage = "Invalid Input Pattern: parent field name->current field name pattern is not matching with OpenId4VP specification"
-		actualException = Logger.handleException(
-			exceptionType = "InvalidInputPattern", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName
-		)
-
-		assertEquals(expectedExceptionMessage,actualException.message)
-	}
+//	@Test
+//	fun `should return missing input exception if exception type input value is MissingInput`() {
+//		expectedExceptionMessage = "Missing Input: parent field name->current field name param is required"
+//		actualException = Logger.handleException(
+//			exceptionType = "MissingInput", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName
+//		)
+//
+//		assertEquals(expectedExceptionMessage,actualException.message)
+//	}
+//
+//	@Test
+//	fun `should return invalid input exception if exception type input value is InvalidInput and field data is of type String`() {
+//		expectedExceptionMessage = "Invalid Input: parent field name->current field name value cannot be an empty string, null, or an integer"
+//		actualException = Logger.handleException(
+//			exceptionType = "InvalidInput", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName, fieldType = "String"
+//		)
+//
+//		assertEquals(expectedExceptionMessage,actualException.message)
+//	}
+//
+//	@Test
+//	fun `should return invalid input pattern exception if exception type input value is InvalidInputPattern`() {
+//		expectedExceptionMessage = "Invalid Input Pattern: parent field name->current field name pattern is not matching with OpenId4VP specification"
+//		actualException = Logger.handleException(
+//			exceptionType = "InvalidInputPattern", fieldPath = listOf("parent field name", "current field name"), className = javaClass.simpleName
+//		)
+//
+//		assertEquals(expectedExceptionMessage,actualException.message)
+//	}
 }

@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationRequest
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -98,6 +99,7 @@ class WalletMetadataTest {
                 authorizationEncryptionEncValuesSupported = listOf("A256GCM")
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "vp_formats_supported should at least have one supported vp_format",
             exception.message
@@ -123,6 +125,7 @@ class WalletMetadataTest {
                 authorizationEncryptionEncValuesSupported = listOf("A256GCM")
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "vp_formats_supported cannot have empty keys",
             exception.message
@@ -148,6 +151,7 @@ class WalletMetadataTest {
                 authorizationEncryptionEncValuesSupported = listOf("A256GCM")
             )
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(
             "vp_formats_supported cannot have empty keys",
             exception.message

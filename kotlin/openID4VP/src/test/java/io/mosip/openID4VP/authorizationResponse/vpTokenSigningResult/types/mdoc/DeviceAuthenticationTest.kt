@@ -4,7 +4,7 @@ import android.util.Log
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import org.junit.After
 import org.junit.Before
@@ -44,6 +44,7 @@ class DeviceAuthenticationTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             deviceAuth.validate()
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: mdoc_vp_token_signing_result->device_authentication->signature value cannot be empty or null", exception.message)
     }
 
@@ -54,6 +55,7 @@ class DeviceAuthenticationTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidInput> {
             deviceAuth.validate()
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals("Invalid Input: mdoc_vp_token_signing_result->device_authentication->algorithm value cannot be empty or null", exception.message)
     }
 

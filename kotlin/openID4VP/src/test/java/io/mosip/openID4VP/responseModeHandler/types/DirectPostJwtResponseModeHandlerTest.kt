@@ -12,10 +12,10 @@ import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSerializer
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.ClientIdScheme.*
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
@@ -76,6 +76,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(exceptionMessage, exception.message)
     }
 
@@ -88,6 +89,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(exceptionMessage, exception.message)
     }
 
@@ -100,6 +102,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception =assertThrows<OpenID4VPExceptions.MissingInput>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(exceptionMessage, exception.message)
     }
 
@@ -112,6 +115,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception =assertThrows<OpenID4VPExceptions.InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(exceptionMessage, exception.message)
     }
 
@@ -124,6 +128,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception =assertThrows<OpenID4VPExceptions.InvalidData>{
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, false)
         }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(exceptionMessage, exception.message)
     }
 
@@ -148,7 +153,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -177,7 +182,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -194,7 +199,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -223,7 +228,7 @@ class DirectPostJwtResponseModeHandlerTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 

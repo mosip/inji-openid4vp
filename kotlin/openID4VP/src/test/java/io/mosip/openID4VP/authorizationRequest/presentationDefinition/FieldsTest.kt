@@ -5,9 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
-import io.mosip.openID4VP.authorizationRequest.exception.AuthorizationRequestExceptions.InvalidInputPattern
-import io.mosip.openID4VP.exceptions.Exceptions
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 import org.junit.After
@@ -46,7 +44,7 @@ class FieldsTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInputPattern::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -60,7 +58,7 @@ class FieldsTest {
 			Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -74,7 +72,7 @@ class FieldsTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 
@@ -88,7 +86,7 @@ class FieldsTest {
 			Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
 				deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
 			}
-
+		Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 		Assert.assertEquals(expectedExceptionMessage, actualException.message)
 	}
 }

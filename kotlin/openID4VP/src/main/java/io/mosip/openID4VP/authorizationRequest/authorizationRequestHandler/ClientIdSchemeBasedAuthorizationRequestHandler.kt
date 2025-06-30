@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationRequest.presentationDefinition.parseAndVa
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.extractClientIdScheme
 import io.mosip.openID4VP.common.Logger
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.common.getStringValue
@@ -39,7 +40,11 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 throw OpenID4VPExceptions.InvalidData("${REQUEST_URI.value} data is not valid", className)
             val requestUriMethod =
                 getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?: "get"
-            val httpMethod = determineHttpMethod(requestUriMethod)
+            val httpMethod = try {
+                determineHttpMethod(requestUriMethod)
+            } catch (e: IllegalArgumentException) {
+                throw OpenID4VPExceptions.InvalidData("Unsupported HTTP method: $requestUriMethod", className, OpenID4VPErrorCodes.INVALID_REQUEST_URI_METHOD)
+            }
 
             var body: Map<String, String>? = null
             var headers: Map<String, String>? = null

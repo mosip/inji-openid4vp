@@ -7,6 +7,7 @@ import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION_URI
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ResponseMode.DIRECT_POST_JWT
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.json.Json
@@ -54,7 +55,7 @@ class PresentationDefinitionTest {
                     PresentationDefinitionSerializer
                 )
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -68,7 +69,7 @@ class PresentationDefinitionTest {
             assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -83,7 +84,7 @@ class PresentationDefinitionTest {
             assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -97,7 +98,7 @@ class PresentationDefinitionTest {
             assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -111,7 +112,7 @@ class PresentationDefinitionTest {
             assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 deserializeAndValidate(presentationDefinition, PresentationDefinitionSerializer)
             }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         assertEquals(expectedExceptionMessage,actualException.message)
     }
 
@@ -128,7 +129,7 @@ class PresentationDefinitionTest {
         val exception = assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
             parseAndValidatePresentationDefinition(authorizationRequestParam, false)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 

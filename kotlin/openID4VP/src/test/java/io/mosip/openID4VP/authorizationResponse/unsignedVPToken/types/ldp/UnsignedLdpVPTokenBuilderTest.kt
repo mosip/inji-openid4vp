@@ -6,7 +6,6 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.encodeToJsonString
-import io.mosip.openID4VP.exceptions.Exceptions
 import io.mosip.openID4VP.testData.ldpCredential1
 import io.mosip.openID4VP.testData.ldpCredential2
 import org.junit.After

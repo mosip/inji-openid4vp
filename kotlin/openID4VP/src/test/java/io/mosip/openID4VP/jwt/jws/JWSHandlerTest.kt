@@ -5,6 +5,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
 import io.mosip.openID4VP.testData.JWSUtil
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
@@ -60,8 +61,7 @@ class JWSHandlerTest {
         val publicKey = "invalidPublicKeyBase64"
         val jwt =JWSUtil.createJWS(jwtPayload, true, jwtHeader)
         every { publicKeyResolver.resolveKey(any()) } returns publicKey
-        val exception =
-            assertThrows(Exception::class.java) { JWSHandler(jwt, publicKeyResolver).verify() }
+        val exception = assertThrows(OpenID4VPExceptions::class.java) { JWSHandler(jwt, publicKeyResolver).verify() }
         assertTrue(exception.message!!.contains("An unexpected exception occurred during verification"))
     }
 
@@ -72,7 +72,7 @@ class JWSHandlerTest {
         every { publicKeyResolver.resolveKey(any()) } returns publicKey
 
         val exception =
-            assertThrows(Exception::class.java) { JWSHandler(jwt, publicKeyResolver).verify() }
+            assertThrows(OpenID4VPExceptions::class.java) { JWSHandler(jwt, publicKeyResolver).verify() }
 
         assertEquals(
             "JWS signature verification failed",

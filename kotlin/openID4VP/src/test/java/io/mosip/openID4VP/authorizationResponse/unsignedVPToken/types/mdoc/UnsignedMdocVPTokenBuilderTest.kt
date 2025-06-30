@@ -4,7 +4,7 @@ import android.util.Log
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkStatic
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.mdocCredential
 import io.mosip.openID4VP.testData.responseUrl
@@ -16,6 +16,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assertions
 
 
 class UnsignedMdocVPTokenBuilderTest {
@@ -78,6 +79,7 @@ class UnsignedMdocVPTokenBuilderTest {
                     walletNonce
                 ).build() as UnsignedMdocVPToken
             }
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
 
        assertEquals("Duplicate Mdoc Credentials with same doctype found", actualException.message)
     }

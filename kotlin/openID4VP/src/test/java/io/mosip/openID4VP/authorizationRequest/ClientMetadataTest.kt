@@ -10,12 +10,10 @@ import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSeri
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.parseAndValidateClientMetadata
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.*
 import io.mosip.openID4VP.constants.ResponseMode.*
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidData
-import io.mosip.openID4VP.exceptions.Exceptions.InvalidInput
-import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.walletMetadata
@@ -30,7 +28,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertThrows
 
 class ClientMetadataTest {
-    private lateinit var actualException: Exception
+    private lateinit var actualException: OpenID4VPExceptions
 
     @Before
     fun setUp() {
@@ -75,7 +73,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
     @Test
@@ -94,7 +92,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -115,7 +113,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -137,7 +135,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -158,7 +156,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -177,7 +175,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
-
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -196,6 +194,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -214,6 +213,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -232,6 +232,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -249,6 +250,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -264,6 +266,7 @@ class ClientMetadataTest {
             Assert.assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
                 parseAndValidateClientMetadata(authorizationRequestParam, false, walletMetadata)
             }
+        Assert.assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, actualException.errorCode)
         Assert.assertEquals(expectedExceptionMessage, actualException.message)
     }
 
@@ -301,7 +304,7 @@ class ClientMetadataTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true,walletMetadata)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -334,7 +337,7 @@ class ClientMetadataTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, invalidWalletMetadata)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -353,7 +356,7 @@ class ClientMetadataTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam, true, walletMetadata)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
@@ -386,7 +389,7 @@ class ClientMetadataTest {
         val exception = assertThrows<OpenID4VPExceptions.InvalidData> {
             parseAndValidateClientMetadata(authorizationRequestParam,true, invalidWalletMetadata)
         }
-
+        assertEquals(OpenID4VPErrorCodes.INVALID_REQUEST, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 
