@@ -23,6 +23,8 @@ vcverifier = "1.2.0"
 sonarqube = "5.1.0.4872"
 googleTink = "1.11.0"
 assertj = "3.24.2"
+dokka = "1.9.20"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,3 +57,6 @@ jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = 
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serialization"}
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+

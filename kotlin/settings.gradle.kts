@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "kotlin"
 include(":openID4VP")
+include(":sampleovpwallet")

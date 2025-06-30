@@ -1,3 +1,7 @@
+group = "io.mosip"
+version = "0.4.0-SNAPSHOT"
+
+
 publishing {
     repositories {
         maven {
@@ -38,11 +42,14 @@ publishing {
                     }
 
                     def dependenciesNode = asNode().appendNode('dependencies')
-                    project.configurations.implementation.allDependencies.each {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
+                    def commonMainDependencies = configurations["commonMainImplementation"].dependencies
+                    commonMainDependencies.forEach { dep ->
+                        if (dep instanceof org.gradle.api.artifacts.ExternalDependency) {
+                            def dependencyNode = dependenciesNode.appendNode("dependency")
+                            dependencyNode.appendNode("groupId", dep.group)
+                            dependencyNode.appendNode("artifactId", dep.name)
+                            dependencyNode.appendNode("version", dep.version)
+                        }
                     }
 
                     def pluginsNode = asNode().appendNode('build').appendNode('plugins')
@@ -88,9 +95,7 @@ publishing {
                     gpgArgumentsNode.appendNode('arg', 'loopback')
                 }
             }
-            groupId = "io.mosip"
-            artifactId = "inji-openid4vp"
-            version = "0.3.0-SNAPSHOT"
+            artifactId = "inji-openid4vp-aar"
             if (project.gradle.startParameter.taskNames.any { it.contains('assembleRelease') }) {
                 artifacts {
                     aar {
@@ -100,9 +105,97 @@ publishing {
             }
             artifact("build/outputs/aar/${artifactId}-${version}-release.aar")
         }
+        jarRelease(MavenPublication) {
+            artifact(tasks.named("jvmJar").get())
+            artifactId = "inji-openid4vp-jar"
+            artifact(tasks.named("javadocJar").get())
+            artifact(tasks.named("sourcesJar").get())
+            pom {
+                withXml {
+                    asNode().appendNode('name', "Inji OpenID4VP")
+                    asNode().appendNode('url', "https://github.com/mosip/inji-openid4vp")
+                    asNode().appendNode('description', "Kotlin Library to implement OpenID4VP specification")
+
+                    asNode().appendNode('licenses').appendNode('license').with {
+                        appendNode('name', 'MPL-2.0')
+                        appendNode('url', 'https://www.mozilla.org/en-US/MPL/2.0/')
+                    }
+
+                    asNode().appendNode('developers').appendNode('developer').with {
+                        appendNode('id', 'Your developer ID')
+                        appendNode('name', 'Mosip')
+                        appendNode('email', 'mosip.emailnotifier@gmail.com')
+                        appendNode('organization', 'io.mosip')
+                        appendNode('organizationUrl', 'https://github.com/mosip/inji-openid4vp')
+
+                    }
+
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    def commonMainDependencies = configurations["commonMainImplementation"].dependencies
+                    commonMainDependencies.forEach { dep ->
+                        if (dep instanceof org.gradle.api.artifacts.ExternalDependency) {
+                            def dependencyNode = dependenciesNode.appendNode("dependency")
+                            dependencyNode.appendNode("groupId", dep.group)
+                            dependencyNode.appendNode("artifactId", dep.name)
+                            dependencyNode.appendNode("version", dep.version)
+                        }
+                    }
+
+                    def pluginsNode = asNode().appendNode('build').appendNode('plugins')
+
+                    def pluginNode = pluginsNode.appendNode('plugin')
+                    pluginNode.appendNode('groupId', 'pl.project13.maven')
+                    pluginNode.appendNode('artifactId', 'git-commit-id-plugin')
+                    pluginNode.appendNode('version', '3.0.1')
+
+                    asNode().appendNode('scm').with {
+                        appendNode('connection', 'scm:git:git://github.com/mosip/inji-openid4vp.git')
+                        appendNode('developerConnection', 'scm:git:ssh://github.com/mosip/inji-openid4vp.git')
+                        appendNode('url', "https://github.com/mosip/inji-openid4vp")
+                        appendNode('tag', "HEAD")
+                    }
+
+                        def executionsNode = pluginNode.appendNode('executions')
+                        def executionNode = executionsNode.appendNode('execution')
+                        executionNode.appendNode('id', 'get-the-git-infos')
+                        def goalsNode = executionNode.appendNode('goals')
+                        goalsNode.appendNode('goal', 'revision')
+                        executionNode.appendNode('phase', 'validate')
+
+                        def configurationNode = pluginNode.appendNode('configuration')
+                        configurationNode.appendNode('generateGitPropertiesFile', 'true')
+                        configurationNode.appendNode('generateGitPropertiesFilename', '${project.build.outputDirectory}/git.properties')
+
+                        def includeOnlyPropertiesNode = configurationNode.appendNode('includeOnlyProperties')
+                        includeOnlyPropertiesNode.appendNode('includeOnlyProperty', '^git.build.(time|version)$')
+                        includeOnlyPropertiesNode.appendNode('includeOnlyProperty', '^git.commit.id.(abbrev|full)$')
+
+                        configurationNode.appendNode('commitIdGenerationMode', 'full')
+                        configurationNode.appendNode('dotGitDirectory', '${project.basedir}/.git')
+
+                        def gpgPluginNode = pluginsNode.appendNode('plugin')
+                        gpgPluginNode.appendNode('groupId', 'org.apache.maven.plugins')
+                        gpgPluginNode.appendNode('artifactId', 'maven-gpg-plugin')
+                        gpgPluginNode.appendNode('version', '1.5')
+
+                        def gpgExecutionsNode = gpgPluginNode.appendNode('executions')
+                        def gpgExecutionNode = gpgExecutionsNode.appendNode('execution')
+                        gpgExecutionNode.appendNode('id', 'sign-artifacts')
+                        gpgExecutionNode.appendNode('phase', 'verify')
+                        def gpgGoalsNode = gpgExecutionNode.appendNode('goals')
+                        gpgGoalsNode.appendNode('goal', 'sign')
+
+                        def gpgConfigurationNode = gpgExecutionNode.appendNode('configuration')
+                        def gpgArgumentsNode = gpgConfigurationNode.appendNode('gpgArguments')
+                        gpgArgumentsNode.appendNode('arg', '--pinentry-mode')
+                        gpgArgumentsNode.appendNode('arg', 'loopback')
+                    }
+                }
+            }
+        }
     }
-}
 signing {
     useGpgCmd()
     sign publishing.publications.aar
+    sign publishing.publications.jarRelease
 }

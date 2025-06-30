@@ -5,6 +5,8 @@ Formats supported:
 - LDP_VC : Implemented using [Specification-21](https://openid.net/specs/openid-4-verifiable-presentations-1_0-21.html) and [Specification-23](https://openid.net/specs/openid-4-verifiable-presentations-1_0-23.html)
 - MSO_MDOC_VC: Implemented Using [ISO/IEC 18013-5:2021](https://www.iso.org/standard/69084.html) and [ISO/IEC TS 18013-7](https://www.iso.org/standard/82772.html)
   
+Inji-OpenID4VP library is Kotlin Multiplatform Library which generates both AAR and JAR files for Android and Java based projects respectively.
+
 The library validates the client_id and client_id_scheme parameters in the authorization request according to the relevant specification.
 - If the client_id_scheme parameter is included in the authorization request, the request is treated as conforming to Draft 21, and validation is performed accordingly.
 - If the client_id_scheme parameter is not included, the request is interpreted as following Draft 23, and validation is applied based on that specification.
@@ -24,8 +26,16 @@ The library validates the client_id and client_id_scheme parameters in the autho
 
 Snapshot builds are available - 
 
+## For Android Based Projects
+
 ```
-implementation "io.mosip:inji-openid4vp:0.3.0-SNAPSHOT"
+implementation "io.mosip:inji-openid4vp-aar:0.4.0-SNAPSHOT"
+```
+
+## For Java Based Projects
+
+```
+implementation "io.mosip:inji-openid4vp-jar:0.4.0-SNAPSHOT"
 ```
 
 ## Create instance of OpenID4VP library to invoke it's methods
