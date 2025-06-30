@@ -7,7 +7,6 @@ import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.jwt.exception.JWSException
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.vercred.vcverifier.DidWebResolver
 import io.mosip.vercred.vcverifier.exception.DidResolverExceptions.DidResolutionFailed

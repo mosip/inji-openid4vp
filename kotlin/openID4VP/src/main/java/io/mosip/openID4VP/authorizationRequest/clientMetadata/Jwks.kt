@@ -3,7 +3,6 @@ package io.mosip.openID4VP.authorizationRequest.clientMetadata
 import Generated
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.FieldsSerializer
 import io.mosip.openID4VP.common.FieldDeserializer
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

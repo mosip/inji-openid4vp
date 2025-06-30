@@ -6,7 +6,6 @@ import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.Clien
 import io.mosip.openID4VP.authorizationRequest.extractClientIdentifier
 import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.constants.ResponseMode.*
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.getStringValue

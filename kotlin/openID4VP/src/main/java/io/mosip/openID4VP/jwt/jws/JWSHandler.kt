@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.jwt.jws
 
 import io.mosip.openID4VP.common.Decoder.decodeBase64Data
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.*

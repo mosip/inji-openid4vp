@@ -1,6 +1,5 @@
 package io.mosip.openID4VP.jwt.keyResolver.types
 
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
 import io.mosip.vercred.vcverifier.DidWebResolver

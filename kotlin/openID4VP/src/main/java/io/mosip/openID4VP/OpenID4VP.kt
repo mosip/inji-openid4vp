@@ -4,15 +4,12 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponseHandler
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
-
-private val logTag = Logger.getLogTag(OpenID4VP::class.simpleName!!)
 
 class OpenID4VP(private val traceabilityId: String) {
     lateinit var authorizationRequest: AuthorizationRequest
@@ -24,6 +21,9 @@ class OpenID4VP(private val traceabilityId: String) {
         this.responseUri = responseUri
     }
 
+    private fun logTag(): String =
+        "INJI-OpenID4VP : class name - ${OpenID4VP::class.simpleName} | traceID - $traceabilityId"
+
     @JvmOverloads
     fun authenticateVerifier(
         urlEncodedAuthorizationRequest: String,
@@ -32,7 +32,6 @@ class OpenID4VP(private val traceabilityId: String) {
         shouldValidateClient: Boolean = false
     ): AuthorizationRequest {
         try {
-            Logger.setTraceabilityId(traceabilityId)
             authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
                 urlEncodedAuthorizationRequest, trustedVerifiers, walletMetadata, ::setResponseUri,shouldValidateClient
             )
@@ -85,11 +84,8 @@ class OpenID4VP(private val traceabilityId: String) {
                     bodyParams = errorPayload
                 )
             } catch (e: Exception) {
-                Logger.error(
-                    logTag,
-                    Exception("Unexpected error occurred while sending the error to verifier: ${e.message}")
-                )
+                System.err.println("${logTag()} | ERROR | Failed to send error to verifier: ${e.message}")
             }
         }
     }
-    }
+}

@@ -5,7 +5,6 @@ import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.Clien
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types.*
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions

@@ -22,7 +22,6 @@ import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSeri
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.common.Decoder
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -57,7 +56,6 @@ class JWEHandlerTest {
             verifierNonce
         )
 
-        mockkObject(Logger)
         mockkStatic(Log::class)
         every { Log.e(any(), any()) } answers {
             val tag = arg<String>(0)

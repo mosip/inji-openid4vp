@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.authorizationRequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 

@@ -17,7 +17,6 @@ class CborUtilsTest {
 
     @Before
     fun setUp() {
-        mockkObject(Logger)
         mockkStatic(Log::class)
         every { Log.e(any(), any()) } answers {
             val tag = arg<String>(0)

@@ -7,7 +7,6 @@ import co.nstant.`in`.cbor.model.UnicodeString
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
 import io.mosip.openID4VP.common.Decoder
 import io.mosip.openID4VP.common.Encoder
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.common.cborArrayOf
 import io.mosip.openID4VP.common.cborMapOf
 import io.mosip.openID4VP.common.encodeCbor

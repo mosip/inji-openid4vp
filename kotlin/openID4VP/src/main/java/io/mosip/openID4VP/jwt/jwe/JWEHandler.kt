@@ -5,7 +5,6 @@ import com.nimbusds.jwt.EncryptedJWT
 import com.nimbusds.jwt.JWTClaimsSet
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = JWEHandler::class.simpleName!!

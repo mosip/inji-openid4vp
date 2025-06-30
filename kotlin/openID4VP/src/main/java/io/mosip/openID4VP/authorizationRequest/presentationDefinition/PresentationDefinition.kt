@@ -4,7 +4,6 @@ import Generated
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION
 import io.mosip.openID4VP.authorizationRequest.Validatable
 import io.mosip.openID4VP.common.FieldDeserializer
-import io.mosip.openID4VP.common.Logger
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName

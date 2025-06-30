@@ -9,7 +9,6 @@ import io.mockk.mockkStatic
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.jwt.exception.JWEException.*
 import io.mosip.openID4VP.jwt.jwe.encryption.EncryptionProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
