@@ -14,6 +14,8 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import foundation.identity.jsonld.JsonLDObject
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.test.*
 
 class OpenID4VPTest {
@@ -178,20 +180,30 @@ class OpenID4VPTest {
     @Test
     fun `should handle exception during sending error to verifier`() {
 
+        mockkStatic(Logger::class)
+        val mockLogger = mockk<Logger>()
+        every { Logger.getLogger(any()) } returns mockLogger
 
         every {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any())
         } throws Exception("Network error")
 
+        val field = openID4VP::class.java.getDeclaredField("responseUri")
+        field.isAccessible = true
+        field.set(openID4VP, "https://mock-verifier.com/callback")
 
-        openID4VP.sendErrorToVerifier(InvalidData("Test error",""))
+        var capturedLog: String? = null
+        every { mockLogger.log(eq(Level.SEVERE), any<String>()) } answers {
+            capturedLog = secondArg()
+        }
 
-//        verify {
-//            Logger.error(
-//                any(),
-//                match<Exception> { it.message!!.contains("Unexpected error occurred") }
-//            )
-//        }
+        openID4VP.sendErrorToVerifier(Exception("Network error"))
+
+        assertTrue(
+            capturedLog?.contains("Failed to send error to verifier: Network error") == true
+        )
+
+        unmockkStatic(Logger::class)
     }
 
     @Test

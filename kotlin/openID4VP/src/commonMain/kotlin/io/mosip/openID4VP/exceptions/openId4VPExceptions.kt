@@ -2,7 +2,7 @@ package io.mosip.openID4VP.exceptions
 
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import java.util.logging.Level
-import java.util.logging.Logger as JULogger
+import java.util.logging.Logger
 
 sealed class OpenID4VPExceptions(
     val errorCode: String,
@@ -11,7 +11,7 @@ sealed class OpenID4VPExceptions(
 ) : Exception("$errorCode : $message") {
 
     init {
-        JULogger.getLogger(className).log(Level.SEVERE,"ERROR [$errorCode] - $message | Class: $className")
+        Logger.getLogger(className).log(Level.SEVERE,"ERROR [$errorCode] - $message | Class: $className")
     }
 
     fun toErrorResponse(): Map<String, String> {

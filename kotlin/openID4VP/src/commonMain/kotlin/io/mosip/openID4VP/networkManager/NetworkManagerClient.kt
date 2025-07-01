@@ -7,6 +7,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InterruptedIOException
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class NetworkManagerClient {
     companion object {
@@ -53,13 +55,13 @@ class NetworkManagerClient {
                 }
             } catch (exception: InterruptedIOException) {
                 val specificException = NetworkManagerClientExceptions.NetworkRequestTimeout()
-                System.err.println("${logTag()} | ERROR | Timeout occurred: ${specificException.message}")
+                Logger.getLogger(logTag()).log(Level.SEVERE,"ERROR | Timeout occurred: ${specificException.message}")
                 throw specificException
             } catch (exception: Exception) {
                 val specificException = NetworkManagerClientExceptions.NetworkRequestFailed(
                     exception.message ?: "Unknown error"
                 )
-                System.err.println("${logTag()} | ERROR | Request failed: ${specificException.message}")
+                Logger.getLogger(logTag()).log(Level.SEVERE,"ERROR | Request failed: ${specificException.message}")
                 throw specificException
             }
         }

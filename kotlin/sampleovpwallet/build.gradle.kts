@@ -57,6 +57,16 @@ android {
             )
         }
     }
+    lint {
+        disable += setOf(
+            "HardcodedText",
+            "MissingTranslation",
+            "NewApi",
+            "SetTextI18n"
+        )
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 

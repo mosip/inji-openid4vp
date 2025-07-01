@@ -11,6 +11,8 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSign
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class OpenID4VP(private val traceabilityId: String) {
     lateinit var authorizationRequest: AuthorizationRequest
@@ -95,7 +97,7 @@ class OpenID4VP(private val traceabilityId: String) {
                     bodyParams = errorPayload
                 )
             } catch (e: Exception) {
-                System.err.println("${logTag()} | ERROR | Failed to send error to verifier: ${e.message}")
+                Logger.getLogger(logTag()).log(Level.SEVERE, "Failed to send error to verifier: ${e.message}")
             }
         }
     }
