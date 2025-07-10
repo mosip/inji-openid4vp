@@ -90,12 +90,12 @@ sequenceDiagram
     W->>Lib: Send Selected VCs with User Consent<br/>(constructUnsignedVPToken api)
     Note over Lib: Construct unsigned VP Token for each vc format
     Note over Lib: Construct Proof Object without Signature
-    Note over Lib: Attach Proof to VP Token
+    Note over Lib: Attach Proof to unsigned VP Token
     Lib-->>W: Return unsigned VP Token mapped with vc format
 
-    Note over W: For ldp_vc format, create detached JWT<br/>and add send signature
-    Note over W: For mso_mdoc format, create signature<br/>and signed the data
-    W->>Lib: Send signing data with signature<br/>(shareVerifiablePresentation api)
+    Note over W: For ldp_vc format, create detached JWT<br/>by signing the data
+    Note over W: For mso_mdoc format, create signature<br/>by signed the data
+    W->>Lib: Send signed data<br/>(shareVerifiablePresentation api)
 
 
     Lib->>VP: HTTP POST Request with:<br/>1. VP Token<br/>2. Presentation Submission<br/>3. State
