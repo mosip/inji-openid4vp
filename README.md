@@ -70,4 +70,33 @@ This library is officially supported and available in both Kotlin and Swift, ens
 
 ##### The below diagram shows the interactions between Wallet, Verifier and OpenID4VP library
 
-<figure><img src="assets/sequence-diagram.png" alt=""><figcaption></figcaption></figure>
+```mermaid
+sequenceDiagram
+    participant VP as 🔍 Verifier
+    participant W as 📱 Wallet
+    participant Lib as 📚 OpenId4VP Library
+
+    Note over VP: Generate QR Code with<br/>Authorization Request
+    W ->> VP: Scan QR Code and get<br/>Authorization Request
+    W ->> Lib: Forward Authorization Request<br/>(authenticateVerifier api)
+
+    Note over Lib: Validates Request based on client id scheme
+    Note over Lib: Validate Required Fields<br/>and Values
+    Lib-->>W: Return Validated Authorization Request
+
+
+    Note over W: Process Authorization Request<br/>and Display Matching VCs
+
+    W->>Lib: Send Selected VCs with User Consent<br/>(constructUnsignedVPToken api)
+    Note over Lib: Construct unsigned VP Token for each vc format
+    Note over Lib: Construct Proof Object without Signature
+    Note over Lib: Attach Proof to VP Token
+    Lib-->>W: Return unsigned VP Token mapped with vc format
+
+    Note over W: For ldp_vc format, create detached JWT<br/>and add send signature
+    Note over W: For mso_mdoc format, create signature<br/>and signed the data
+    W->>Lib: Send signing data with signature<br/>(shareVerifiablePresentation api)
+
+
+    Lib->>VP: HTTP POST Request with:<br/>1. VP Token<br/>2. Presentation Submission<br/>3. State
+```
