@@ -192,59 +192,35 @@ val presentationDefinitionString = """
     }
 """.trimIndent()
 
-val didResponse = """
-    {
-      "@context": "https://w3id.org/did-resolution/v1",
-      "didDocument": {
-        "assertionMethod": [
-          "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
-        ],
-        "service": [],
-        "id": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-        "verificationMethod": [
-          {
-            "publicKey": "IKXhA7W1HD1sAl+OfG59VKAqciWrrOL1Rw5F+PGLhi4=",
-            "controller": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-            "id": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
-            "type": "Ed25519VerificationKey2020",
-            "@context": "https://w3id.org/security/suites/ed25519-2020/v1"
-          }
-        ],
-        "@context": [
-          "https://www.w3.org/ns/did/v1"
-        ],
-        "alsoKnownAs": [],
-        "authentication": [
-          "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
-        ]
-      },
-      "didResolutionMetadata": {
-        "driverDuration": 19,
-        "contentType": "application/did+ld+json",
-        "pattern": "^(did:web:.+)${'$'}",
-        "driverUrl": "http://uni-resolver-driver-did-uport:8081/1.0/identifiers/",
-        "duration": 19,
-        "did": {
-          "didString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "methodSpecificId": "mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "method": "web"
-        },
-        "didUrl": {
-          "path": null,
-          "fragment": null,
-          "query": null,
-          "didUrlString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "parameters": null,
-          "did": {
-            "didString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-            "methodSpecificId": "mosip.github.io:inji-mock-services:openid4vp-service:docs",
-            "method": "web"
-          }
-        }
-      },
-      "didDocumentMetadata": {}
-    }
-""".trimIndent()
+val didResponse =
+    """
+        {
+           
+            "assertionMethod": [
+              "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
+            ],
+            "service": [],
+            "id": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
+            "verificationMethod": [
+              {
+                "publicKey": "IKXhA7W1HD1sAl+OfG59VKAqciWrrOL1Rw5F+PGLhi4=",
+                "controller": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
+                "id": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
+                "type": "Ed25519VerificationKey2020",
+                "@context": "https://w3id.org/security/suites/ed25519-2020/v1"
+              }
+            ],
+            "@context": [
+              "https://www.w3.org/ns/did/v1"
+            ],
+            "alsoKnownAs": [],
+            "authentication": [
+              "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
+            ]
+          
+      }
+    """.trimIndent()
+
 
 val trustedVerifiers: List<Verifier> = listOf(
     Verifier(

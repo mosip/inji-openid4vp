@@ -3,12 +3,13 @@ package io.mosip.openID4VP.authorizationRequest
 import android.util.Log
 import io.mockk.clearAllMocks
 import io.mockk.every
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REDIRECT_URI
+import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.*
@@ -18,6 +19,7 @@ import io.mosip.openID4VP.exceptions.Exceptions.MissingInput
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions
 import io.mosip.openID4VP.testData.*
+import io.mosip.vercred.vcverifier.DidWebResolver
 import okhttp3.Headers
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -41,12 +43,6 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 HttpMethod.GET
             )
         } returns mapOf("body" to presentationDefinitionString)
-        every {
-            NetworkManagerClient.sendHTTPRequest(
-                "https://resolver.identity.foundation/1.0/identifiers/did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-                HttpMethod.GET
-            )
-        } returns mapOf("body" to didResponse)
 
         mockkStatic(android.util.Log::class)
         every { Log.e(any(), any()) } answers {
@@ -61,6 +57,9 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
             println("Error: logTag: $tag | Message: $msg")
             0
         }
+
+        mockkConstructor(DidWebResolver::class)
+        every { anyConstructed<DidWebResolver>().resolve() } returns convertJsonToMap(didResponse)
     }
 
     @After

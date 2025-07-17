@@ -240,10 +240,15 @@ This method will also notify the Verifier about the error by sending it to the r
 
 ```kotlin
     //NOTE: New API contract
-    val unsignedVPTokens : Map<FormatType, UnsignedVPToken> = openID4VP.constructUnsignedVPToken(Map<String, Map<FormatType, List<Any>>>)
+val unsignedVPTokens : Map<FormatType, UnsignedVPToken> = openID4VP.constructUnsignedVPToken(
+    verifiableCredentials: Map<String, Map<FormatType, List<Any>>>,
+    holderId: String,
+    signatureSuite: String
+)
 
-    //NOTE: Old API contract for backward compatibility
-    val unsignedVPTokens : String = openID4VP.constructUnsignedVPToken(Map<String, List<String>>)
+//NOTE: Old API contract for backward compatibility
+val unsignedVPTokens : String = openID4VP.constructUnsignedVPToken(verifiableCredentials: Map<String, List<String>>)
+
 ```
 
 ###### Request Parameters
@@ -251,6 +256,8 @@ This method will also notify the Verifier about the error by sending it to the r
 | Name                  | Type                                    | Description                                                                                                                                    |
 |-----------------------|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | verifiableCredentials | Map<String, Map<FormatType, List<Any>>> | A Map which contains input descriptor id as key and value is the map of credential format and the list of user selected verifiable credentials |
+| holderId              | String                                  | The identifier of the holder (e.g., DID key or wallet address)                                                                                 |
+| signatureSuite        | String                                  | The signature suite to be used for signing the LDP VP tokens.                                                                                  |
 
 
 ###### Response Parameters
@@ -290,7 +297,7 @@ val unsignedVPToken: String = """
             verifiableCredentials = mapOf(
                 "input_descriptor_id" to mapOf(
                     FormatType.LDP_VC to listOf(
-                        <ldp-vc-json>,
+                        "<ldp-vc-json>,"
                     )
                 ),
                 "input_descriptor_id" to mapOf(
@@ -298,7 +305,9 @@ val unsignedVPToken: String = """
                         "credential2",
                     )
                 )
-            )
+            ),
+            holderId = "did:key:z6Mkiq...",
+            signatureSuite = "Ed25519Signature2020"
         )
 ```
 
