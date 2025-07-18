@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.authorizationRequest
 
 import io.mockk.every
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
@@ -29,6 +30,7 @@ import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
 import io.mosip.openID4VP.testData.walletMetadata
+import io.mosip.vercred.vcverifier.DidWebResolver
 import okhttp3.Headers
 import kotlin.test.*
 
@@ -53,6 +55,21 @@ class AuthRequestByReferenceTest {
                 HttpMethod.GET
             )
         } returns mapOf("body" to didResponse)
+
+        mockkConstructor(DidWebResolver::class)
+
+        every {
+            anyConstructed<DidWebResolver>().resolve()
+        } returns mapOf(
+            "verificationMethod" to listOf(
+                mapOf(
+                    "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
+                    "type" to "Ed25519VerificationKey2020",
+                    "controller" to "did:web:mosip.github.io",
+                    "publicKeyMultibase" to "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo"
+                )
+            )
+        )
 
 
     }

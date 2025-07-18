@@ -273,4 +273,97 @@ class OpenID4VPTest {
 
         assertTrue(result.isEmpty())
     }
+
+    @Test
+    fun `should include state when sending error to verifier`() {
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                any(),
+                any()
+            )
+        } returns mapOf("body" to "Error sent")
+
+        val customAuthorizationRequest = authorizationRequest.copy(state = "test-state")
+        setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
+
+        openID4VP.sendErrorToVerifier(InvalidData("With state test", ""))
+
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                match {
+                    it["error"] == "invalid_request" &&
+                            it["error_description"] == "With state test" &&
+                            it["state"] == "test-state"
+                },
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `should not include state when authorization request has empty state`() {
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                any(),
+                any()
+            )
+        } returns mapOf("body" to "Error sent")
+
+        val customAuthorizationRequest = authorizationRequest.copy(state = "")
+        setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
+
+        openID4VP.sendErrorToVerifier(InvalidData("empty state test", ""))
+
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                match {
+                    it["error"] == "invalid_request" &&
+                            it["error_description"] == "empty state test" &&
+                            !it.containsKey("state")
+                },
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `should not include state when authorization request has no state`() {
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                any(),
+                any()
+            )
+        } returns mapOf("body" to "Error sent")
+
+        val noStateAuthorizationRequest = authorizationRequest.copy(state = null)
+        setField(openID4VP, "authorizationRequest", noStateAuthorizationRequest)
+
+        openID4VP.sendErrorToVerifier(InvalidData("No state test", ""))
+
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/response-uri",
+                HttpMethod.POST,
+                match {
+                    it["error"] == "invalid_request" &&
+                            it["error_description"] == "No state test" &&
+                            !it.containsKey("state")
+                },
+                any()
+            )
+        }
+    }
+
+
+
 }

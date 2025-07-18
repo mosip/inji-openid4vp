@@ -85,6 +85,52 @@ class DidPublicKeyResolverTest {
     }
 
     @Test
+    fun `should throw exception when publicKeyMultibase is empty  verificationMethod`() {
+        val mockResponse = mapOf(
+            "verificationMethod" to listOf(
+                mapOf("publicKeyMultibase" to  "",
+                    "controller" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
+                    "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
+                    "type" to "Ed25519VerificationKey2020",
+                    "@context" to "https://w3id.org/security/suites/ed25519-2020/v1"
+                )
+            )
+        )
+
+        every { anyConstructed<DidWebResolver>().resolve() } returns mockResponse
+
+        val header = mapOf("kid" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0")
+
+        val exception = assertFailsWith<InvalidData> {
+            resolver.resolveKey(header)
+        }
+        assertEquals("publicKeyMultibase cannot be null or empty", exception.message)
+    }
+
+    @Test
+    fun `should throw exception when publicKeyMultibase is null  verificationMethod`() {
+        val mockResponse = mapOf(
+            "verificationMethod" to listOf(
+                mapOf("publicKeyMultibase" to  null,
+                    "controller" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
+                    "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
+                    "type" to "Ed25519VerificationKey2020",
+                    "@context" to "https://w3id.org/security/suites/ed25519-2020/v1"
+                )
+            )
+        )
+
+        every { anyConstructed<DidWebResolver>().resolve() } returns mockResponse
+
+        val header = mapOf("kid" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0")
+
+        val exception = assertFailsWith<InvalidData> {
+            resolver.resolveKey(header)
+        }
+        assertEquals("publicKeyMultibase cannot be null or empty", exception.message)
+    }
+
+    @Test
     fun `should throw exception when unsupported public key- publicKeyHex present in verificationMethod`() {
         val mockResponse = mapOf(
             "verificationMethod" to listOf(
@@ -104,7 +150,7 @@ class DidPublicKeyResolverTest {
         val exception = assertFailsWith<UnsupportedPublicKeyType> {
             resolver.resolveKey(header)
         }
-        assertEquals("Unsupported Public Key type. Must be 'publicKeyMultibase'", exception.message)
+        assertEquals("Unsupported Public Key type. Supported: publicKeyMultibase", exception.message)
     }
 
     @Test
@@ -127,7 +173,7 @@ class DidPublicKeyResolverTest {
         val exception = assertFailsWith<UnsupportedPublicKeyType> {
             resolver.resolveKey(header)
         }
-        assertEquals("Unsupported Public Key type. Must be 'publicKeyMultibase'", exception.message)
+        assertEquals("Unsupported Public Key type. Supported: publicKeyMultibase", exception.message)
     }
 
     @Test
@@ -150,6 +196,6 @@ class DidPublicKeyResolverTest {
         val exception = assertFailsWith<UnsupportedPublicKeyType> {
             resolver.resolveKey(header)
         }
-        assertEquals("Unsupported Public Key type. Must be 'publicKeyMultibase'", exception.message)
+        assertEquals("Unsupported Public Key type. Supported: publicKeyMultibase", exception.message)
     }
 }
