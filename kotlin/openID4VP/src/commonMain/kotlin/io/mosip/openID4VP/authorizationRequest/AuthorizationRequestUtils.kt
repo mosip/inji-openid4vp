@@ -7,6 +7,7 @@ import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
+import io.mosip.openID4VP.constants.ResponseType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -18,7 +19,8 @@ fun getAuthorizationRequestHandler(
     trustedVerifiers: List<Verifier>,
     walletMetadata: WalletMetadata?,
     setResponseUri: (String) -> Unit,
-    shouldValidateClient: Boolean
+    shouldValidateClient: Boolean,
+    walletNonce: String
 ): ClientIdSchemeBasedAuthorizationRequestHandler {
     val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)
     validate(CLIENT_ID.value, clientId, className)
@@ -29,17 +31,20 @@ fun getAuthorizationRequestHandler(
             authorizationRequestParameters,
             walletMetadata,
             shouldValidateClient,
-            setResponseUri
+            setResponseUri,
+            walletNonce
         )
         ClientIdScheme.REDIRECT_URI.value -> RedirectUriSchemeAuthorizationRequestHandler(
             authorizationRequestParameters,
             walletMetadata,
-            setResponseUri
+            setResponseUri,
+            walletNonce
         )
         ClientIdScheme.DID.value -> DidSchemeAuthorizationRequestHandler(
             authorizationRequestParameters,
             walletMetadata,
-            setResponseUri
+            setResponseUri,
+            walletNonce
         )
         else -> throw OpenID4VPExceptions.InvalidData("Given client_id_scheme is not supported", className)
     }
@@ -102,4 +107,17 @@ fun extractClientIdentifier(authorizationRequestParameters: Map<String, Any>): S
         // client_id_scheme is optional (Fallback client_id_scheme - pre-registered) i.e., a : character is not present in the Client Identifier
         clientId
     }
+}
+
+fun validateWalletNonce(requestUriResponse: Map<String, Any>, walletNonce: String) {
+    if (requestUriResponse["wallet_nonce"] != walletNonce) {
+        throw OpenID4VPExceptions.InvalidData("nonce value is mis-matched", className)
+    }
+}
+
+fun validateResponseTypeSupported(responseType: String) {
+    ResponseType.entries.find { it.value == responseType } ?: throw OpenID4VPExceptions.InvalidData(
+        "Response type $responseType is not supported",
+        className
+    )
 }

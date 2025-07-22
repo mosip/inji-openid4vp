@@ -11,7 +11,7 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.Unsig
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.DeviceAuthentication
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
-import io.mosip.openID4VP.constants.VCFormatType
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.sampleapp.data.HardcodedOVPData.getListOfVerifiers
 import io.mosip.sampleapp.data.HardcodedOVPData.getWalletMetadata
@@ -47,7 +47,7 @@ object OpenID4VPManager {
         }
     }
 
-    private fun constructUnsignedVpToken(selectedCredentials : Map<String, Map<VCFormatType, List<Any>>>, holderId: String, signatureSuite: String): Map<VCFormatType, UnsignedVPToken> {
+    private fun constructUnsignedVpToken(selectedCredentials : Map<String, Map<FormatType, List<Any>>>, holderId: String, signatureSuite: String): Map<FormatType, UnsignedVPToken> {
         return try {
             instance.constructUnsignedVPToken(selectedCredentials, holderId, signatureSuite)
         } catch (exception: Exception) {
@@ -82,7 +82,7 @@ object OpenID4VPManager {
             holderId, SIGNATURE_SUITE)
 
 
-        val ldpSigningResult = unsignedVpTokenMap[VCFormatType.LDP_VC]?.let { vpPayload ->
+        val ldpSigningResult = unsignedVpTokenMap[FormatType.LDP_VC]?.let { vpPayload ->
 
 
             val result = VPTokenSigner.signVpToken(ldpKeyType, (vpPayload as UnsignedLdpVPToken).dataToSign, ldpKeyPair)
@@ -97,7 +97,7 @@ object OpenID4VPManager {
         val mdocKeyType = KeyType.ES256
         val mdocKeyPair = SampleKeyGenerator.generateKeyPair(mdocKeyType)
 
-        val mdocSigningResult = unsignedVpTokenMap[VCFormatType.MSO_MDOC]?.let { payload ->
+        val mdocSigningResult = unsignedVpTokenMap[FormatType.MSO_MDOC]?.let { payload ->
             val mdocPayload = payload as UnsignedMdocVPToken
             val docTypeToDeviceAuthenticationBytes = mdocPayload.docTypeToDeviceAuthenticationBytes
 
@@ -115,8 +115,8 @@ object OpenID4VPManager {
 
 
         val vpTokenSigningResultMap = buildMap {
-            ldpSigningResult?.let { put(VCFormatType.LDP_VC, it) }
-            mdocSigningResult?.let { put(VCFormatType.MSO_MDOC, it) }
+            ldpSigningResult?.let { put(FormatType.LDP_VC, it) }
+            mdocSigningResult?.let { put(FormatType.MSO_MDOC, it) }
         }
 
         try {

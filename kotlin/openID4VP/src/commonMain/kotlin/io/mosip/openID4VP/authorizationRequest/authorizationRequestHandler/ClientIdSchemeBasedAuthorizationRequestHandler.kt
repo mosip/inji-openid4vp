@@ -8,6 +8,7 @@ import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Presentati
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.parseAndValidatePresentationDefinition
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.extractClientIdScheme
+import io.mosip.openID4VP.authorizationRequest.validateResponseTypeSupported
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.common.encodeToJsonString
@@ -25,7 +26,8 @@ private val className = ClientIdSchemeBasedAuthorizationRequestHandler::class.si
 abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     var authorizationRequestParameters: MutableMap<String, Any>,
     val walletMetadata: WalletMetadata?,
-    private val setResponseUri: (String) -> Unit
+    private val setResponseUri: (String) -> Unit,
+    val walletNonce: String
 ) {
     protected var shouldValidateWithWalletMetadata = false
 
@@ -51,17 +53,20 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
 
             if (httpMethod == HttpMethod.POST) {
+
                 walletMetadata?.let { walletMetadata ->
                     isClientIdSchemeSupported(walletMetadata)
                     val processedWalletMetadata = process(walletMetadata)
                     body = mapOf(
                         "wallet_metadata" to
                             encodeToJsonString<WalletMetadata>(processedWalletMetadata, "wallet_metadata", className),
-
                     )
                     headers = getHeadersForAuthorizationRequestUri()
                     shouldValidateWithWalletMetadata = true
                 }
+
+                body = body?.plus(mapOf("wallet_nonce" to walletNonce))
+                walletMetadata
             }
             requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
 
@@ -87,6 +92,8 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     open fun validateAndParseRequestFields() {
         val responseType = getStringValue(authorizationRequestParameters, RESPONSE_TYPE.value)
         validate(RESPONSE_TYPE.value, responseType, className)
+        //TODO: check the optional or required field
+        validateResponseTypeSupported(responseType!!)
         val nonce = getStringValue(authorizationRequestParameters, NONCE.value)
         validate(NONCE.value, nonce, className)
         val state = getStringValue(authorizationRequestParameters, STATE.value)
@@ -98,6 +105,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 walletMetadata?.presentationDefinitionURISupported ?: true
         parseAndValidatePresentationDefinition(authorizationRequestParameters, presentationDefinitionUriSupported)
     }
+
 
     private fun isClientIdSchemeSupported(walletMetadata: WalletMetadata) {
         val clientIdScheme = extractClientIdScheme(authorizationRequestParameters)

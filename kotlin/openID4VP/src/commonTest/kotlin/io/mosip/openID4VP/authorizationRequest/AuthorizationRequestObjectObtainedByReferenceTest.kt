@@ -9,9 +9,7 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.*
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.VCFormatType
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
@@ -62,21 +60,6 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
             "request_uri_method" to "post"
         )
-        val walletMetadata = WalletMetadata(
-            presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(
-                FormatType.LDP_VC to VPFormatSupported(
-                    algValuesSupported = listOf("RSA")
-                )
-            ),
-            clientIdSchemesSupported = listOf(
-                ClientIdScheme.REDIRECT_URI,
-                PRE_REGISTERED
-            ),
-            requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
-            authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
-        )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
             authorizationRequestParamsMap,
@@ -84,7 +67,20 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
             DID
         )
 
-        val openID4VP = OpenID4VP("test-OpenID4VP", vpSigningAlgorithmSupported)
+        val walletMetadata = WalletMetadata(
+            presentationDefinitionURISupported = true,
+            vpFormatsSupported = mapOf(
+                "LDP_VC" to VPFormatSupported(
+                    algValuesSupported = listOf("EdDSA", "ES256")
+                )
+            ),
+            clientIdSchemesSupported = listOf("REDIRECT_URI"),
+            requestObjectSigningAlgValuesSupported = listOf("EdDSA"),
+            authorizationEncryptionAlgValuesSupported = listOf("ECDH_ES"),
+            authorizationEncryptionEncValuesSupported = listOf("A256GCM")
+        )
+
+        val openID4VP = OpenID4VP("test-OpenID4VP", walletMetadata)
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
             openID4VP.authenticateVerifier(

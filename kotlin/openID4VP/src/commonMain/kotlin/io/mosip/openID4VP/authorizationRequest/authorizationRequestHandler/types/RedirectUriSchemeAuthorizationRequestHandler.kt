@@ -5,12 +5,12 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
 import io.mosip.openID4VP.authorizationRequest.extractClientIdentifier
 import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
+import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
 import io.mosip.openID4VP.constants.ResponseMode.*
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
-import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import okhttp3.Headers
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -20,8 +20,9 @@ private val className = RedirectUriSchemeAuthorizationRequestHandler::class.simp
 class RedirectUriSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
     walletMetadata: WalletMetadata?,
-    setResponseUri: (String) -> Unit
-) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters,walletMetadata, setResponseUri) {
+    setResponseUri: (String) -> Unit,
+    walletNonce: String
+) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters,walletMetadata, setResponseUri, walletNonce) {
 
     override fun validateRequestUriResponse(
         requestUriResponse: Map<String, Any>
@@ -38,6 +39,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
+                validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestObject
             } else {
                 throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)

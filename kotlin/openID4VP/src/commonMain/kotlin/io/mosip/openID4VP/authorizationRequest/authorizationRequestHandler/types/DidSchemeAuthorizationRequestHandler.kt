@@ -4,6 +4,7 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
 import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
+import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.isJWS
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
@@ -21,8 +22,9 @@ private val className = DidSchemeAuthorizationRequestHandler::class.simpleName!!
 class DidSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
     walletMetadata: WalletMetadata?,
-    setResponseUri: (String) -> Unit
-) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri) {
+    setResponseUri: (String) -> Unit,
+    walletNonce: String
+) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce) {
 
     override fun validateRequestUriResponse(
         requestUriResponse: Map<String, Any>
@@ -46,6 +48,7 @@ class DidSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
+                validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestParameters = authorizationRequestObject
 
             } else

@@ -8,9 +8,8 @@ import io.mosip.openID4VP.authorizationRequest.clientMetadata.parseAndValidateCl
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.parseAndValidatePresentationDefinition
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ContentType
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.VCFormatType
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.presentationDefinitionString
@@ -41,7 +40,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
 
         walletMetadata = WalletMetadata(
             presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(FormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
+            vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
             clientIdSchemesSupported = listOf(ClientIdScheme.REDIRECT_URI),
             requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA)
         )
@@ -50,7 +49,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateRequestUriResponse should succeed with valid JSON content type`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         val headers = Headers.Builder()
@@ -82,7 +81,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateRequestUriResponse should handle empty request URI response`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         try {
@@ -95,7 +94,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateRequestUriResponse should throw exception with invalid content type`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         val headers = Headers.Builder()
@@ -122,7 +121,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `process should return wallet metadata with requestObjectSigningAlgValuesSupported set to null`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         val result = handler.process(walletMetadata)
@@ -133,7 +132,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         val headers = handler.getHeadersForAuthorizationRequestUri()
@@ -145,7 +144,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateAndParseRequestFields should succeed with valid direct_post response mode`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri
+            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
         )
 
         try {
@@ -161,7 +160,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         modifiedParams[RESPONSE_MODE.value] = "direct_post.jwt"
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         try {
@@ -177,7 +176,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         modifiedParams[RESPONSE_MODE.value] = "unsupported_mode"
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
@@ -203,7 +202,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         }
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
@@ -220,7 +219,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         modifiedParams[REDIRECT_URI.value] = "https://example.com/redirect"
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
@@ -235,7 +234,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         modifiedParams.remove(RESPONSE_URI.value)
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
@@ -250,7 +249,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         modifiedParams[RESPONSE_URI.value] = "https://different-domain.com/response"
 
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            modifiedParams, walletMetadata, setResponseUri
+            modifiedParams, walletMetadata, setResponseUri, walletNonce
         )
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {

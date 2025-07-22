@@ -38,7 +38,8 @@ data class AuthorizationRequest(
                 trustedVerifiers,
                 walletMetadata,
                 shouldValidateClient,
-                setResponseUri
+                setResponseUri,
+                walletNonce
             )
         }
 
@@ -47,14 +48,16 @@ data class AuthorizationRequest(
             trustedVerifiers: List<Verifier>,
             walletMetadata: WalletMetadata?,
             shouldValidateClient: Boolean,
-            setResponseUri: (String) -> Unit
+            setResponseUri: (String) -> Unit,
+            walletNonce: String
         ): AuthorizationRequest {
             val authorizationRequestHandler = getAuthorizationRequestHandler(
                 params,
                 trustedVerifiers,
                 walletMetadata,
                 setResponseUri,
-                shouldValidateClient
+                shouldValidateClient,
+                walletNonce
             )
             processAndValidateAuthorizationRequestParameter(authorizationRequestHandler)
             return authorizationRequestHandler.createAuthorizationRequest()

@@ -8,14 +8,13 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.Unsig
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.URDNA2015Canonicalization
 import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.constants.VCFormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import foundation.identity.jsonld.JsonLDObject
-import io.mosip.openID4VP.constants.VCFormatType.LDP_VC
-import io.mosip.openID4VP.constants.VCFormatType.MSO_MDOC
+import io.mosip.openID4VP.constants.FormatType.LDP_VC
+import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.test.*
@@ -39,7 +38,7 @@ class OpenID4VPTest {
     @BeforeTest
     fun setUp() {
         mockkObject(NetworkManagerClient)
-        openID4VP = OpenID4VP("test-OpenID4VP", vpSigningAlgorithmSupported)
+        openID4VP = OpenID4VP("test-OpenID4VP")
         openID4VP.authorizationRequest = authorizationRequest
         setField(openID4VP, "responseUri", responseUrl)
         setField(openID4VP, "walletNonce", "bMHvX1HGhbh8zqlSWf/fuQ==")
@@ -84,7 +83,7 @@ class OpenID4VPTest {
         mockkObject(AuthorizationRequest.Companion)
         mockkObject(NetworkManagerClient)
 
-        var openID4VP = OpenID4VP("test-OpenID4VP", vpSigningAlgorithmSupported)
+        var openID4VP = OpenID4VP("test-OpenID4VP")
 
         val testException = InvalidInput("", "Invalid authorization request","")
 
@@ -144,7 +143,7 @@ class OpenID4VPTest {
         val testException = InvalidData("Invalid credential format","")
 
         every {
-            mockHandler.constructUnsignedVPToken(any(), any(), any(), any(), any(), any())
+            mockHandler.constructUnsignedVPTokenV1(any(), any(), any(), any(), any(), any())
         } throws testException
 
         setField(openID4VP, "authorizationResponseHandler", mockHandler)
@@ -274,7 +273,7 @@ class OpenID4VPTest {
 
         val mockHandler = mockk<AuthorizationResponseHandler>()
         every {
-            mockHandler.constructUnsignedVPToken(any(), any(), any(), any(), any(), any())
+            mockHandler.constructUnsignedVPTokenV1(any(), any(), any(), any(), any(), any())
         } returns emptyMap()
 
         setField(openID4VP, "authorizationResponseHandler", mockHandler)

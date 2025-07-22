@@ -14,7 +14,7 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.Proof
 import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.VCFormatType
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
@@ -28,12 +28,10 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPToken
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.FormatType.LDP_VC
-import io.mosip.openID4VP.constants.FormatType.LDP_VP
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 
 const val requestUrl = "https://mock-verifier.com/verifier/get-auth-request-obj"
 const val responseUrl = "https://mock-verifier.com/response-uri"
@@ -73,11 +71,11 @@ val mdocVPTokenSigningResult: MdocVPTokenSigningResult = MdocVPTokenSigningResul
     )
 )
 
-val ldpvpTokenSigningResults: Map<VCFormatType, VPTokenSigningResult> =
-    mapOf(VCFormatType.LDP_VC to ldpVPTokenSigningResult)
+val ldpvpTokenSigningResults: Map<FormatType, VPTokenSigningResult> =
+    mapOf(FormatType.LDP_VC to ldpVPTokenSigningResult)
 
-val mdocvpTokenSigningResults: Map<VCFormatType, VPTokenSigningResult> =
-    mapOf(VCFormatType.MSO_MDOC to mdocVPTokenSigningResult)
+val mdocvpTokenSigningResults: Map<FormatType, VPTokenSigningResult> =
+    mapOf(FormatType.MSO_MDOC to mdocVPTokenSigningResult)
 
 val unsignedLdpVPToken: UnsignedLdpVPToken = UnsignedLdpVPToken(
    dataToSign = "base64EncodedCanonicalisedData"
@@ -104,15 +102,15 @@ val clientMetadataMap = mapOf(
 )
 
 private val vpFormatsMap = mapOf(
-    LDP_VC to VPFormatSupported(
+    VPFormatType.LDP_VC to VPFormatSupported(
         algValuesSupported = listOf("Ed25519Signature2018", "Ed25519Signature2020")
     )
 )
 
 val vpSigningAlgorithmSupported = mapOf(
-    LDP_VC to listOf("Ed25519Signature2020", "RSASignature2018", "Ed25519Signature2018"),
-    LDP_VP to listOf("Ed25519Signature2020"),
-    FormatType.MSO_MDOC to listOf("ES256")
+    VPFormatType.LDP_VC to listOf("Ed25519Signature2020", "RSASignature2018", "Ed25519Signature2018"),
+    VPFormatType.LDP_VP to listOf("Ed25519Signature2020"),
+    VPFormatType.MSO_MDOC to listOf("ES256")
 )
 
 
@@ -126,7 +124,7 @@ val vpSigningAlgorithmSupported = mapOf(
     ),
     requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
     authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-    authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+    authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
 )
 
 val clientMetadataString = """{
@@ -393,8 +391,8 @@ val vpTokenSigningPayload = VPTokenSigningPayload(
 )
 
 val unsignedVPTokens = mapOf(
-    VCFormatType.LDP_VC to mapOf("vpTokenSigningPayload" to vpTokenSigningPayload, "unsignedVPToken" to unsignedLdpVPToken),
-    VCFormatType.MSO_MDOC to mapOf("vpTokenSigningPayload" to listOf(mdocCredential), "unsignedVPToken" to unsignedMdocVPToken)
+    FormatType.LDP_VC to mapOf("vpTokenSigningPayload" to vpTokenSigningPayload, "unsignedVPToken" to unsignedLdpVPToken),
+    FormatType.MSO_MDOC to mapOf("vpTokenSigningPayload" to listOf(mdocCredential), "unsignedVPToken" to unsignedMdocVPToken)
 )
 
 val mdocVPToken = MdocVPToken(

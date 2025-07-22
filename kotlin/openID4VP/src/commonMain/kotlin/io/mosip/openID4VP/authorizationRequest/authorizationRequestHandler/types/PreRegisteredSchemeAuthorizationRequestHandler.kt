@@ -8,7 +8,7 @@ import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import io.mosip.openID4VP.authorizationRequest.Verifier
-import io.mosip.openID4VP.authorizationRequest.extractClientIdentifier
+import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
 import okhttp3.Headers
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -20,8 +20,9 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
     walletMetadata: WalletMetadata?,
     private val shouldValidateClient: Boolean,
-    setResponseUri: (String) -> Unit
-) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri) {
+    setResponseUri: (String) -> Unit,
+    walletNonce: String
+) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce) {
     override fun validateClientId() {
         if (!shouldValidateClient) return
 
@@ -34,7 +35,6 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     override fun validateRequestUriResponse(
         requestUriResponse: Map<String, Any>
     ) {
-
         authorizationRequestParameters = if (requestUriResponse.isEmpty())
             authorizationRequestParameters
         else {
@@ -47,6 +47,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
+                validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestObject
             } else {
                 throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)

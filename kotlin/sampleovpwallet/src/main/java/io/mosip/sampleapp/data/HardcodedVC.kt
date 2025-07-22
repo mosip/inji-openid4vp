@@ -2,7 +2,7 @@ package io.mosip.sampleapp.data
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import io.mosip.openID4VP.constants.VCFormatType
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.pixelpass.PixelPass
 import io.mosip.sampleapp.utils.MdocKeyManager
 import org.json.JSONObject
@@ -112,8 +112,8 @@ object HardcodedVC {
     fun get(index: Int): VCMetadata {
         val gson = Gson()
         return when (index) {
-            0 -> VCMetadata(VCFormatType.LDP_VC.value, gson.fromJson(MOSIP_VC, JsonObject::class.java))
-            1 -> VCMetadata(VCFormatType.LDP_VC.value, gson.fromJson(INSURANCE_VC, JsonObject::class.java))
+            0 -> VCMetadata(FormatType.LDP_VC.value, gson.fromJson(MOSIP_VC, JsonObject::class.java))
+            1 -> VCMetadata(FormatType.LDP_VC.value, gson.fromJson(INSURANCE_VC, JsonObject::class.java))
             else -> {
                 val rawMdoc = PixelPass().toJson(MDOC_CBOR_DATA)
                 val jsonString = when (rawMdoc) {
@@ -123,7 +123,7 @@ object HardcodedVC {
                 }
                 val mdocJsonObject = gson.fromJson(jsonString, JsonObject::class.java)
 
-                VCMetadata(VCFormatType.MSO_MDOC.value, mdocJsonObject, MDOC_CBOR_DATA)
+                VCMetadata(FormatType.MSO_MDOC.value, mdocJsonObject, MDOC_CBOR_DATA)
             }
         }
     }

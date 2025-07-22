@@ -1,19 +1,22 @@
 package io.mosip.openID4VP.authorizationRequest
 
 import io.mockk.every
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
+import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.VCFormatType
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.assertDoesNotThrow
@@ -28,6 +31,7 @@ import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
 import io.mosip.openID4VP.testData.walletMetadata
+import io.mosip.vercred.vcverifier.DidWebResolver
 import okhttp3.Headers
 import kotlin.test.*
 
@@ -46,12 +50,10 @@ class AuthRequestByReferenceTest {
                 HttpMethod.GET
             )
         } returns mapOf("body" to presentationDefinitionString)
-        every {
-            NetworkManagerClient.sendHTTPRequest(
-                "https://resolver.identity.foundation/1.0/identifiers/did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-                HttpMethod.GET
-            )
-        } returns mapOf("body" to didResponse)
+        mockkConstructor(DidWebResolver::class)
+        every { anyConstructed<DidWebResolver>().resolve() } returns convertJsonToMap(didResponse)
+
+
 
 
     }
@@ -217,14 +219,14 @@ class AuthRequestByReferenceTest {
         val walletMetadata = WalletMetadata(
             presentationDefinitionURISupported = true,
             vpFormatsSupported = mapOf(
-                VCFormatType.LDP_VC to VPFormatSupported(
+                VPFormatType.LDP_VC to VPFormatSupported(
                     algValuesSupported = listOf("RSA")
                 )
             ),
             clientIdSchemesSupported = listOf(DID, PRE_REGISTERED),
             requestObjectSigningAlgValuesSupported = null,
             authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+            authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
         )
         every {
             NetworkManagerClient.sendHTTPRequest(
@@ -300,14 +302,14 @@ fun `should validate and throw error if the signing algorithm is not supported b
     val walletMetadata = WalletMetadata(
         presentationDefinitionURISupported = true,
         vpFormatsSupported = mapOf(
-            VCFormatType.LDP_VC to VPFormatSupported(
+            VPFormatType.LDP_VC to VPFormatSupported(
                 algValuesSupported = listOf("RSA")
             )
         ),
         clientIdSchemesSupported = listOf(DID, PRE_REGISTERED),
         requestObjectSigningAlgValuesSupported = null,
         authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-        authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+        authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
     )
     every {
         NetworkManagerClient.sendHTTPRequest(
