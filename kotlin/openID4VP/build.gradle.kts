@@ -48,7 +48,6 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                //implementation(kotlin("test-junit"))
                 implementation(libs.junit)
                 implementation(libs.mockk)
                 implementation(libs.mockwebserver)

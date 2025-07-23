@@ -1,5 +1,5 @@
 group = "io.mosip"
-version = "4.4.0-SNAPSHOT"
+version = "0.4.0-SNAPSHOT"
 
 
 publishing {
@@ -194,8 +194,8 @@ publishing {
             }
         }
     }
-//signing {
-//    useGpgCmd()
-//    sign publishing.publications.aar
-//    sign publishing.publications.jarRelease
-//}
+signing {
+    useGpgCmd()
+    sign publishing.publications.aar
+    sign publishing.publications.jarRelease
+}
