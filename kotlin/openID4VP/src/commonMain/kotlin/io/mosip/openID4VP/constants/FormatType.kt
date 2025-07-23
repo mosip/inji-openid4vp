@@ -8,7 +8,13 @@ enum class FormatType(val value: String)  {
 enum class VPFormatType(val value: String)  {
   LDP_VP("ldp_vp"),
   LDP_VC("ldp_vc"),
-  MSO_MDOC("mso_mdoc")
+  MSO_MDOC("mso_mdoc");
+
+    companion object {
+        fun fromValue(value: String): VPFormatType? {
+        return entries.find { it.value == value }
+        }
+    }
 }
 
 

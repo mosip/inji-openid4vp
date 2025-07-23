@@ -48,6 +48,4 @@ class DidPublicKeyResolver(private val didUrl: String) : PublicKeyResolver {
     companion object {
         val SUPPORTED_PUBLIC_KEY_TYPES = listOf("publicKeyMultibase")
     }
-
-
 }
