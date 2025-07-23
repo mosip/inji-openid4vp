@@ -53,7 +53,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
 
             if (httpMethod == HttpMethod.POST) {
-
                 walletMetadata?.let { walletMetadata ->
                     isClientIdSchemeSupported(walletMetadata)
                     val processedWalletMetadata = process(walletMetadata)
@@ -64,9 +63,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                     headers = getHeadersForAuthorizationRequestUri()
                     shouldValidateWithWalletMetadata = true
                 }
-
                 body = body?.plus(mapOf("wallet_nonce" to walletNonce))
-                walletMetadata
             }
             requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
 

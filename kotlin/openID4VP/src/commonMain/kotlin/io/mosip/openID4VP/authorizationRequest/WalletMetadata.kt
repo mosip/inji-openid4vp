@@ -44,7 +44,7 @@ data class WalletMetadata(
             typeName: String
         ): T {
             return validEntries.find { it.name == value } ?: throw OpenID4VPExceptions.InvalidData(
-                "Invalid $typeName value: $value",
+                "Invalid $typeName value: $value. Its is not supported by the library.",
                 className
             )
         }

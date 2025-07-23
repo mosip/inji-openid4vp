@@ -19,7 +19,6 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSign
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
-import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.encodeToJsonString
@@ -37,12 +36,12 @@ internal class AuthorizationResponseHandler {
     private lateinit var unsignedVPTokens: Map<FormatType, Map<String, Any>>
     private lateinit var walletNonce : String
 
-    fun constructUnsignedVPTokenV1(credentialsMap: Map<String, Map<FormatType, List<Any>>>,
-                holderId: String?,
-                authorizationRequest: AuthorizationRequest,
-                responseUri: String,
-                signatureSuite: String?,
-                nonce: String
+    fun constructUnsignedVPToken(credentialsMap: Map<String, Map<FormatType, List<Any>>>,
+                                 holderId: String?,
+                                 authorizationRequest: AuthorizationRequest,
+                                 responseUri: String,
+                                 signatureSuite: String?,
+                                 nonce: String
     ): Map<FormatType, UnsignedVPToken> {
 
         val containsLdpVc = credentialsMap.any { (_, formatMap) ->
@@ -64,10 +63,10 @@ internal class AuthorizationResponseHandler {
             }
         }
 
-        return constructUnsignedVPToken(credentialsMap, holderId, authorizationRequest, responseUri, signatureSuite, nonce)
+        return createUnsignedVPToken(credentialsMap, holderId, authorizationRequest, responseUri, signatureSuite, nonce)
     }
 
-    private fun constructUnsignedVPToken(
+    private fun createUnsignedVPToken(
         credentialsMap: Map<String, Map<FormatType, List<Any>>>,
         holderId: String?,
         authorizationRequest: AuthorizationRequest,
@@ -127,7 +126,7 @@ internal class AuthorizationResponseHandler {
                 )
             }
 
-            else -> throw  OpenID4VPExceptions.InvalidData("Provided response_type - ${authorizationRequest.responseType} is not supported", className,OpenID4VPErrorCodes.VP_FORMATS_NOT_SUPPORTED)
+            else -> throw  OpenID4VPExceptions.InvalidData("Provided response_type - ${authorizationRequest.responseType} is not supported", className)
         }
     }
 
@@ -288,7 +287,7 @@ internal class AuthorizationResponseHandler {
         val transformedCredentials = verifiableCredentials.mapValues { (_, credentials) ->
             mapOf(FormatType.LDP_VC to credentials)
         }
-        constructUnsignedVPToken(
+        createUnsignedVPToken(
             credentialsMap = transformedCredentials,
             holderId = "",
             authorizationRequest = authorizationRequest,

@@ -56,7 +56,7 @@ class OpenID4VP @JvmOverloads constructor(
         signatureSuite: String? = null
     ): Map<FormatType, UnsignedVPToken> {
         return try {
-            authorizationResponseHandler.constructUnsignedVPTokenV1(
+            authorizationResponseHandler.constructUnsignedVPToken(
                 credentialsMap = verifiableCredentials,
                 authorizationRequest = authorizationRequest,
                 responseUri = responseUri!!,
@@ -152,7 +152,7 @@ class OpenID4VP @JvmOverloads constructor(
         }
     }
 
-    @Deprecated("Supports only direct POST response mode for LDP VC")
+    @Deprecated("Supports only direct POST response mode for LDP VC. Use shareVerifiablePresentation with VPTokenSigningResults instead")
     fun shareVerifiablePresentation(vpResponseMetadata: VPResponseMetadata): String {
         return try {
             authorizationResponseHandler.shareVPV1(

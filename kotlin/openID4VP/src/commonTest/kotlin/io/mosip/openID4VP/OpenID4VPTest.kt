@@ -143,7 +143,7 @@ class OpenID4VPTest {
         val testException = InvalidData("Invalid credential format","")
 
         every {
-            mockHandler.constructUnsignedVPTokenV1(any(), any(), any(), any(), any(), any())
+            mockHandler.constructUnsignedVPToken(any(), any(), any(), any(), any(), any())
         } throws testException
 
         setField(openID4VP, "authorizationResponseHandler", mockHandler)
@@ -273,7 +273,7 @@ class OpenID4VPTest {
 
         val mockHandler = mockk<AuthorizationResponseHandler>()
         every {
-            mockHandler.constructUnsignedVPTokenV1(any(), any(), any(), any(), any(), any())
+            mockHandler.constructUnsignedVPToken(any(), any(), any(), any(), any(), any())
         } returns emptyMap()
 
         setField(openID4VP, "authorizationResponseHandler", mockHandler)

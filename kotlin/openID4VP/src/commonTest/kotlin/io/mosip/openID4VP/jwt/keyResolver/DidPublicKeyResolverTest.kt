@@ -1,38 +1,12 @@
 package io.mosip.openID4VP.jwt.keyResolver
 
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jose.util.Base64URL
-import io.ipfs.multibase.Base58
-import io.ipfs.multibase.Multibase
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockkConstructor
-import io.mosip.openID4VP.common.convertJsonToMap
-import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.SIGNATURE
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.vercred.vcverifier.DidWebResolver
-import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants
-import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants.DER_PUBLIC_KEY_PREFIX
 import io.mosip.vercred.vcverifier.exception.DidResolverExceptions.DidResolutionFailed
-import io.mosip.vercred.vcverifier.exception.PublicKeyNotFoundException
-import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
-import org.bouncycastle.crypto.signers.Ed25519Signer
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.util.encoders.Base64
-import org.bouncycastle.util.encoders.Hex
-import java.nio.charset.StandardCharsets
-import java.security.KeyFactory
-import java.security.PublicKey
-import java.security.Signature
-import java.security.spec.X509EncodedKeySpec
 import kotlin.test.*
 
 class DidPublicKeyResolverTest {

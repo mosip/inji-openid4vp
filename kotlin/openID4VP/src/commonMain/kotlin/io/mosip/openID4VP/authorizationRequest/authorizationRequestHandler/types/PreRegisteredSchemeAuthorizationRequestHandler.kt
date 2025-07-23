@@ -49,12 +49,10 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
-                val httpMethod = determineHttpMethod(
-                    getStringValue(
-                        authorizationRequestParameters,
-                        REQUEST_URI_METHOD.value
-                    ) ?: "get"
-                )
+                val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?.let {
+                    determineHttpMethod(it)
+                } ?: HttpMethod.GET
+
                 if (httpMethod == HttpMethod.POST)
                     validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestObject

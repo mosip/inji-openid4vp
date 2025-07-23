@@ -111,7 +111,7 @@ fun extractClientIdentifier(authorizationRequestParameters: Map<String, Any>): S
 
 fun validateWalletNonce(requestUriResponse: Map<String, Any>, walletNonce: String) {
     if (requestUriResponse[WALLET_NONCE.value] != walletNonce) {
-        throw OpenID4VPExceptions.InvalidData("nonce value is mis-matched", className)
+        throw OpenID4VPExceptions.InvalidData("wallet_nonce provided in the authorization request is not the same as shared by wallet", className)
     }
 }
 
