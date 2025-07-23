@@ -9,7 +9,9 @@ import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
+import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
+import io.mosip.openID4VP.constants.HttpMethod
 import okhttp3.Headers
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
@@ -47,7 +49,14 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
-                validateWalletNonce(authorizationRequestObject, walletNonce)
+                val httpMethod = determineHttpMethod(
+                    getStringValue(
+                        authorizationRequestParameters,
+                        REQUEST_URI_METHOD.value
+                    ) ?: "get"
+                )
+                if (httpMethod == HttpMethod.POST)
+                    validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestObject
             } else {
                 throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)

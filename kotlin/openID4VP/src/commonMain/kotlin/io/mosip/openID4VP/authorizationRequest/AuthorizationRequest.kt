@@ -12,6 +12,7 @@ data class AuthorizationRequest(
     val responseUri: String?,
     val redirectUri: String?,
     val nonce: String,
+    val walletNonce: String?,
     val state: String?,
     var clientMetadata: ClientMetadata? = null,
     val clientIdScheme: String? = null

@@ -110,7 +110,7 @@ fun extractClientIdentifier(authorizationRequestParameters: Map<String, Any>): S
 }
 
 fun validateWalletNonce(requestUriResponse: Map<String, Any>, walletNonce: String) {
-    if (requestUriResponse["wallet_nonce"] != walletNonce) {
+    if (requestUriResponse[WALLET_NONCE.value] != walletNonce) {
         throw OpenID4VPExceptions.InvalidData("nonce value is mis-matched", className)
     }
 }

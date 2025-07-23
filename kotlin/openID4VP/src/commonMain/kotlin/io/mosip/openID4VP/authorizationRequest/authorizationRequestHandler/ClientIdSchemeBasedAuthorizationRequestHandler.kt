@@ -92,7 +92,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     open fun validateAndParseRequestFields() {
         val responseType = getStringValue(authorizationRequestParameters, RESPONSE_TYPE.value)
         validate(RESPONSE_TYPE.value, responseType, className)
-        //TODO: check the optional or required field
         validateResponseTypeSupported(responseType!!)
         val nonce = getStringValue(authorizationRequestParameters, NONCE.value)
         validate(NONCE.value, nonce, className)
@@ -123,6 +122,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value),
             redirectUri = getStringValue(authorizationRequestParameters, REDIRECT_URI.value),
             nonce = getStringValue(authorizationRequestParameters, NONCE.value)!!,
+            walletNonce = getStringValue(authorizationRequestParameters, WALLET_NONCE.value),
             state = getStringValue(authorizationRequestParameters, STATE.value),
             clientMetadata = authorizationRequestParameters[CLIENT_METADATA.value] as? ClientMetadata,
             clientIdScheme = getStringValue(authorizationRequestParameters, CLIENT_ID_SCHEME.value)

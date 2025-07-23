@@ -26,6 +26,7 @@ data class WalletMetadata(
     @JsonProperty("response_types_supported")
     var responseTypeSupported: List<ResponseType>? = getDefaultResponseTypeSupported()
 ) {
+
     companion object {
         private val className = WalletMetadata::class.simpleName!!
 
@@ -66,7 +67,7 @@ data class WalletMetadata(
         },
         clientIdSchemesSupported = clientIdSchemesSupported?.map {
             parseEnum(it, ClientIdScheme.entries.toTypedArray(), "ClientIdScheme")
-        },
+        }?: listOf(ClientIdScheme.PRE_REGISTERED),
         requestObjectSigningAlgValuesSupported = requestObjectSigningAlgValuesSupported?.map {
             parseEnum(it, RequestSigningAlgorithm.entries.toTypedArray(), "RequestSigningAlgorithm")
         },
