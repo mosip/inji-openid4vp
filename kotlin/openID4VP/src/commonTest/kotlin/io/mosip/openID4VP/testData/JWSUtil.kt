@@ -1,6 +1,10 @@
 package io.mosip.openID4VP.testData
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.OctetKeyPair
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
+import io.ipfs.multibase.Multibase
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -62,6 +66,28 @@ class JWSUtil {
             else
                 "aW52YWxpZC1zaWdu"
             return "$header64.$payload64.$signature64"
+        }
+
+
+        //Method to generate a multibase key for Ed25519
+        private fun generateEd25519MultibaseKey(): String {
+            // 1. Generate the Ed25519 key pair
+            val jwk: OctetKeyPair = OctetKeyPairGenerator(Curve.Ed25519)
+                .keyIDFromThumbprint(true)
+                .generate()
+
+            // 2. Decode the public key (base64url) into raw bytes
+            val rawPubKey = jwk.x.decode() // 32 bytes
+
+            // 3. Prepend multicodec prefix for Ed25519 (0xED 0x01)
+            val ed25519Prefix = byteArrayOf(0xED.toByte(), 0x01.toByte())
+            val prefixedPubKey = ed25519Prefix + rawPubKey
+
+            // 4. Encode to base58btc using multibase
+            val multibasePubKey = Multibase.encode(Multibase.Base.Base58BTC, prefixedPubKey)
+
+            println("z6M-form multibase key: $multibasePubKey")
+            return multibasePubKey
         }
     }
 }
