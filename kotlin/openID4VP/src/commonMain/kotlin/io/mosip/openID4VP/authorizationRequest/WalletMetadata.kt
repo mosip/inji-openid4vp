@@ -26,6 +26,14 @@ data class WalletMetadata(
     @JsonProperty("response_types_supported")
     var responseTypeSupported: List<ResponseType>? = getDefaultResponseTypeSupported()
 ) {
+    init {
+        vpFormatsSupported = vpFormatsSupported ?: getDefaultVpFormatsSupported()
+        clientIdSchemesSupported = clientIdSchemesSupported ?: getDefaultClientIdSchemesSupported()
+        requestObjectSigningAlgValuesSupported = requestObjectSigningAlgValuesSupported ?: getDefaultRequestSigningAlgorithmSupported()
+        authorizationEncryptionAlgValuesSupported = authorizationEncryptionAlgValuesSupported ?: getDefaultKeyManagementAlgorithmSupported()
+        authorizationEncryptionEncValuesSupported = authorizationEncryptionEncValuesSupported ?: getDefaultContentEncryptionAlgorithmSupported()
+        responseTypeSupported = responseTypeSupported ?: getDefaultResponseTypeSupported()
+    }
 
     companion object {
         private val className = WalletMetadata::class.simpleName!!

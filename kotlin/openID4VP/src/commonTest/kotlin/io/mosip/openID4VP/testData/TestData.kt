@@ -341,7 +341,8 @@ val authorizationRequestForResponseModeJWT = AuthorizationRequest(
     redirectUri = null,
     nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
     state = "fsnC8ixCs6mWyV+00k23Qg==",
-    clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
+    clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer),
+    walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 )
 
 val authorizationRequest = AuthorizationRequest(
@@ -356,7 +357,8 @@ val authorizationRequest = AuthorizationRequest(
     redirectUri = null,
     nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
     state = "fsnC8ixCs6mWyV+00k23Qg==",
-    clientMetadata = deserializeAndValidate(clientMetadataMap, ClientMetadataSerializer)
+    clientMetadata = deserializeAndValidate(clientMetadataMap, ClientMetadataSerializer),
+    walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 )
 
 val proof = Proof(

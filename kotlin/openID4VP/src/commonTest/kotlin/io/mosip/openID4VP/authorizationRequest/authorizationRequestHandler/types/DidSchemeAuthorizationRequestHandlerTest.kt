@@ -23,6 +23,7 @@ class DidSchemeAuthorizationRequestHandlerTest {
     private lateinit var authorizationRequestParameters: MutableMap<String, Any>
     private lateinit var walletMetadata: WalletMetadata
     private val setResponseUri: (String) -> Unit = mockk(relaxed = true)
+    val walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 
     @BeforeTest
     fun setup() {
@@ -180,23 +181,6 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
         assertEquals(walletMetadata, result)
         assertEquals(listOf(RequestSigningAlgorithm.EdDSA), result.requestObjectSigningAlgValuesSupported)
-    }
-
-    @Test
-    fun `process should throw exception when requestObjectSigningAlgValuesSupported is null`() {
-        val handler = DidSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters,
-            walletMetadata,
-            setResponseUri,
-            walletNonce
-        )
-
-        val invalidWalletMetadata = walletMetadata.copy(requestObjectSigningAlgValuesSupported = null)
-
-        val exception = assertFailsWith<Exception> {
-            handler.process(invalidWalletMetadata)
-        }
-        assertTrue(exception.message?.contains("request_object_signing_alg_values_supported is not present") == true)
     }
 
     @Test

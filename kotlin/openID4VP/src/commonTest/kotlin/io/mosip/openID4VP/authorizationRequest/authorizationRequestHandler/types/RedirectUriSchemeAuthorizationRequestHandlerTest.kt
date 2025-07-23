@@ -22,6 +22,7 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     private lateinit var authorizationRequestParameters: MutableMap<String, Any>
     private lateinit var walletMetadata: WalletMetadata
     private val setResponseUri: (String) -> Unit = mockk(relaxed = true)
+    val walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 
     @BeforeTest
     fun setup() {

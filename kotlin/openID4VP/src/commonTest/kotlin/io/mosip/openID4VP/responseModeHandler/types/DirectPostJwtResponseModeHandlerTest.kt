@@ -123,23 +123,6 @@ class DirectPostJwtResponseModeHandlerTest {
         assertEquals("authorization_encrypted_response_alg is not supported", exception.message)
     }
 
-    @Test
-    fun `should throw error if the key exchange algorithm supported list is not provided by wallet`() {
-        val invalidWalletMetadata = WalletMetadata(
-            presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(algValuesSupported = listOf("RSA"))),
-            clientIdSchemesSupported = listOf(REDIRECT_URI, DID, PRE_REGISTERED),
-            requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
-            authorizationEncryptionAlgValuesSupported = null,
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
-        )
-        val clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
-
-        val exception = assertFailsWith<InvalidData> {
-            DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
-        }
-        assertEquals("authorization_encryption_alg_values_supported must be present in wallet_metadata", exception.message)
-    }
 
     @Test
     fun `should throw error if the encryption algorithm does not match supported list from the walletMetadata`() {
@@ -150,24 +133,6 @@ class DirectPostJwtResponseModeHandlerTest {
             DirectPostJwtResponseModeHandler().validate(clientMetadata, walletMetadata, true)
         }
         assertEquals("authorization_encrypted_response_enc is not supported", exception.message)
-    }
-
-    @Test
-    fun `should throw error if the encryption algorithm supported list is not provided by wallet`() {
-        val clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
-        val invalidWalletMetadata = WalletMetadata(
-            presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(algValuesSupported = listOf("RSA"))),
-            clientIdSchemesSupported = listOf(REDIRECT_URI, DID, PRE_REGISTERED),
-            requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
-            authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = null
-        )
-
-        val exception = assertFailsWith<InvalidData> {
-            DirectPostJwtResponseModeHandler().validate(clientMetadata, invalidWalletMetadata, true)
-        }
-        assertEquals("authorization_encryption_enc_values_supported must be present in wallet_metadata", exception.message)
     }
 
     /** sending of authorization response **/
