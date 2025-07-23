@@ -55,7 +55,7 @@ class JWSHandlerTest {
     }
     @Test
     fun `verify should pass with valid signature`() {
-        val publicKey = "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo"
+        val publicKey = "z6MkwAm9tLpXZNfeEAqj9jcccFhjdiTwxVD32GhcjyeqGYSo"
         val jwt =JWSUtil.createJWS(jwtPayload, true, jwtHeader)
         every { publicKeyResolver.resolveKey(any()) } returns publicKey
 

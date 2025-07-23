@@ -11,7 +11,7 @@ import java.util.Base64
 
 class JWSUtil {
     companion object {
-        private const val ed25519PrivateKey = "vlo/0lVUn4oCEFo/PiPi3FyqSBSdZ2JDSBJJcvbf6o0="
+        private const val ed25519PrivateKey = "7JGq310it2uq1_KZ3kARpoUB36KaVO2Ki5VeqQ_856A"
         private const val didDocumentUrl = "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs"
         private const val publicKeyId = "$didDocumentUrl#key-0"
         val jwtHeader = buildJsonObject {
@@ -56,7 +56,7 @@ class JWSUtil {
             val header64 = encodeB64(header.toString())
             val payload64 = encodeB64(mapper.writeValueAsString(authorizationRequestParam))
             val preHash = "$header64.$payload64"
-            val privateKey = Base64.getDecoder().decode(ed25519PrivateKey)
+            val privateKey = Base64.getUrlDecoder().decode(ed25519PrivateKey.toByteArray())
             val signature64 = if(addValidSignature)
                 createSignatureED(privateKey, preHash)
             else
