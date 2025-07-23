@@ -134,7 +134,7 @@ class DidPublicKeyResolverTest {
     fun `should throw exception when unsupported public key- publicKeyHex present in verificationMethod`() {
         val mockResponse = mapOf(
             "verificationMethod" to listOf(
-                mapOf("publicKeyHex" to  "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo",
+                mapOf("publicKeyHex" to  "z6MkwAm9tLpXZNfeEAqj9jcccFhjdiTwxVD32GhcjyeqGYSo",
                     "controller" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
                     "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
                     "type" to "Ed25519VerificationKey2020",
@@ -157,7 +157,7 @@ class DidPublicKeyResolverTest {
     fun `should throw exception when unsupported public key- publicKeyJwk present in verificationMethod`() {
         val mockResponse = mapOf(
             "verificationMethod" to listOf(
-                mapOf("publicKeyJwk" to  "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo",
+                mapOf("publicKeyJwk" to  "z6MkwAm9tLpXZNfeEAqj9jcccFhjdiTwxVD32GhcjyeqGYSo",
                     "controller" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
                     "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
                     "type" to "Ed25519VerificationKey2020",
@@ -180,7 +180,7 @@ class DidPublicKeyResolverTest {
     fun `should throw exception when unsupported public key- publicKeyPem present in verificationMethod`() {
         val mockResponse = mapOf(
             "verificationMethod" to listOf(
-                mapOf("publicKeyPem" to  "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo",
+                mapOf("publicKeyPem" to  "z6MkwAm9tLpXZNfeEAqj9jcccFhjdiTwxVD32GhcjyeqGYSo",
                     "controller" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
                     "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
                     "type" to "Ed25519VerificationKey2020",

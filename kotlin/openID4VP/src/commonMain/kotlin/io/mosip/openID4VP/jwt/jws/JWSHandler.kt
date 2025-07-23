@@ -6,13 +6,23 @@ import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.*
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
-import org.bouncycastle.crypto.signers.Ed25519Signer
+import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants
+import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants.DER_PUBLIC_KEY_PREFIX
+import io.mosip.vercred.vcverifier.exception.PublicKeyNotFoundException
+import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.util.encoders.Hex
 import java.nio.charset.StandardCharsets
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.Signature
+import java.security.spec.X509EncodedKeySpec
 
 private val className = JWSHandler::class.simpleName!!
 
+
 class JWSHandler(private val jws: String, private val publicKeyResolver: PublicKeyResolver) {
+    private val provider = BouncyCastleProvider()
 
     enum class JwsPart(val number: Int) {
         HEADER(0),
@@ -27,16 +37,15 @@ class JWSHandler(private val jws: String, private val publicKeyResolver: PublicK
             val header = parts[HEADER.number]
             val payload = parts[PAYLOAD.number]
             val signature = decodeFromBase64Url(parts[SIGNATURE.number])
-            val publicKey = publicKeyResolver.resolveKey(extractDataJsonFromJws(HEADER))
-            val publicKeyBytes = Base58.decode(publicKey.drop(1))
-            val publicKeyParams = Ed25519PublicKeyParameters(publicKeyBytes, 0)
-            val signer = Ed25519Signer()
-            signer.init(false, publicKeyParams)
-
+            val publicKeyMultibase = publicKeyResolver.resolveKey(extractDataJsonFromJws(HEADER))
+            val publicKey = getPublicKeyObjectFromPublicKeyMultibase(publicKeyMultibase)
             val messageBytes = "$header.$payload".toByteArray(StandardCharsets.UTF_8)
-            signer.update(messageBytes, 0, messageBytes.size)
-            verificationResult = signer.verifySignature(signature)
-
+            verificationResult = ED25519SignatureVerifierImpl().verify(
+                publicKey = publicKey,
+                signData = messageBytes,
+                signature = signature,
+                provider = provider
+            )
         } catch (ex: Exception) {
             throw  OpenID4VPExceptions.VerificationFailure("An unexpected exception occurred during verification: ${ex.message}", className)
         }
@@ -50,5 +59,19 @@ class JWSHandler(private val jws: String, private val publicKeyResolver: PublicK
         val payload = components[part.number]
         val decodedString = decodeFromBase64Url(payload)
         return convertJsonToMap(String(decodedString,Charsets.UTF_8))
+    }
+
+    //TODO: this function exists in vc-verifier.
+    private fun getPublicKeyObjectFromPublicKeyMultibase(publicKeyMultibase: String): PublicKey {
+        try {
+            val rawPublicKeyWithHeader = Base58.decode(publicKeyMultibase.substring(1))
+            val rawPublicKey = rawPublicKeyWithHeader.copyOfRange(2, rawPublicKeyWithHeader.size)
+            val publicKey = Hex.decode(DER_PUBLIC_KEY_PREFIX) + rawPublicKey
+            val pubKeySpec = X509EncodedKeySpec(publicKey)
+            val keyFactory = KeyFactory.getInstance("Ed25519", provider)
+            return keyFactory.generatePublic(pubKeySpec)
+        } catch (e: Exception) {
+            throw PublicKeyNotFoundException("Public key object is null")
+        }
     }
 }

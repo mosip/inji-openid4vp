@@ -66,7 +66,7 @@ class AuthRequestByReferenceTest {
                     "id" to "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0",
                     "type" to "Ed25519VerificationKey2020",
                     "controller" to "did:web:mosip.github.io",
-                    "publicKeyMultibase" to "z3CSkXmF1DmgVuqPFKMTuJgn846mEuVB9rNoyP9hXribo"
+                    "publicKeyMultibase" to "z6MkwAm9tLpXZNfeEAqj9jcccFhjdiTwxVD32GhcjyeqGYSo"
                 )
             )
         )
