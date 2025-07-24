@@ -1,8 +1,10 @@
 package io.mosip.openID4VP.constants
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 enum class FormatType(val value: String)  {
-  LDP_VC("ldp_vc"),
-  MSO_MDOC("mso_mdoc");
+    @JsonProperty("ldp_vc") LDP_VC("ldp_vc"),
+    @JsonProperty("mso_mdoc") MSO_MDOC("mso_mdoc");
 
     companion object {
         fun fromValue(value: String): FormatType? {
@@ -12,9 +14,9 @@ enum class FormatType(val value: String)  {
 }
 
 enum class VPFormatType(val value: String)  {
-  LDP_VP("ldp_vp"),
-  LDP_VC("ldp_vc"),
-  MSO_MDOC("mso_mdoc");
+    @JsonProperty("ldp_vp") LDP_VP("ldp_vp"),
+    @JsonProperty("ldp_vc") LDP_VC("ldp_vc"),
+    @JsonProperty("mso_mdoc") MSO_MDOC("mso_mdoc");
 
     companion object {
         fun fromValue(value: String): VPFormatType? {
