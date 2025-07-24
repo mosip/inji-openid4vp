@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
     id("signing")
+    id("org.jetbrains.dokka") version "1.9.20"
     alias(libs.plugins.sonarqube)
     jacoco
 }
@@ -108,7 +109,15 @@ tasks {
         setProperty("validateDistributionUrl", true)
     }
 }
-
+tasks.register<Jar>("javadocJar") {
+    dependsOn("dokkaJavadoc")
+    archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaHtml").get().outputs.files)
+}
+tasks.register<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets["main"].java.srcDirs)
+}
 tasks.build {
     finalizedBy("jacocoTestReport")
 }
@@ -122,7 +131,20 @@ sonarqube {
         property( "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
     }
 }
-
+tasks.withType<Jar>().configureEach {
+    doLast {
+        ant.withGroovyBuilder {
+            "checksum"(
+                "algorithm" to "md5",
+                "file" to archiveFile.get().asFile
+            )
+            "checksum"(
+                "algorithm" to "sha1",
+                "file" to archiveFile.get().asFile
+            )
+        }
+    }
+}
 apply {
     from("publish-artifact.gradle")
 }
