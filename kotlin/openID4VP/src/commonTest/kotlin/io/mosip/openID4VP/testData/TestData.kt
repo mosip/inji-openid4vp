@@ -28,10 +28,10 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPToken
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.FormatType.LDP_VC
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 
 const val requestUrl = "https://mock-verifier.com/verifier/get-auth-request-obj"
 const val responseUrl = "https://mock-verifier.com/response-uri"
@@ -72,7 +72,7 @@ val mdocVPTokenSigningResult: MdocVPTokenSigningResult = MdocVPTokenSigningResul
 )
 
 val ldpvpTokenSigningResults: Map<FormatType, VPTokenSigningResult> =
-    mapOf(LDP_VC to ldpVPTokenSigningResult)
+    mapOf(FormatType.LDP_VC to ldpVPTokenSigningResult)
 
 val mdocvpTokenSigningResults: Map<FormatType, VPTokenSigningResult> =
     mapOf(FormatType.MSO_MDOC to mdocVPTokenSigningResult)
@@ -102,12 +102,19 @@ val clientMetadataMap = mapOf(
 )
 
 private val vpFormatsMap = mapOf(
-    LDP_VC to VPFormatSupported(
+    VPFormatType.LDP_VC to VPFormatSupported(
         algValuesSupported = listOf("Ed25519Signature2018", "Ed25519Signature2020")
     )
 )
 
-val walletMetadata = WalletMetadata(
+val vpSigningAlgorithmSupported = mapOf(
+    VPFormatType.LDP_VC to listOf("Ed25519Signature2020", "RSASignature2018", "Ed25519Signature2018"),
+    VPFormatType.LDP_VP to listOf("Ed25519Signature2020"),
+    VPFormatType.MSO_MDOC to listOf("ES256")
+)
+
+
+    val walletMetadata = WalletMetadata(
     presentationDefinitionURISupported = true,
     vpFormatsSupported = vpFormatsMap,
     clientIdSchemesSupported = listOf(
@@ -117,7 +124,7 @@ val walletMetadata = WalletMetadata(
     ),
     requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
     authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-    authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+    authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
 )
 
 val clientMetadataString = """{
@@ -198,8 +205,6 @@ val presentationDefinitionString = """
 
 val didResponse = """
     {
-      "@context": "https://w3id.org/did-resolution/v1",
-      "didDocument": {
         "assertionMethod": [
           "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
         ],
@@ -221,33 +226,7 @@ val didResponse = """
         "authentication": [
           "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs#key-0"
         ]
-      },
-      "didResolutionMetadata": {
-        "driverDuration": 19,
-        "contentType": "application/did+ld+json",
-        "pattern": "^(did:web:.+)${'$'}",
-        "driverUrl": "http://uni-resolver-driver-did-uport:8081/1.0/identifiers/",
-        "duration": 19,
-        "did": {
-          "didString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "methodSpecificId": "mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "method": "web"
-        },
-        "didUrl": {
-          "path": null,
-          "fragment": null,
-          "query": null,
-          "didUrlString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-          "parameters": null,
-          "did": {
-            "didString": "did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
-            "methodSpecificId": "mosip.github.io:inji-mock-services:openid4vp-service:docs",
-            "method": "web"
-          }
-        }
-      },
-      "didDocumentMetadata": {}
-    }
+      }
 """.trimIndent()
 
 val trustedVerifiers: List<Verifier> = listOf(
@@ -362,7 +341,8 @@ val authorizationRequestForResponseModeJWT = AuthorizationRequest(
     redirectUri = null,
     nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
     state = "fsnC8ixCs6mWyV+00k23Qg==",
-    clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
+    clientMetadata = deserializeAndValidate(clientMetadataString, ClientMetadataSerializer),
+    walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 )
 
 val authorizationRequest = AuthorizationRequest(
@@ -377,7 +357,8 @@ val authorizationRequest = AuthorizationRequest(
     redirectUri = null,
     nonce = "bMHvX1HGhbh8zqlSWf/fuQ==",
     state = "fsnC8ixCs6mWyV+00k23Qg==",
-    clientMetadata = deserializeAndValidate(clientMetadataMap, ClientMetadataSerializer)
+    clientMetadata = deserializeAndValidate(clientMetadataMap, ClientMetadataSerializer),
+    walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 )
 
 val proof = Proof(
@@ -412,7 +393,7 @@ val vpTokenSigningPayload = VPTokenSigningPayload(
 )
 
 val unsignedVPTokens = mapOf(
-    LDP_VC to mapOf("vpTokenSigningPayload" to vpTokenSigningPayload, "unsignedVPToken" to unsignedLdpVPToken),
+    FormatType.LDP_VC to mapOf("vpTokenSigningPayload" to vpTokenSigningPayload, "unsignedVPToken" to unsignedLdpVPToken),
     FormatType.MSO_MDOC to mapOf("vpTokenSigningPayload" to listOf(mdocCredential), "unsignedVPToken" to unsignedMdocVPToken)
 )
 

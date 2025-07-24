@@ -198,4 +198,5 @@ class DidPublicKeyResolverTest {
         }
         assertEquals("Unsupported Public Key type. Supported: publicKeyMultibase", exception.message)
     }
+
 }

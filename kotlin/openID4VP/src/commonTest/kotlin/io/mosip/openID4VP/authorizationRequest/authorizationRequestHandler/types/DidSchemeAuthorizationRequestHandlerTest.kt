@@ -4,14 +4,10 @@ import io.mockk.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
-import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
 import io.mosip.openID4VP.constants.ContentType
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.FormatType.LDP_VC
-import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
@@ -27,6 +23,7 @@ class DidSchemeAuthorizationRequestHandlerTest {
     private lateinit var authorizationRequestParameters: MutableMap<String, Any>
     private lateinit var walletMetadata: WalletMetadata
     private val setResponseUri: (String) -> Unit = mockk(relaxed = true)
+    val walletNonce = "VbRRB/LTxLiXmVNZuyMO8A=="
 
     @BeforeTest
     fun setup() {
@@ -45,7 +42,7 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
         walletMetadata = WalletMetadata(
             presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(LDP_VC to VPFormatSupported(listOf("ES256"))),
+            vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
             clientIdSchemesSupported = listOf(DID),
             requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA)
         )
@@ -58,7 +55,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should succeed with valid JWS and content type`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
         val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
@@ -76,7 +78,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should throw exception with invalid content type`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
         val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JSON.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
@@ -88,7 +95,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should throw exception when body is not JWS`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
         val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to "{\"client_id\":\"didUrl\"}")
 
@@ -102,7 +114,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
     fun `validateRequestUriResponse should throw exception when JWS verification fails`() {
         every { anyConstructed<JWSHandler>().verify() } throws Exception("Invalid signature")
 
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
         val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
@@ -113,7 +130,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should throw exception when requestUriResponse is empty`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
 
         val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
             handler.validateRequestUriResponse(emptyMap())
@@ -126,7 +148,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
         every { anyConstructed<JWSHandler>().verify() } just runs
         every { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "HS256")
 
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
 
         val field = handler.javaClass.superclass.getDeclaredField("shouldValidateWithWalletMetadata")
         field.isAccessible = true
@@ -143,7 +170,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `process should return wallet metadata when requestObjectSigningAlgValuesSupported is valid`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
 
         val result = handler.process(walletMetadata)
 
@@ -152,20 +184,13 @@ class DidSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `process should throw exception when requestObjectSigningAlgValuesSupported is null`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
-
-        val invalidWalletMetadata = walletMetadata.copy(requestObjectSigningAlgValuesSupported = null)
-
-        val exception = assertFailsWith<Exception> {
-            handler.process(invalidWalletMetadata)
-        }
-        assertTrue(exception.message?.contains("request_object_signing_alg_values_supported is not present") == true)
-    }
-
-    @Test
     fun `process should throw exception when requestObjectSigningAlgValuesSupported is empty`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
 
         val invalidWalletMetadata = walletMetadata.copy(requestObjectSigningAlgValuesSupported = emptyList())
 
@@ -177,7 +202,12 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = DidSchemeAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri)
+        val handler = DidSchemeAuthorizationRequestHandler(
+            authorizationRequestParameters,
+            walletMetadata,
+            setResponseUri,
+            walletNonce
+        )
 
         val headers = handler.getHeadersForAuthorizationRequestUri()
 

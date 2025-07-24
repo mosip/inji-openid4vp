@@ -4,6 +4,8 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
 import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
+import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
+import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.isJWS
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
@@ -13,6 +15,7 @@ import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
 import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JWT
+import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import okhttp3.Headers
 
@@ -21,17 +24,23 @@ private val className = DidSchemeAuthorizationRequestHandler::class.simpleName!!
 class DidSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
     walletMetadata: WalletMetadata?,
-    setResponseUri: (String) -> Unit
-) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri) {
+    setResponseUri: (String) -> Unit,
+    walletNonce: String
+) : ClientIdSchemeBasedAuthorizationRequestHandler(
+    authorizationRequestParameters,
+    walletMetadata,
+    setResponseUri,
+    walletNonce
+) {
 
     override fun validateRequestUriResponse(
         requestUriResponse: Map<String, Any>
     ) {
-        if(requestUriResponse.isNotEmpty()){
+        if (requestUriResponse.isNotEmpty()) {
             val headers = requestUriResponse["header"] as Headers
             val responseBody = requestUriResponse["body"].toString()
 
-            if(isValidContentType(headers) &&  isJWS(responseBody)){
+            if (isValidContentType(headers) && isJWS(responseBody)) {
                 val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
                 val jwsHandler = JWSHandler(responseBody, DidPublicKeyResolver(didUrl))
 
@@ -46,18 +55,30 @@ class DidSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
+
+                val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?.let {
+                    determineHttpMethod(it)
+                } ?: HttpMethod.GET
+
+                if (httpMethod == HttpMethod.POST)
+                    validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestParameters = authorizationRequestObject
 
             } else
-                throw OpenID4VPExceptions.InvalidData("Authorization Request must be signed for given client_id_scheme",
-                    className)
-        } else  throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value),"", className)
+                throw OpenID4VPExceptions.InvalidData(
+                    "Authorization Request must be signed for given client_id_scheme",
+                    className
+                )
+        } else throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value), "", className)
 
     }
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {
-        if(walletMetadata.requestObjectSigningAlgValuesSupported.isNullOrEmpty())
-            throw  OpenID4VPExceptions.InvalidData("request_object_signing_alg_values_supported is not present in wallet metadata",className)
+        if (walletMetadata.requestObjectSigningAlgValuesSupported.isNullOrEmpty())
+            throw OpenID4VPExceptions.InvalidData(
+                "request_object_signing_alg_values_supported is not present in wallet metadata",
+                className
+            )
         return walletMetadata
     }
 
@@ -75,8 +96,16 @@ class DidSchemeAuthorizationRequestHandler(
         if (shouldValidateWithWalletMetadata) {
             val alg = headers["alg"] as String
             walletMetadata?.let {
-                if (!it.requestObjectSigningAlgValuesSupported!!.contains(RequestSigningAlgorithm.fromValue(alg)))
-                    throw OpenID4VPExceptions.InvalidData("request_object_signing_alg is not support by wallet", className)
+                if (!it.requestObjectSigningAlgValuesSupported!!.contains(
+                        RequestSigningAlgorithm.fromValue(
+                            alg
+                        )
+                    )
+                )
+                    throw OpenID4VPExceptions.InvalidData(
+                        "request_object_signing_alg is not support by wallet",
+                        className
+                    )
             }
         }
     }

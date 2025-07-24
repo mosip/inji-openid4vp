@@ -36,7 +36,7 @@ fun getStringValue(params: Map<String, Any>, key: String): String? {
     return params[key]?.toString()
 }
 
-fun generateNonce(minEntropy: Int): String {
+fun generateNonce(minEntropy: Int = 16): String {
     val secureRandom = SecureRandom()
     val nonce = CharArray(minEntropy) {
         when (val randomChar = secureRandom.nextInt(62)) { // 26 (A-Z) + 26 (a-z) + 10 (0-9)

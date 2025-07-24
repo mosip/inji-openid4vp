@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.authorizationResponse
 
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
-import io.mosip.openID4VP.common.JacksonObjectMapper
 import io.mosip.openID4VP.common.getObjectMapper
 import io.mosip.openID4VP.constants.FormatType
 

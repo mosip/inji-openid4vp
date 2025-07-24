@@ -6,7 +6,6 @@ import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.*
 import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
-import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants
 import io.mosip.vercred.vcverifier.constants.CredentialVerifierConstants.DER_PUBLIC_KEY_PREFIX
 import io.mosip.vercred.vcverifier.exception.PublicKeyNotFoundException
 import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
@@ -15,7 +14,6 @@ import org.bouncycastle.util.encoders.Hex
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
 import java.security.PublicKey
-import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
 
 private val className = JWSHandler::class.simpleName!!

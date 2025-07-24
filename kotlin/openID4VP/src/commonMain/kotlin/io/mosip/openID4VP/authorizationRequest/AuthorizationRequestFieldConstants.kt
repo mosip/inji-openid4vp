@@ -12,6 +12,7 @@ enum class AuthorizationRequestFieldConstants(val value: String) {
     REQUEST_URI ("request_uri"),
     REQUEST_URI_METHOD ("request_uri_method"),
     NONCE ("nonce"),
+    WALLET_NONCE ("wallet_nonce"),
     STATE ("state"),
     CLIENT_METADATA ("client_metadata")
 }

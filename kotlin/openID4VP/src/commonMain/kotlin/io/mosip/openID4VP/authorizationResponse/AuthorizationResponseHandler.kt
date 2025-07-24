@@ -12,7 +12,6 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenArray
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenElement
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
 import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.common.generateNonce
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.ResponseType
 import io.mosip.openID4VP.constants.VPFormatType
@@ -20,7 +19,6 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSign
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
-import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.encodeToJsonString
@@ -38,13 +36,45 @@ internal class AuthorizationResponseHandler {
     private lateinit var unsignedVPTokens: Map<FormatType, Map<String, Any>>
     private lateinit var walletNonce : String
 
-    fun constructUnsignedVPToken(
+    fun constructUnsignedVPToken(credentialsMap: Map<String, Map<FormatType, List<Any>>>,
+                                 holderId: String?,
+                                 authorizationRequest: AuthorizationRequest,
+                                 responseUri: String,
+                                 signatureSuite: String?,
+                                 nonce: String
+    ): Map<FormatType, UnsignedVPToken> {
+
+        val containsLdpVc = credentialsMap.any { (_, formatMap) ->
+            formatMap.containsKey(FormatType.LDP_VC)
+        }
+
+        if (containsLdpVc) {
+            require(!holderId.isNullOrEmpty()) {
+                OpenID4VPExceptions.InvalidData(
+                    "Holder ID cannot be null or empty for LDP VC format",
+                    className
+                )
+            }
+            require(!signatureSuite.isNullOrEmpty()) {
+                OpenID4VPExceptions.InvalidData(
+                    "Signature Suite cannot be null or empty for LDP VC format",
+                    className
+                )
+            }
+        }
+
+        return createUnsignedVPToken(credentialsMap, holderId, authorizationRequest, responseUri, signatureSuite, nonce)
+    }
+
+    private fun createUnsignedVPToken(
         credentialsMap: Map<String, Map<FormatType, List<Any>>>,
-        holderId: String,
+        holderId: String?,
         authorizationRequest: AuthorizationRequest,
         responseUri: String,
-        signatureSuite: String
+        signatureSuite: String?,
+        nonce: String
     ): Map<FormatType, UnsignedVPToken> {
+        walletNonce = nonce
         if (credentialsMap.isEmpty()) {
             throw OpenID4VPExceptions.InvalidData("Empty credentials list - The Wallet did not have the requested Credentials to satisfy the Authorization Request.", className)
         }
@@ -96,7 +126,7 @@ internal class AuthorizationResponseHandler {
                 )
             }
 
-            else -> throw  OpenID4VPExceptions.InvalidData("Provided response_type - ${authorizationRequest.responseType} is not supported", className,OpenID4VPErrorCodes.VP_FORMATS_NOT_SUPPORTED)
+            else -> throw  OpenID4VPExceptions.InvalidData("Provided response_type - ${authorizationRequest.responseType} is not supported", className)
         }
     }
 
@@ -209,8 +239,8 @@ internal class AuthorizationResponseHandler {
     private fun createUnsignedVPTokens(
         authorizationRequest: AuthorizationRequest,
         responseUri: String,
-        holderId: String,
-        signatureSuite: String
+        holderId: String?,
+        signatureSuite: String?
     ): Map<FormatType, Map<String, Any>> {
 
         val groupedVcs: Map<FormatType, List<Any>> = credentialsMap.entries
@@ -220,8 +250,6 @@ internal class AuthorizationResponseHandler {
                 lists.flatten()
             }
 
-        walletNonce = generateNonce(16)
-
         // group all formats together, call specific creator and pass the grouped credentials
         return groupedVcs.mapValues { (format, credentialsArray) ->
             when (format) {
@@ -229,10 +257,10 @@ internal class AuthorizationResponseHandler {
                     UnsignedLdpVPTokenBuilder(
                         verifiableCredential = credentialsArray,
                         id = UUIDGenerator.generateUUID(),
-                        holder = holderId,
+                        holder = holderId!!,
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,
-                        signatureSuite = signatureSuite
+                        signatureSuite = signatureSuite!!
                     ).build()
                 }
 
@@ -259,12 +287,13 @@ internal class AuthorizationResponseHandler {
         val transformedCredentials = verifiableCredentials.mapValues { (_, credentials) ->
             mapOf(FormatType.LDP_VC to credentials)
         }
-        constructUnsignedVPToken(
+        createUnsignedVPToken(
             credentialsMap = transformedCredentials,
+            holderId = "",
             authorizationRequest = authorizationRequest,
             responseUri = responseUri,
-            holderId = "",
-            signatureSuite = "Ed25519Signature2020"
+            signatureSuite = "Ed25519Signature2020",
+            nonce = walletNonce
         )
         val unsignedLdpVPToken =
             unsignedVPTokens[FormatType.LDP_VC]?.get("vpTokenSigningPayload").let {

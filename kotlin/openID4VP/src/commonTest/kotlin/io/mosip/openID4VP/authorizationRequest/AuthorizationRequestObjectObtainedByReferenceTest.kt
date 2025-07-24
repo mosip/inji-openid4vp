@@ -2,13 +2,14 @@ package io.mosip.openID4VP.authorizationRequest
 
 import io.mockk.clearAllMocks
 import io.mockk.every
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.*
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.FormatType
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
@@ -16,6 +17,7 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions
 import io.mosip.openID4VP.testData.*
+import io.mosip.vercred.vcverifier.DidWebResolver
 import okhttp3.Headers
 import kotlin.test.*
 
@@ -41,6 +43,10 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         } returns mapOf("body" to didResponse)
 
 
+        mockkConstructor(DidWebResolver::class)
+        every { anyConstructed<DidWebResolver>().resolve() } returns convertJsonToMap(didResponse)
+
+
     }
 
     @AfterTest
@@ -54,26 +60,24 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
             "request_uri_method" to "post"
         )
-        val walletMetadata = WalletMetadata(
-            presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(
-                FormatType.LDP_VC to VPFormatSupported(
-                    algValuesSupported = listOf("RSA")
-                )
-            ),
-            clientIdSchemesSupported = listOf(
-                ClientIdScheme.REDIRECT_URI,
-                PRE_REGISTERED
-            ),
-            requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
-            authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
-        )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
             authorizationRequestParamsMap,
             true,
             DID
+        )
+
+        val walletMetadata = WalletMetadata(
+            presentationDefinitionURISupported = true,
+            vpFormatsSupported = mapOf(
+                "LDP_VC" to VPFormatSupported(
+                    algValuesSupported = listOf("EdDSA", "ES256")
+                )
+            ),
+            clientIdSchemesSupported = listOf("REDIRECT_URI"),
+            requestObjectSigningAlgValuesSupported = listOf("EdDSA"),
+            authorizationEncryptionAlgValuesSupported = listOf("ECDH_ES"),
+            authorizationEncryptionEncValuesSupported = listOf("A256GCM")
         )
 
         val openID4VP = OpenID4VP("test-OpenID4VP", walletMetadata)
@@ -147,7 +151,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 trustedVerifiers,
                 walletMetadata,
                 { _: String -> },
-                false
+                false,
+                walletNonce
             )
         }
 
@@ -176,7 +181,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 trustedVerifiers,
                 walletMetadata,
                 { _: String -> },
-                false
+                false,
+                walletNonce
             )
         }
 
@@ -288,7 +294,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 trustedVerifiers,
                 walletMetadata,
                 { _: String -> },
-                false
+                false,
+                walletNonce
             )
         }
     }
@@ -321,7 +328,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 trustedVerifiers,
                 walletMetadata,
                 { _: String -> },
-                false
+                false,
+                walletNonce
             )
         }
     }
@@ -354,7 +362,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 trustedVerifiers,
                 walletMetadata,
                 { _: String -> },
-                false
+                false,
+                walletNonce
             )
         }
     }

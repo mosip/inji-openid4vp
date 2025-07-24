@@ -8,8 +8,8 @@ import io.mosip.openID4VP.testData.*
 import okhttp3.Headers
 import io.mockk.*
 import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 import kotlin.test.*
 
 class PreRegisteredSchemeAuthorizationRequestHandlerTest {
@@ -35,7 +35,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
         walletMetadata = WalletMetadata(
             presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(FormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
+            vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
             clientIdSchemesSupported = listOf(ClientIdScheme.PRE_REGISTERED)
         )
     }
@@ -43,7 +43,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateClientId should pass when client ID is trusted and validation is enabled`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         try {
@@ -57,7 +62,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     fun `validateClientId should skip validation when shouldValidateClient is false`() {
         authorizationRequestParameters[CLIENT_ID.value] = "untrusted-client-id"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, false, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            false,
+            setResponseUri,
+            walletNonce
         )
 
         try {
@@ -71,7 +81,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     fun `validateClientId should throw exception when client ID is not trusted`() {
         authorizationRequestParameters[CLIENT_ID.value] = "untrusted-client-id"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val exception = assertFailsWith<Exception> {
@@ -83,7 +98,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateRequestUriResponse should accept valid JSON response`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val headers = Headers.Builder()
@@ -103,7 +123,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateRequestUriResponse should throw exception for invalid content type`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val headers = Headers.Builder()
@@ -122,7 +147,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `process should return wallet metadata with null requestObjectSigningAlgValuesSupported`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val processedMetadata = handler.process(walletMetadata.copy(
@@ -135,7 +165,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val headers = handler.getHeadersForAuthorizationRequestUri()
@@ -147,7 +182,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     @Test
     fun `validateAndParseRequestFields should pass for trusted client with valid response URI`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         try {
@@ -161,7 +201,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     fun `validateAndParseRequestFields should throw exception when response URI is not trusted`() {
         authorizationRequestParameters[RESPONSE_URI.value] = "https://untrusted.verifier.com/response"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, true, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
         )
 
         val exception = assertFailsWith<Exception> {
@@ -174,7 +219,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     fun `validateAndParseRequestFields should skip validation when shouldValidateClient is false`() {
         authorizationRequestParameters[RESPONSE_URI.value] = "https://untrusted.verifier.com/response"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers, authorizationRequestParameters, walletMetadata, false, setResponseUri
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            false,
+            setResponseUri,
+            walletNonce
         )
 
         try {

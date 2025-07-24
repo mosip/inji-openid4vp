@@ -4,12 +4,12 @@ import android.util.Base64
 import android.util.Base64.encodeToString
 import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
 
 class EncoderTest {
 

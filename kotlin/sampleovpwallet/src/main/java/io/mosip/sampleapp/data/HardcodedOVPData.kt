@@ -7,27 +7,27 @@ import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
-import io.mosip.openID4VP.constants.FormatType
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.constants.VPFormatType
 
 object HardcodedOVPData {
     fun getWalletMetadata(): WalletMetadata {
         return WalletMetadata(
             presentationDefinitionURISupported = true,
             vpFormatsSupported = mapOf(
-                FormatType.LDP_VC to VPFormatSupported(
+                VPFormatType.LDP_VC to VPFormatSupported(
                     algValuesSupported = listOf("Ed25519Signature2018", "Ed25519Signature2020", "RSASignature2018")
                 ),
-                FormatType.MSO_MDOC to VPFormatSupported(
+                VPFormatType.MSO_MDOC to VPFormatSupported(
                     algValuesSupported = listOf("ES256")
                 )
             ),
             clientIdSchemesSupported = listOf(ClientIdScheme.REDIRECT_URI, ClientIdScheme.DID, ClientIdScheme.PRE_REGISTERED),
             requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
             authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+            authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
         )
     }
 

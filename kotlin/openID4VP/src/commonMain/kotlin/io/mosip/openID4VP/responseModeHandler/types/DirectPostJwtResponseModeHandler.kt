@@ -5,7 +5,7 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponse
 import io.mosip.openID4VP.authorizationResponse.toJsonEncodedMap
-import io.mosip.openID4VP.constants.ContentEncrytionAlgorithm
+import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
@@ -67,7 +67,7 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
         val supportedEncs = walletMetadata.authorizationEncryptionEncValuesSupported
             ?: throwInvalidDataException("authorization_encryption_enc_values_supported must be present in wallet_metadata")
 
-        if (ContentEncrytionAlgorithm.fromValue(clientEnc) !in supportedEncs) {
+        if (ContentEncryptionAlgorithm.fromValue(clientEnc) !in supportedEncs) {
             throwInvalidDataException("authorization_encrypted_response_enc is not supported")
         }
     }
