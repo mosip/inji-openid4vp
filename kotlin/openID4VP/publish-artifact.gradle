@@ -5,16 +5,14 @@ version = "0.4.0-SNAPSHOT"
 publishing {
     repositories {
         maven {
-            url = System.getenv("OSSRH_URL")
-            name = "inji-openId4vp"
-            credentials {
-                username = System.getenv("OSSRH_USER")
-                password = System.getenv("OSSRH_SECRET")
-            }
+            name = "LocalMavenWithChecksums"
+            url = uri(layout.buildDirectory.dir("staging"))
         }
     }
     publications {
         aar(MavenPublication) {
+            artifact(tasks.named("javadocJar").get())
+            artifact(tasks.named("sourcesJar").get())
             pom {
                 withXml {
                     asNode().appendNode('name', "Inji OpenID4VP")
