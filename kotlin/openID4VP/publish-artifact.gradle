@@ -4,9 +4,20 @@ version = "0.4.0-SNAPSHOT"
 
 publishing {
     repositories {
-        maven {
-            name = "LocalMavenWithChecksums"
-            url = uri(layout.buildDirectory.dir("staging"))
+        if (System.getenv("RELEASE_TYPE") == "release") {
+            maven {
+                name = "LocalMavenWithChecksums"
+                url = uri(layout.buildDirectory.dir("staging"))
+            }
+        } else {
+            maven {
+                url = System.getenv("OSSRH_URL")
+                name = "inji-openid4vp"
+                credentials {
+                    username = System.getenv("OSSRH_USER")
+                    password = System.getenv("OSSRH_SECRET")
+                }
+            }
         }
     }
     publications {
