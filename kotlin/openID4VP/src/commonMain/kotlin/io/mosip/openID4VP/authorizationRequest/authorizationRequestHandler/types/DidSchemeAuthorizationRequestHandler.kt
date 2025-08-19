@@ -13,10 +13,10 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
-import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JWT
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.vercred.vcverifier.publicKey.types.did.DidPublicKeyResolver
 import okhttp3.Headers
 
 private val className = DidSchemeAuthorizationRequestHandler::class.simpleName!!
@@ -42,23 +42,25 @@ class DidSchemeAuthorizationRequestHandler(
 
             if (isValidContentType(headers) && isJWS(responseBody)) {
                 val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
-                val jwsHandler = JWSHandler(responseBody, DidPublicKeyResolver(didUrl))
 
-                val header = jwsHandler.extractDataJsonFromJws(HEADER)
+                val header = JWSHandler.extractDataJsonFromJws(responseBody, HEADER)
                 validateAuthorizationRequestSigningAlgorithm(header)
 
-                jwsHandler.verify()
+                println("Validating JWS signature for didUrl: $didUrl, header: $header, jws: $responseBody")
+                JWSHandler.verify(responseBody, DidPublicKeyResolver(), didUrl)
 
-                val authorizationRequestObject = jwsHandler.extractDataJsonFromJws(PAYLOAD)
+                val authorizationRequestObject =
+                    JWSHandler.extractDataJsonFromJws(responseBody, PAYLOAD)
 
                 validateAuthorizationRequestObjectAndParameters(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
 
-                val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?.let {
-                    determineHttpMethod(it)
-                } ?: HttpMethod.GET
+                val httpMethod =
+                    getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)?.let {
+                        determineHttpMethod(it)
+                    } ?: HttpMethod.GET
 
                 if (httpMethod == HttpMethod.POST)
                     validateWalletNonce(authorizationRequestObject, walletNonce)

@@ -10,7 +10,6 @@ import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
-import io.mosip.openID4VP.jwt.keyResolver.types.DidPublicKeyResolver
 import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.didUrl
 import io.mosip.openID4VP.testData.jws
@@ -47,10 +46,9 @@ class DidSchemeAuthorizationRequestHandlerTest {
             requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA)
         )
 
-        mockkConstructor(JWSHandler::class)
-        mockkConstructor(DidPublicKeyResolver::class)
-        every { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "ES256")
-        every { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.PAYLOAD) } returns authorizationRequestParameters
+        mockkObject(JWSHandler)
+        every { JWSHandler.extractDataJsonFromJws(jws,JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "ES256")
+        every { JWSHandler.extractDataJsonFromJws(jws,JWSHandler.JwsPart.PAYLOAD) } returns authorizationRequestParameters
     }
 
     @Test
@@ -61,10 +59,17 @@ class DidSchemeAuthorizationRequestHandlerTest {
             setResponseUri,
             walletNonce
         )
-        val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
+        val headers =
+            Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
-        every { anyConstructed<JWSHandler>().verify() } just runs
+        every {
+            JWSHandler.verify(
+                any(),
+                any(),
+                any()
+            )
+        } just runs
 
         try {
             handler.validateRequestUriResponse(requestUriResponse)
@@ -72,8 +77,8 @@ class DidSchemeAuthorizationRequestHandlerTest {
             fail("Expected no exception, but caught: ${e::class.simpleName} - ${e.message}")
         }
 
-        verify { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.HEADER) }
-        verify { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.PAYLOAD) }
+        verify { JWSHandler.extractDataJsonFromJws(jws, JWSHandler.JwsPart.HEADER) }
+        verify { JWSHandler.extractDataJsonFromJws(jws, JWSHandler.JwsPart.PAYLOAD) }
     }
 
     @Test
@@ -84,7 +89,8 @@ class DidSchemeAuthorizationRequestHandlerTest {
             setResponseUri,
             walletNonce
         )
-        val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JSON.value).build()
+        val headers =
+            Headers.Builder().add("content-type", ContentType.APPLICATION_JSON.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
         val exception = assertFailsWith<Exception> {
@@ -101,7 +107,8 @@ class DidSchemeAuthorizationRequestHandlerTest {
             setResponseUri,
             walletNonce
         )
-        val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
+        val headers =
+            Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to "{\"client_id\":\"didUrl\"}")
 
         val exception = assertFailsWith<Exception> {
@@ -112,7 +119,11 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should throw exception when JWS verification fails`() {
-        every { anyConstructed<JWSHandler>().verify() } throws Exception("Invalid signature")
+        every { JWSHandler.verify(
+            jws,
+            any(),
+            didUrl
+        ) } throws Exception("Invalid signature")
 
         val handler = DidSchemeAuthorizationRequestHandler(
             authorizationRequestParameters,
@@ -120,7 +131,8 @@ class DidSchemeAuthorizationRequestHandlerTest {
             setResponseUri,
             walletNonce
         )
-        val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
+        val headers =
+            Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
         assertFailsWith<Exception> {
@@ -145,8 +157,14 @@ class DidSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateRequestUriResponse should throw exception when signing algorithm is not supported`() {
-        every { anyConstructed<JWSHandler>().verify() } just runs
-        every { anyConstructed<JWSHandler>().extractDataJsonFromJws(JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "HS256")
+        every { JWSHandler.verify(
+            jws,
+            any(),
+            didUrl
+        ) } just runs
+        every { JWSHandler.extractDataJsonFromJws(jws,JWSHandler.JwsPart.HEADER) } returns mutableMapOf(
+            "alg" to "HS256"
+        )
 
         val handler = DidSchemeAuthorizationRequestHandler(
             authorizationRequestParameters,
@@ -155,11 +173,13 @@ class DidSchemeAuthorizationRequestHandlerTest {
             walletNonce
         )
 
-        val field = handler.javaClass.superclass.getDeclaredField("shouldValidateWithWalletMetadata")
+        val field =
+            handler.javaClass.superclass.getDeclaredField("shouldValidateWithWalletMetadata")
         field.isAccessible = true
         field.set(handler, true)
 
-        val headers = Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
+        val headers =
+            Headers.Builder().add("content-type", ContentType.APPLICATION_JWT.value).build()
         val requestUriResponse = mapOf("header" to headers, "body" to jws)
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
@@ -180,7 +200,10 @@ class DidSchemeAuthorizationRequestHandlerTest {
         val result = handler.process(walletMetadata)
 
         assertEquals(walletMetadata, result)
-        assertEquals(listOf(RequestSigningAlgorithm.EdDSA), result.requestObjectSigningAlgValuesSupported)
+        assertEquals(
+            listOf(RequestSigningAlgorithm.EdDSA),
+            result.requestObjectSigningAlgValuesSupported
+        )
     }
 
     @Test
@@ -192,7 +215,8 @@ class DidSchemeAuthorizationRequestHandlerTest {
             walletNonce
         )
 
-        val invalidWalletMetadata = walletMetadata.copy(requestObjectSigningAlgValuesSupported = emptyList())
+        val invalidWalletMetadata =
+            walletMetadata.copy(requestObjectSigningAlgValuesSupported = emptyList())
 
         val exception = assertFailsWith<Exception> {
             handler.process(invalidWalletMetadata)
