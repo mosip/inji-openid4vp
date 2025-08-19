@@ -202,6 +202,22 @@ tasks.register("generatePom") {
     dependsOn("generatePomFileForAarPublication", "generatePomFileForJarReleasePublication")
 }
 
+afterEvaluate {
+    tasks.findByName("publishAarPublicationToLocalMavenWithChecksumsRepository")?.let {
+        it.dependsOn(tasks.named("signJarReleasePublication"))
+    }
+    tasks.findByName("publishJarReleasePublicationToLocalMavenWithChecksumsRepository")?.let {
+        it.dependsOn(tasks.named("signAarPublication"))
+    }
+    tasks.findByName("publishAarPublicationToMavenLocal")?.let {
+        it.dependsOn(tasks.named("signJarReleasePublication"))
+    }
+    tasks.findByName("publishJarReleasePublicationToMavenLocal")?.let {
+        it.dependsOn(tasks.named("signAarPublication"))
+    }
+}
+
+
 apply(from = "publish-artifact.gradle")
 var buildDir = project.layout.buildDirectory.get()
 sonarqube {
