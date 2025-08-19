@@ -7,7 +7,7 @@ import io.mosip.openID4VP.testData.JWSUtil
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtPayload
 import io.mosip.openID4VP.testData.didUrl
-import io.mosip.vercred.vcverifier.publicKey.PublicKeyResolver
+import io.mosip.vercred.vcverifier.keyResolver.PublicKeyResolver
 import java.util.Base64
 import kotlin.test.*
 

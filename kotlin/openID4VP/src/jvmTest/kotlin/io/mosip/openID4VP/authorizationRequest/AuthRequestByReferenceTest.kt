@@ -35,7 +35,6 @@ import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
 import io.mosip.openID4VP.testData.walletMetadata
-import io.mosip.vercred.vcverifier.DidWebResolver
 import okhttp3.Headers
 import kotlin.test.*
 
@@ -57,9 +56,6 @@ class AuthRequestByReferenceTest {
                 HttpMethod.GET
             )
         } returns mapOf("body" to presentationDefinitionString)
-        mockkConstructor(DidWebResolver::class)
-        every { anyConstructed<DidWebResolver>().resolve() } returns convertJsonToMap(didResponse)
-
     }
 
     @Test

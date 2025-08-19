@@ -6,7 +6,7 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.SIGNATURE
-import io.mosip.vercred.vcverifier.publicKey.PublicKeyResolver
+import io.mosip.vercred.vcverifier.keyResolver.PublicKeyResolver
 import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
 import java.nio.charset.StandardCharsets
 import java.security.PublicKey

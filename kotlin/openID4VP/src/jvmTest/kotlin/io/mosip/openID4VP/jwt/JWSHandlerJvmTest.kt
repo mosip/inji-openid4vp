@@ -8,7 +8,7 @@ import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtPayload
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.didUrl
-import io.mosip.vercred.vcverifier.publicKey.types.did.DidPublicKeyResolver
+import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
 
 class JWSHandlerTest {
     private val publicKeyResolver = DidPublicKeyResolver()
-
 
     @AfterTest
     fun tearDown() {

@@ -10,7 +10,6 @@ import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPTokenBu
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.DateUtil
 import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
@@ -18,7 +17,6 @@ import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 import io.mosip.openID4VP.testData.*
-import io.mosip.vercred.vcverifier.DidWebResolver
 import java.io.IOException
 import kotlin.test.*
 
@@ -75,9 +73,6 @@ class AuthorizationResponseHandlerTest {
             "unsignedVPToken" to unsignedMdocVPToken,
             "vpTokenSigningPayload" to listOf(mdocCredential)
         )
-
-        mockkConstructor(DidWebResolver::class)
-        every { anyConstructed<DidWebResolver>().resolve() } returns convertJsonToMap(didResponse)
 
         mockkObject(ResponseModeBasedHandlerFactory)
         every { ResponseModeBasedHandlerFactory.get(any()) } returns mockResponseHandler

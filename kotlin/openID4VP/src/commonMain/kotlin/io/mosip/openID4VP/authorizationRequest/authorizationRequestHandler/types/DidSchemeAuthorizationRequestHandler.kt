@@ -16,7 +16,7 @@ import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JWT
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
-import io.mosip.vercred.vcverifier.publicKey.types.did.DidPublicKeyResolver
+import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
 import okhttp3.Headers
 
 private val className = DidSchemeAuthorizationRequestHandler::class.simpleName!!
