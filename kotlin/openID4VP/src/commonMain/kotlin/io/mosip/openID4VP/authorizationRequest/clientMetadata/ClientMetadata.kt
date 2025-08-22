@@ -114,12 +114,12 @@ object ClientMetadataSerializer : KSerializer<ClientMetadata> {
 
 @Serializable(with = ClientMetadataSerializer::class)
 class ClientMetadata(
-	@SerialName("client_name") val clientName: String?,
-	@SerialName("logo_uri") val logoUri: String?,
+	@SerialName("client_name") val clientName: String? = null,
+	@SerialName("logo_uri") val logoUri: String? = null,
 	@SerialName("vp_formats") val vpFormats: Map<String, Map<String, List<String>>>,
-	@SerialName("authorization_encrypted_response_alg") val authorizationEncryptedResponseAlg: String?,
-	@SerialName("authorization_encrypted_response_enc") val authorizationEncryptedResponseEnc: String?,
-	@SerialName("jwks") val jwks: Jwks?,
+	@SerialName("authorization_encrypted_response_alg") val authorizationEncryptedResponseAlg: String? = null,
+	@SerialName("authorization_encrypted_response_enc") val authorizationEncryptedResponseEnc: String? = null,
+	@SerialName("jwks") val jwks: Jwks? = null,
 ) : Validatable {
 	override fun validate() {
 		if(vpFormats.isEmpty())	{

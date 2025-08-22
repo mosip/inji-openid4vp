@@ -14,6 +14,7 @@ import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
 import io.mosip.openID4VP.constants.HttpMethod
 import okhttp3.Headers
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidVerifier
 
 private val className = PreRegisteredSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -24,13 +25,21 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     private val shouldValidateClient: Boolean,
     setResponseUri: (String) -> Unit,
     walletNonce: String
-) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce) {
+) : ClientIdSchemeBasedAuthorizationRequestHandler(
+    authorizationRequestParameters,
+    walletMetadata,
+    setResponseUri,
+    walletNonce
+) {
     override fun validateClientId() {
         if (!shouldValidateClient) return
 
-        val clientId =  getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
+        val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
         if (trustedVerifiers.none { it.clientId == clientId }) {
-            throw  OpenID4VPExceptions.InvalidVerifier("Verifier is not trusted by the wallet", className)
+            throw InvalidVerifier(
+                "Verifier is not trusted by the wallet",
+                className
+            )
         }
     }
 
@@ -49,15 +58,19 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                     authorizationRequestParameters,
                     authorizationRequestObject
                 )
-                val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?.let {
-                    determineHttpMethod(it)
-                } ?: HttpMethod.GET
+                val httpMethod =
+                    getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)?.let {
+                        determineHttpMethod(it)
+                    } ?: HttpMethod.GET
 
                 if (httpMethod == HttpMethod.POST)
                     validateWalletNonce(authorizationRequestObject, walletNonce)
                 authorizationRequestObject
             } else {
-                throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)
+                throw OpenID4VPExceptions.InvalidData(
+                    "Authorization Request must not be signed for given client_id_scheme",
+                    className
+                )
             }
         }
     }
@@ -80,13 +93,29 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
 
         if (!shouldValidateClient) return
 
-        val clientId =  getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
+        val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
         val responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value)!!
 
-        if (trustedVerifiers.none { it.clientId == clientId && it.responseUris.contains(responseUri) }) {
-            throw OpenID4VPExceptions.InvalidVerifier("Verifier is not trusted by the wallet", className)
-        }
+        val preRegisteredVerifier = trustedVerifiers.find { it.clientId == clientId }
 
+        if (preRegisteredVerifier != null) {
+            if (!preRegisteredVerifier.responseUris.contains(responseUri)) {
+                throw InvalidVerifier(
+                    "Verifier is not trusted by the wallet",
+                    className
+                )
+            }
+
+            if (preRegisteredVerifier.clientMetadata != null && authorizationRequestParameters.containsKey(
+                    CLIENT_METADATA.value
+                )
+            ) {
+                throw InvalidVerifier(
+                    "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
+                    className
+                )
+            }
+        }
     }
 
     private fun isValidContentType(headers: Headers): Boolean =
