@@ -16,6 +16,7 @@ fun parseAndValidateClientMetadata(
 ) {
     val clientMetadata = authorizationRequestParameters[CLIENT_METADATA.value]?.let {
         when (it) {
+            is ClientMetadata -> it
             is String -> deserializeAndValidate(it, ClientMetadataSerializer)
             is Map<*, *> -> deserializeAndValidate(
                 it as Map<String, Any>,

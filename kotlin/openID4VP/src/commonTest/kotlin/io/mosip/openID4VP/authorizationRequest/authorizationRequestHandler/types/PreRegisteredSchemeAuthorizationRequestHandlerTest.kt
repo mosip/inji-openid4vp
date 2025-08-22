@@ -20,15 +20,16 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     private lateinit var walletMetadata: WalletMetadata
     private val setResponseUri: (String) -> Unit = mockk(relaxed = true)
     private val validClientId = "mock-client"
-    val trustedVerifiers: List<Verifier> = listOf(
+    val clientMetadata = ClientMetadata(
+        clientName = "mock-client",
+        vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("ES256"))),
+    )
+    private val trustedVerifiers: List<Verifier> = listOf(
         Verifier(
             "mock-client", listOf(
                 "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
             ),
-            clientMetadata = ClientMetadata(
-                clientName = "mock-client",
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("ES256"))),
-            )
+            clientMetadata = clientMetadata
         )
     )
 
@@ -43,7 +44,6 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             RESPONSE_MODE.value to "direct_post",
             NONCE.value to "VbRRB/LTxLiXmVNZuyMO8A==",
             STATE.value to "+mRQe1d6pBoJqF6Ab28klg==",
-            CLIENT_METADATA.value to clientMetadataString
         )
 
         walletMetadata = WalletMetadata(
@@ -211,10 +211,12 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `validateAndParseRequestFields should throw exception when client metadata of the pre-registered verifier is known but its also availabel in authorization request`() {
+    fun `validateAndParseRequestFields should throw exception when client metadata of the pre-registered verifier is known but its also available in authorization request`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers,
-            authorizationRequestParameters,
+            (authorizationRequestParameters + mapOf(
+                CLIENT_METADATA.value to clientMetadataString
+            )) as MutableMap<String, Any>,
             walletMetadata,
             true,
             setResponseUri,
@@ -242,7 +244,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         try {
             handler.validateAndParseRequestFields()
 
-            assertEquals(handler.authorizationRequestParameters[CLIENT_METADATA.value], clientMetadataString)
+            assertEquals(handler.authorizationRequestParameters[CLIENT_METADATA.value], clientMetadata)
         } catch (e: Throwable) {
             fail("Expected no exception, but got: ${e.message}")
         }

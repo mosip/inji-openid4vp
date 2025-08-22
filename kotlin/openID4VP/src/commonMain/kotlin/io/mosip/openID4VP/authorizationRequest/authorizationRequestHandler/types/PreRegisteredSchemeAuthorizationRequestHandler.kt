@@ -89,33 +89,34 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     }
 
     override fun validateAndParseRequestFields() {
-        super.validateAndParseRequestFields()
+        if (shouldValidateClient) {
+            val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
+            val responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value)!!
 
-        if (!shouldValidateClient) return
+            val preRegisteredVerifier = trustedVerifiers.find { it.clientId == clientId }
 
-        val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
-        val responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value)!!
+            if (preRegisteredVerifier != null) {
+                if (!preRegisteredVerifier.responseUris.contains(responseUri)) {
+                    throw InvalidVerifier(
+                        "Verifier is not trusted by the wallet",
+                        className
+                    )
+                }
 
-        val preRegisteredVerifier = trustedVerifiers.find { it.clientId == clientId }
-
-        if (preRegisteredVerifier != null) {
-            if (!preRegisteredVerifier.responseUris.contains(responseUri)) {
-                throw InvalidVerifier(
-                    "Verifier is not trusted by the wallet",
-                    className
-                )
-            }
-
-            if (preRegisteredVerifier.clientMetadata != null && authorizationRequestParameters.containsKey(
-                    CLIENT_METADATA.value
-                )
-            ) {
-                throw InvalidVerifier(
-                    "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
-                    className
-                )
+                if (preRegisteredVerifier.clientMetadata != null) {
+                    if (authorizationRequestParameters.containsKey(CLIENT_METADATA.value)) {
+                        throw InvalidVerifier(
+                            "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
+                            className
+                        )
+                    }
+                    authorizationRequestParameters[CLIENT_METADATA.value] =
+                        preRegisteredVerifier.clientMetadata
+                }
             }
         }
+
+        super.validateAndParseRequestFields()
     }
 
     private fun isValidContentType(headers: Headers): Boolean =
