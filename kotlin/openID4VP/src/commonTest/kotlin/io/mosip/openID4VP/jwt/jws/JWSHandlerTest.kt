@@ -3,10 +3,11 @@ package io.mosip.openID4VP.jwt.jws
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mosip.openID4VP.jwt.keyResolver.PublicKeyResolver
 import io.mosip.openID4VP.testData.JWSUtil
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtPayload
+import io.mosip.openID4VP.testData.didUrl
+import io.mosip.vercred.vcverifier.keyResolver.PublicKeyResolver
 import java.util.Base64
 import kotlin.test.*
 
@@ -24,12 +25,16 @@ class JWSHandlerTest {
 
     @Test
     fun `verify should throw exception with invalid public key`() {
-        val publicKey = "invalidPublicKeyBase64"
+        val publicKey = mockk<java.security.PublicKey>()
         val jwt = JWSUtil.createJWS(jwtPayload, true, jwtHeader)
-        every { publicKeyResolver.resolveKey(any()) } returns publicKey
+        every { publicKeyResolver.resolve(any(), any()) } returns publicKey
 
         val exception = assertFailsWith<Exception> {
-            JWSHandler(jwt, publicKeyResolver).verify()
+            JWSHandler.verify(
+                jwt,
+                publicKeyResolver,
+                didUrl
+            )
         }
         assertTrue(exception.message!!.contains("An unexpected exception occurred during verification"))
     }

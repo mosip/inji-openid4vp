@@ -190,10 +190,6 @@ io.mosip.openID4VP/
 │   │       └── EncryptionProvider.kt # Provides encryption services
 │   ├── jws/                      # JWS signature support
 │       └── JWSHandler.kt         # Handles JWS operations
-│   ├──keyResolver/          # Resolves keys for JWT operations
-│   │   ├── types/
-│   │   │   ├── DidPublicKeyResolver.kt  
-│   │   └── PublicKeyResolver.kt       # Base class for public key resolution
 │
 ├── exceptions/                   # Exceptions
 │   └── OpenID4VPExceptions.kt    # Centralized exception definitions
