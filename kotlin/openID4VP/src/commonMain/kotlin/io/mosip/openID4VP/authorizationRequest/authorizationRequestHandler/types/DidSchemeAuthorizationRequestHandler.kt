@@ -46,7 +46,6 @@ class DidSchemeAuthorizationRequestHandler(
                 val header = JWSHandler.extractDataJsonFromJws(responseBody, HEADER)
                 validateAuthorizationRequestSigningAlgorithm(header)
 
-                println("Validating JWS signature for didUrl: $didUrl, header: $header, jws: $responseBody")
                 JWSHandler.verify(responseBody, DidPublicKeyResolver(), didUrl)
 
                 val authorizationRequestObject =
