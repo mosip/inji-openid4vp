@@ -152,8 +152,7 @@ class AuthorizationRequestTest {
             PRESENTATION_DEFINITION_URI.value,
             RESPONSE_TYPE.value,
             NONCE.value,
-            STATE.value,
-            CLIENT_METADATA.value
+            STATE.value
         )
         val encodedAuthorizationRequest =
             createUrlEncodedData(
@@ -315,8 +314,7 @@ class AuthorizationRequestTest {
             PRESENTATION_DEFINITION_URI.value,
             RESPONSE_TYPE.value,
             NONCE.value,
-            STATE.value,
-            CLIENT_METADATA.value
+            STATE.value
         )
         val encodedAuthorizationRequest =
             createUrlEncodedData(
@@ -380,8 +378,7 @@ class AuthorizationRequestTest {
                 PRESENTATION_DEFINITION_URI.value,
                 RESPONSE_TYPE.value,
                 NONCE.value,
-                STATE.value,
-                CLIENT_METADATA.value
+                STATE.value
             )
         every {
             NetworkManagerClient.sendHTTPRequest(
@@ -422,8 +419,7 @@ class AuthorizationRequestTest {
                 PRESENTATION_DEFINITION_URI.value,
                 RESPONSE_TYPE.value,
                 NONCE.value,
-                STATE.value,
-                CLIENT_METADATA.value
+                STATE.value
             )
         every {
             NetworkManagerClient.sendHTTPRequest(
@@ -550,8 +546,7 @@ class AuthorizationRequestTest {
             PRESENTATION_DEFINITION_URI.value,
             RESPONSE_TYPE.value,
             NONCE.value,
-            STATE.value,
-            CLIENT_METADATA.value
+            STATE.value
         )
 
         // Simulate network failure
