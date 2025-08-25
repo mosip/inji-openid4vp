@@ -203,25 +203,20 @@ tasks.register("generatePom") {
 }
 
 afterEvaluate {
-    tasks.findByName("publishAarPublicationToLocalMavenWithChecksumsRepository")?.let {
-        it.dependsOn(tasks.named("signJarReleasePublication"))
-    }
-    tasks.findByName("publishJarReleasePublicationToLocalMavenWithChecksumsRepository")?.let {
-        it.dependsOn(tasks.named("signAarPublication"))
-    }
-    tasks.findByName("publishAarPublicationToMavenLocal")?.let {
-        it.dependsOn(tasks.named("signJarReleasePublication"))
-    }
-    tasks.findByName("publishJarReleasePublicationToMavenLocal")?.let {
-        it.dependsOn(tasks.named("signAarPublication"))
-    }
-    tasks.findByName("publishAarPublicationToInji-openid4vpRepository")?.let { publishTask ->
-        tasks.findByName("signJarReleasePublication")?.let { signTask ->
-            publishTask.dependsOn(signTask)
-        }
+    val signTasks = listOf("signJarReleasePublication", "signAarPublication")
+    val publishTasks = listOf(
+        "publishAarPublicationToLocalMavenWithChecksumsRepository",
+        "publishJarReleasePublicationToLocalMavenWithChecksumsRepository",
+        "publishAarPublicationToMavenLocal",
+        "publishJarReleasePublicationToMavenLocal",
+        "publishAarPublicationToInji-openid4vpRepository",
+        "publishJarReleasePublicationToInji-openid4vpRepository"
+    )
+
+    publishTasks.forEach { publishName ->
+        tasks.findByName(publishName)?.dependsOn(signTasks[0], signTasks[1])
     }
 }
-
 
 apply(from = "publish-artifact.gradle")
 var buildDir = project.layout.buildDirectory.get()
