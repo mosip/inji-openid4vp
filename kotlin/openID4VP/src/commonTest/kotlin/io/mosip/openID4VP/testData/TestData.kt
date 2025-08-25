@@ -233,7 +233,8 @@ val trustedVerifiers: List<Verifier> = listOf(
     Verifier(
         "mock-client", listOf(
             "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
-        )
+        ),
+        deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
     ), Verifier(
         "mock-client2", listOf(
             "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"
@@ -272,8 +273,7 @@ val authRequestWithPreRegisteredByValue = listOf(
     PRESENTATION_DEFINITION.value,
     RESPONSE_TYPE.value,
     NONCE.value,
-    STATE.value,
-    CLIENT_METADATA.value
+    STATE.value
 )
 
 val authRequestWithDidByValue = listOf(

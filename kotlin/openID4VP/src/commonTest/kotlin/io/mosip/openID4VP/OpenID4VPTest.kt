@@ -13,6 +13,8 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import foundation.identity.jsonld.JsonLDObject
+import io.mosip.openID4VP.authorizationRequest.Verifier
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import java.util.logging.Level
@@ -51,7 +53,7 @@ class OpenID4VPTest {
 
     @Test
     fun `should authenticate verifier successfully`() {
-        mockkObject(AuthorizationRequest.Companion)
+        mockkObject(AuthorizationRequest)
 
         every {
             AuthorizationRequest.validateAndCreateAuthorizationRequest(
@@ -79,8 +81,52 @@ class OpenID4VPTest {
     }
 
     @Test
+    fun `should authenticate verifier successfully for pre-registered verifier with client metadata`() {
+        mockkObject(AuthorizationRequest)
+
+        every {
+            AuthorizationRequest.validateAndCreateAuthorizationRequest(
+                any(), any(), any(), any(), any(), any()
+            )
+        } returns authorizationRequest
+        val trustedVerifiers: List<Verifier> = listOf(
+            Verifier(
+                "mock-client", listOf(
+                    "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
+                ),
+                clientMetadata = ClientMetadata(
+                    clientName = "mock-client",
+                    vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("ES256"))),
+                )
+            ), Verifier(
+                "mock-client2", listOf(
+                    "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"
+                )
+            )
+        )
+
+        val result = openID4VP.authenticateVerifier(
+            "openid-vc://?request=test-request",
+            trustedVerifiers,
+            true
+        )
+
+        assertEquals(authorizationRequest, result)
+        verify {
+            AuthorizationRequest.validateAndCreateAuthorizationRequest(
+                "openid-vc://?request=test-request",
+                trustedVerifiers,
+                any(),
+                any(),
+                true,
+                any()
+            )
+        }
+    }
+
+    @Test
     fun `should throw exception during verifier authentication`() {
-        mockkObject(AuthorizationRequest.Companion)
+        mockkObject(AuthorizationRequest)
         mockkObject(NetworkManagerClient)
 
         var openID4VP = OpenID4VP("test-OpenID4VP")

@@ -11,6 +11,7 @@ import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSerializer
 import io.mosip.openID4VP.common.convertJsonToMap
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ClientIdScheme
@@ -27,6 +28,7 @@ import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.clientIdOfDid
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft23
+import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createUrlEncodedData
 import io.mosip.openID4VP.testData.didResponse
@@ -306,6 +308,18 @@ fun `should return Authorization Request if it has request uri and it is a valid
 
     @Test
     fun `should return Authorization Request with populated clientIdScheme(pre-registered) field if the verifier is draft 21 compliant`() {
+        val trustedVerifiers: List<Verifier> = listOf(
+            Verifier(
+                "mock-client", listOf(
+                    "https://mock-verifier.com/response-uri",
+                    "https://verifier.env2.com/responseUri"
+                )
+            ), Verifier(
+                "mock-client2", listOf(
+                    "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"
+                )
+            )
+        )
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered + mapOf(
             CLIENT_ID_SCHEME.value to PRE_REGISTERED.value
         )
@@ -317,7 +331,11 @@ fun `should return Authorization Request if it has request uri and it is a valid
             )
         } returns mapOf(
             "header" to Headers.Builder().add("content-type", "application/json").build(),
-            "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, draftVersion = 21)
+            "body" to createAuthorizationRequestObject(
+                PRE_REGISTERED,
+                authorizationRequestParamsMap,
+                draftVersion = 21
+            )
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -326,7 +344,6 @@ fun `should return Authorization Request if it has request uri and it is a valid
             PRE_REGISTERED,
             draftVersion = 21
         )
-
 
 
         val authorizationRequest = assertDoesNotThrow {
@@ -339,5 +356,4 @@ fun `should return Authorization Request if it has request uri and it is a valid
 
         assertEquals(PRE_REGISTERED.value, authorizationRequest.clientIdScheme)
     }
-
 }

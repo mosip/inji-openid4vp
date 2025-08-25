@@ -59,12 +59,17 @@ fun createAuthorizationRequestObject(
     val paramList = applicableFields ?: authorisationRequestListToClientIdSchemeMap[clientIdScheme]!!
     return createAuthorizationRequest(paramList, authorizationRequestParams, draftVersion).let { authRequestParam ->
 
-        val param = if(isPresentationDefinitionUriPresent != true)
+        val param = if (isPresentationDefinitionUriPresent != true) {
             authRequestParam + clientMetadataPresentationDefinitionMap
-        else
-            authRequestParam + mapOf(
-                CLIENT_METADATA.value to clientMetadataMap
-            )
+        } else {
+            if (clientIdScheme != ClientIdScheme.PRE_REGISTERED) {
+                authRequestParam + mapOf(
+                    CLIENT_METADATA.value to clientMetadataMap
+                )
+            } else {
+                authRequestParam
+            }
+        }
         when (clientIdScheme) {
             ClientIdScheme.DID -> createJWS(param, addValidSignature!!, jwtHeader)
             else -> mapper.writeValueAsString(param)
