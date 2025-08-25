@@ -229,9 +229,34 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         assertEquals("client_metadata provided despite pre-registered metadata already existing for the Client Identifier.", exception.message)
     }
 
+    @Test
+    fun `validateAndParseRequestFields should not throw exception when client metadata of the pre-registered verifier is not known and its available in authorization request`() {
+        val trustedVerifiersWithoutClientMetadata: List<Verifier> = listOf(
+            Verifier(
+                "mock-client", listOf(
+                    "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
+                ),
+            )
+        )
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiersWithoutClientMetadata,
+            (authorizationRequestParameters + mapOf(
+                CLIENT_METADATA.value to clientMetadataString
+            )) as MutableMap<String, Any>,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
+        )
+
+        assertDoesNotThrow {
+            handler.validateAndParseRequestFields()
+        }
+    }
+
 
     @Test
-    fun `validateAndParseRequestFields should update authorization request with client_metadata if its available in teh related pre-registered verifier`() {
+    fun `validateAndParseRequestFields should update authorization request with client_metadata if its available in the related pre-registered verifier`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers,
             authorizationRequestParameters,
