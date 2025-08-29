@@ -40,6 +40,7 @@ class JWSHandler {
                     publicKey = publicKey,
                     signData = messageBytes,
                     signature = signature,
+                    provider = null
                 )
             } catch (ex: Exception) {
                 throw  OpenID4VPExceptions.VerificationFailure("An unexpected exception occurred during verification: ${ex.message}", className)
