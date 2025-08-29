@@ -1,20 +1,26 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types
 
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_URI
+import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
-import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
-import io.mosip.openID4VP.common.convertJsonToMap
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
+import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
-import io.mosip.openID4VP.authorizationRequest.Verifier
-import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
-import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
-import io.mosip.openID4VP.constants.HttpMethod
-import okhttp3.Headers
+import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidVerifier
+import okhttp3.Headers
+import java.math.BigInteger
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.NamedParameterSpec
+import java.security.spec.XECPublicKeySpec
 
 private val className = PreRegisteredSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -24,7 +30,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     walletMetadata: WalletMetadata?,
     private val shouldValidateClient: Boolean,
     setResponseUri: (String) -> Unit,
-    walletNonce: String
+    walletNonce: String,
 ) : ClientIdSchemeBasedAuthorizationRequestHandler(
     authorizationRequestParameters,
     walletMetadata,
@@ -43,35 +49,78 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         }
     }
 
-    override fun validateRequestUriResponse(
-        requestUriResponse: Map<String, Any>
-    ) {
-        authorizationRequestParameters = if (requestUriResponse.isEmpty())
-            authorizationRequestParameters
-        else {
-            val headers = requestUriResponse["header"] as Headers
-            val responseBody = requestUriResponse["body"].toString()
+    override fun isRequestUriSupported(): Boolean {
+        return true
+    }
 
-            if (isValidContentType(headers)) {
-                val authorizationRequestObject = convertJsonToMap(responseBody)
-                validateAuthorizationRequestObjectAndParameters(
-                    authorizationRequestParameters,
-                    authorizationRequestObject
-                )
-                val httpMethod =
-                    getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)?.let {
-                        determineHttpMethod(it)
-                    } ?: HttpMethod.GET
+    override fun isRequestObjectSupported(): Boolean {
+        return true
+    }
 
-                if (httpMethod == HttpMethod.POST)
-                    validateWalletNonce(authorizationRequestObject, walletNonce)
-                authorizationRequestObject
-            } else {
-                throw OpenID4VPExceptions.InvalidData(
-                    "Authorization Request must not be signed for given client_id_scheme",
+    override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
+        val clientMetadata =
+            authorizationRequestParameters[CLIENT_METADATA.value] as? ClientMetadata
+                ?: throw OpenID4VPExceptions.MissingInput(
+                    listOf(CLIENT_METADATA.value),
+                    "",
                     className
                 )
+
+        val jwks = clientMetadata.jwks
+            ?: throw OpenID4VPExceptions.MissingInput(listOf("client_metadata.jwks"), "", className)
+
+        val keys = jwks.keys
+
+        if (kid != null) {
+            val byKid = keys.firstOrNull { it.kid == kid }
+                ?: throw OpenID4VPExceptions.VerificationFailure(
+                    "No JWK found for kid=$kid",
+                    className
+                )
+            return byKid.toJavaPublicKey()
+        }
+
+        val matchingKeys = keys.filter { algorithm.matches(it) }
+
+        if (matchingKeys.isEmpty()) {
+            throw OpenID4VPExceptions.VerificationFailure(
+                "No matching key found for algorithm=${algorithm.name}",
+                className
+            )
+        }
+
+        val sigUseKeys = matchingKeys.filter { it.use.equals("sig", ignoreCase = true) }
+
+        val selectedKey = when {
+            sigUseKeys.size == 1 -> sigUseKeys.first()
+            sigUseKeys.size > 1 -> throw OpenID4VPExceptions.VerificationFailure(
+                "Multiple keys with 'use=sig' found for ${algorithm.name} without 'kid'",
+                className
+            )
+
+            matchingKeys.size == 1 -> matchingKeys.first()
+            else -> throw OpenID4VPExceptions.VerificationFailure(
+                "Multiple ambiguous keys found for ${algorithm.name} without 'kid' or unique 'use=sig'",
+                className
+            )
+        }
+
+        return selectedKey.toJavaPublicKey()
+    }
+
+
+    private fun Jwk.toJavaPublicKey(): PublicKey {
+        return when (kty.uppercase()) {
+
+            "OKP" -> {
+                val xDecoded = decodeFromBase64Url(x)
+                val xBigInt = BigInteger(1, xDecoded)
+                val namedCurve = NamedParameterSpec(crv)
+                val keyFactory = KeyFactory.getInstance(crv)
+                keyFactory.generatePublic(XECPublicKeySpec(namedCurve, xBigInt))
             }
+
+            else -> throw IllegalArgumentException("Unsupported key type (kty): $kty")
         }
     }
 

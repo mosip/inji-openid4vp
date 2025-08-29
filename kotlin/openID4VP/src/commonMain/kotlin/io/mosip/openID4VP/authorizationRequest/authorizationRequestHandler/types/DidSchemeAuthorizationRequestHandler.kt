@@ -3,23 +3,19 @@ package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.type
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
-import io.mosip.openID4VP.authorizationRequest.validateAuthorizationRequestObjectAndParameters
-import io.mosip.openID4VP.authorizationRequest.validateWalletNonce
-import io.mosip.openID4VP.common.determineHttpMethod
 import io.mosip.openID4VP.common.getStringValue
-import io.mosip.openID4VP.common.isJWS
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.PAYLOAD
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JWT
-import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
 import okhttp3.Headers
+import java.security.PublicKey
 
 private val className = DidSchemeAuthorizationRequestHandler::class.simpleName!!
+private const val KEY_ID = "kid"
 
 class DidSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
@@ -32,46 +28,20 @@ class DidSchemeAuthorizationRequestHandler(
     setResponseUri,
     walletNonce
 ) {
+    override fun isRequestUriSupported(): Boolean {
+        return true
+    }
 
-    override fun validateRequestUriResponse(
-        requestUriResponse: Map<String, Any>
-    ) {
-        if (requestUriResponse.isNotEmpty()) {
-            val headers = requestUriResponse["header"] as Headers
-            val responseBody = requestUriResponse["body"].toString()
+    override fun isRequestObjectSupported(): Boolean {
+        return false
+    }
 
-            if (isValidContentType(headers) && isJWS(responseBody)) {
-                val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
-
-                val header = JWSHandler.extractDataJsonFromJws(responseBody, HEADER)
-                validateAuthorizationRequestSigningAlgorithm(header)
-
-                JWSHandler.verify(responseBody, DidPublicKeyResolver(), didUrl)
-
-                val authorizationRequestObject =
-                    JWSHandler.extractDataJsonFromJws(responseBody, PAYLOAD)
-
-                validateAuthorizationRequestObjectAndParameters(
-                    authorizationRequestParameters,
-                    authorizationRequestObject
-                )
-
-                val httpMethod =
-                    getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)?.let {
-                        determineHttpMethod(it)
-                    } ?: HttpMethod.GET
-
-                if (httpMethod == HttpMethod.POST)
-                    validateWalletNonce(authorizationRequestObject, walletNonce)
-                authorizationRequestParameters = authorizationRequestObject
-
-            } else
-                throw OpenID4VPExceptions.InvalidData(
-                    "Authorization Request must be signed for given client_id_scheme",
-                    className
-                )
-        } else throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value), "", className)
-
+    override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
+        val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)?:throw OpenID4VPExceptions.InvalidData(
+            "client_id is not present in authorization request",
+            className
+        )
+        return DidPublicKeyResolver().resolve(didUrl, kid)
     }
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {

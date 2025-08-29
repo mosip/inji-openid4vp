@@ -14,8 +14,10 @@ import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import okhttp3.Headers
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import java.security.PublicKey
 
 private val className = RedirectUriSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -25,33 +27,16 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     setResponseUri: (String) -> Unit,
     walletNonce: String
 ) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters,walletMetadata, setResponseUri, walletNonce) {
+    override fun isRequestUriSupported(): Boolean {
+        return false
+    }
 
-    override fun validateRequestUriResponse(
-        requestUriResponse: Map<String, Any>
-    ) {
-        authorizationRequestParameters = if (requestUriResponse.isEmpty())
-            authorizationRequestParameters
-        else {
-            val headers = requestUriResponse["header"] as Headers
-            val responseBody = requestUriResponse["body"].toString()
+    override fun isRequestObjectSupported(): Boolean {
+        return true
+    }
 
-            if (isValidContentType(headers)) {
-                val authorizationRequestObject = convertJsonToMap(responseBody)
-                validateAuthorizationRequestObjectAndParameters(
-                    authorizationRequestParameters,
-                    authorizationRequestObject
-                )
-                val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?.let {
-                    determineHttpMethod(it)
-                } ?: HttpMethod.GET
-
-                if (httpMethod == HttpMethod.POST)
-                    validateWalletNonce(authorizationRequestObject, walletNonce)
-                authorizationRequestObject
-            } else {
-                throw OpenID4VPExceptions.InvalidData("Authorization Request must not be signed for given client_id_scheme", className)
-            }
-        }
+    override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
+        throw UnsupportedOperationException("Public key extraction is not supported for Redirect URI scheme")
     }
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {
@@ -101,8 +86,5 @@ class RedirectUriSchemeAuthorizationRequestHandler(
             throw OpenID4VPExceptions.InvalidData("$validAttribute should be equal to client_id for given client_id_scheme", className)
 
     }
-
-    private fun isValidContentType(headers: Headers): Boolean =
-        headers["content-type"]?.contains(APPLICATION_JSON.value, ignoreCase = true) == true
 
 }
