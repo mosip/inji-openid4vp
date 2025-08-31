@@ -6,7 +6,6 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
-import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.common.getStringValue
@@ -16,11 +15,14 @@ import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidVerifier
 import okhttp3.Headers
-import java.math.BigInteger
+import org.bouncycastle.asn1.edec.EdECObjectIdentifiers
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.KeyFactory
 import java.security.PublicKey
-import java.security.spec.NamedParameterSpec
-import java.security.spec.XECPublicKeySpec
+import java.security.Security
+import java.security.spec.X509EncodedKeySpec
 
 private val className = PreRegisteredSchemeAuthorizationRequestHandler::class.simpleName!!
 
@@ -57,72 +59,110 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         return true
     }
 
-    override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
-        val clientMetadata =
-            authorizationRequestParameters[CLIENT_METADATA.value] as? ClientMetadata
-                ?: throw OpenID4VPExceptions.MissingInput(
-                    listOf(CLIENT_METADATA.value),
-                    "",
-                    className
-                )
+    override fun extractPublicKey(
+        algorithm: RequestSigningAlgorithm,
+        kid: String?
+    ): PublicKey {
+        val clientId = authorizationRequestParameters[CLIENT_ID.value] as String
+        if(authorizationRequestParameters.containsKey(CLIENT_METADATA.value))
+            throw OpenID4VPExceptions.InvalidData("client_metadata available in Authorization Request, cannot be used to verify the signed Authorization Request",
+                className)
+
+        val verifier = trustedVerifiers.firstOrNull { it.clientId == clientId }
+            ?: throw OpenID4VPExceptions.MissingInput(
+                listOf("trusted_verifiers.client_metadata"),
+                "No verifier found for client_id=$clientId",
+                className
+            )
+
+        val clientMetadata = verifier.clientMetadata
+            ?: throw OpenID4VPExceptions.MissingInput(
+                listOf("trusted_verifiers.client_metadata"),
+                "Missing client_metadata for client_id=$clientId",
+                className
+            )
 
         val jwks = clientMetadata.jwks
-            ?: throw OpenID4VPExceptions.MissingInput(listOf("client_metadata.jwks"), "", className)
+            ?: throw OpenID4VPExceptions.MissingInput(
+                listOf("client_metadata.jwks"),
+                "Missing jwks for client_id=$clientId",
+                className
+            )
 
         val keys = jwks.keys
 
+        // Case 1: If kid is provided, try direct match
         if (kid != null) {
             val byKid = keys.firstOrNull { it.kid == kid }
-                ?: throw OpenID4VPExceptions.VerificationFailure(
+                ?: throw OpenID4VPExceptions.PublicKeyResolutionFailed(
                     "No JWK found for kid=$kid",
                     className
                 )
             return byKid.toJavaPublicKey()
         }
 
-        val matchingKeys = keys.filter { algorithm.matches(it) }
+        // Case 2: No kid - match based on algorithm
+        val matchingKeys = keys.filter { it.supports(RequestSigningAlgorithm.EdDSA) }
 
         if (matchingKeys.isEmpty()) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "No matching key found for algorithm=${algorithm.name}",
+            throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+                "Public key extraction failed for algorithm: ${algorithm.name}. No matching Keys found",
                 className
             )
         }
 
-        val sigUseKeys = matchingKeys.filter { it.use.equals("sig", ignoreCase = true) }
+        val sigUseKeys = matchingKeys.filter { it.use.equals("sig") }
 
         val selectedKey = when {
             sigUseKeys.size == 1 -> sigUseKeys.first()
-            sigUseKeys.size > 1 -> throw OpenID4VPExceptions.VerificationFailure(
-                "Multiple keys with 'use=sig' found for ${algorithm.name} without 'kid'",
+            sigUseKeys.size > 1 -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+                "Public key extraction failed.Multiple keys with 'use=sig' found for ${algorithm.name} without 'kid'",
                 className
             )
-
             matchingKeys.size == 1 -> matchingKeys.first()
-            else -> throw OpenID4VPExceptions.VerificationFailure(
-                "Multiple ambiguous keys found for ${algorithm.name} without 'kid' or unique 'use=sig'",
+            else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+                "Public key extraction failed.Multiple ambiguous keys found for ${algorithm.name} without 'kid' or unique 'use=sig'",
                 className
             )
         }
 
-        return selectedKey.toJavaPublicKey()
+        try {
+            return selectedKey.toJavaPublicKey()
+        }
+        catch (e:Exception){
+            throw OpenID4VPExceptions.PublicKeyResolutionFailed("Public key extraction failed: ${e.message}",
+                className)
+        }
     }
+
 
 
     private fun Jwk.toJavaPublicKey(): PublicKey {
+        if (Security.getProvider("BC") == null) {
+            Security.addProvider(BouncyCastleProvider())
+        }
+
         return when (kty.uppercase()) {
-
-            "OKP" -> {
-                val xDecoded = decodeFromBase64Url(x)
-                val xBigInt = BigInteger(1, xDecoded)
-                val namedCurve = NamedParameterSpec(crv)
-                val keyFactory = KeyFactory.getInstance(crv)
-                keyFactory.generatePublic(XECPublicKeySpec(namedCurve, xBigInt))
+            "OKP" -> when (crv) {
+                "Ed25519" -> buildEd25519PublicKey(x)
+                else -> throw UnsupportedOperationException("Unsupported OKP curve: $crv")
             }
-
-            else -> throw IllegalArgumentException("Unsupported key type (kty): $kty")
+            else -> throw UnsupportedOperationException("Unsupported key type: $kty")
         }
     }
+
+    private fun buildEd25519PublicKey(x: String): PublicKey {
+        val publicKeyBytes = decodeFromBase64Url(x)
+        val algorithmIdentifier = AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519)
+        val subjectPublicKeyInfo = SubjectPublicKeyInfo(algorithmIdentifier, publicKeyBytes)
+        val encodedKey = subjectPublicKeyInfo.encoded
+
+        val keySpec = X509EncodedKeySpec(encodedKey)
+        val keyFactory = KeyFactory.getInstance("EdDSA", "BC")
+
+        return keyFactory.generatePublic(keySpec)
+    }
+
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {
         val updatedWalletMetadata = walletMetadata.copy()

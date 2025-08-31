@@ -1,15 +1,13 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types
 
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.ClientIdSchemeBasedAuthorizationRequestHandler
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
-import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.jwt.jws.JWSHandler
-import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.HEADER
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_JWT
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
 import okhttp3.Headers
 import java.security.PublicKey
@@ -21,7 +19,7 @@ class DidSchemeAuthorizationRequestHandler(
     authorizationRequestParameters: MutableMap<String, Any>,
     walletMetadata: WalletMetadata?,
     setResponseUri: (String) -> Unit,
-    walletNonce: String
+    walletNonce: String,
 ) : ClientIdSchemeBasedAuthorizationRequestHandler(
     authorizationRequestParameters,
     walletMetadata,
@@ -37,10 +35,11 @@ class DidSchemeAuthorizationRequestHandler(
     }
 
     override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
-        val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)?:throw OpenID4VPExceptions.InvalidData(
-            "client_id is not present in authorization request",
-            className
-        )
+        val didUrl = getStringValue(authorizationRequestParameters, CLIENT_ID.value)
+            ?: throw OpenID4VPExceptions.InvalidData(
+                "client_id is not present in authorization request",
+                className
+            )
         return DidPublicKeyResolver().resolve(didUrl, kid)
     }
 

@@ -75,7 +75,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
             if (!isValidUrl(requestUri)) {
                 throw OpenID4VPExceptions.InvalidData(
-                    "${REQUEST_URI.value}${requestUri} data is not valid",
+                    "${REQUEST_URI.value} data is not valid",
                     className
                 )
             }
@@ -230,14 +230,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 className
             )
 
-        val algorithm = try {
-            RequestSigningAlgorithm.valueOf(algString)
-        } catch (e: IllegalArgumentException) {
-            throw OpenID4VPExceptions.InvalidData(
-                "Unsupported signing algorithm '$algString' in JWS header",
-                className
-            )
-        }
+        val algorithm = RequestSigningAlgorithm.valueOf(algString)
 
         val kid = header["kid"] as? String
 
@@ -281,7 +274,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                     )
                 )
                     throw OpenID4VPExceptions.InvalidData(
-                        "request_object_signing_alg is not support by wallet",
+                        "request_object_signing_alg is not supported by wallet",
                         className
                     )
             }
