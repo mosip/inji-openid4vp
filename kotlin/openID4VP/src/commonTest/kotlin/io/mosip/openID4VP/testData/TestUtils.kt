@@ -3,7 +3,6 @@ package io.mosip.openID4VP.testData
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
-import io.mosip.openID4VP.common.getObjectMapper
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.testData.JWSUtil.Companion.createJWS
 import kotlinx.serialization.json.JsonObject
@@ -22,7 +21,7 @@ fun createUrlEncodedData(
     verifierSentAuthRequestByReference: Boolean? = false,
     clientIdScheme: ClientIdScheme,
     applicableFields: List<String>? = null,
-    draftVersion: Int = 23
+    draftVersion: Int = 23,
 ): String {
     val paramList = when (verifierSentAuthRequestByReference) {
         true -> {
@@ -31,6 +30,7 @@ fun createUrlEncodedData(
             else
                 authRequestParamsByReferenceDraft21
         }
+
         else -> applicableFields ?: authorisationRequestListToClientIdSchemeMap[clientIdScheme]!!
     }
     val authorizationRequestParam =
@@ -54,10 +54,8 @@ fun createAuthorizationRequestObject(
     jwtHeader: JsonObject? = null,
     isPresentationDefinitionUriPresent: Boolean? = false,
     draftVersion: Int = 23,
-    byReference: Boolean = false,
     removeClientId: Boolean = false,
 ): Any {
-    val mapper = getObjectMapper()
     val paramList =
         applicableFields ?: authorisationRequestListToClientIdSchemeMap[clientIdScheme]!!
     return createAuthorizationRequest(
@@ -66,7 +64,7 @@ fun createAuthorizationRequestObject(
         draftVersion
     ).let { authRequestParam ->
 
-        val param = if (isPresentationDefinitionUriPresent != true && !byReference) {
+        val param = if (isPresentationDefinitionUriPresent != true) {
             authRequestParam + clientMetadataPresentationDefinitionMap
         } else {
             if (clientIdScheme != ClientIdScheme.PRE_REGISTERED) {
@@ -81,23 +79,16 @@ fun createAuthorizationRequestObject(
         if (removeClientId) {
             param.remove(CLIENT_ID.value)
         }
-        when {
-            clientIdScheme == ClientIdScheme.DID -> createJWS(param, addValidSignature!!, jwtHeader)
-            (clientIdScheme == ClientIdScheme.PRE_REGISTERED && byReference) -> createJWS(
-                param,
-                addValidSignature!!,
-                jwtHeader
-            )
 
-            else -> mapper.writeValueAsString(param)
-        }
+        createJWS(param, addValidSignature!!, jwtHeader)
+
     }
 }
 
 private fun createAuthorizationRequest(
     paramList: List<String>,
     requestParams: Map<String, String?>,
-    draftVersion: Int = 23
+    draftVersion: Int = 23,
 ): MutableMap<String, String?> {
     var params: List<String> = paramList
     if (draftVersion == 21) {

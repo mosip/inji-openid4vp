@@ -2,6 +2,7 @@ package io.mosip.openID4VP.common
 
 object OpenID4VPErrorCodes {
     const val INVALID_REQUEST = "invalid_request"
+    const val INVALID_REQUEST_OBJECT = "invalid_request_object"
     const val ACCESS_DENIED = "access_denied"
     const val INVALID_CLIENT = "invalid_client"
     const val INVALID_SCOPE = "invalid_scope"

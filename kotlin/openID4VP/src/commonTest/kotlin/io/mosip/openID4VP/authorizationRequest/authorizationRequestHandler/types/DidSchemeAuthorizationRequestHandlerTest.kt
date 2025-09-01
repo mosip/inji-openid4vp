@@ -91,21 +91,6 @@ class DidSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = DidSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters,
-            walletMetadata,
-            setResponseUri,
-            walletNonce
-        )
-
-        val headers = handler.getHeadersForAuthorizationRequestUri()
-
-        assertEquals(ContentType.APPLICATION_FORM_URL_ENCODED.value, headers["content-type"])
-        assertEquals(ContentType.APPLICATION_JWT.value, headers["accept"])
-    }
-
-    @Test
     fun `extractPublicKey should call DidPublicKeyResolver with correct values`() {
         val testKid = "test-key"
 

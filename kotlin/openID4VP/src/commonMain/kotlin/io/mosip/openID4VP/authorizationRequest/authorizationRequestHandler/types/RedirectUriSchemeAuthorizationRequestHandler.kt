@@ -8,8 +8,7 @@ import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.Clien
 import io.mosip.openID4VP.authorizationRequest.extractClientIdentifier
 import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
-import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
-import io.mosip.openID4VP.constants.ContentType.APPLICATION_JSON
+import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.ResponseMode.DIRECT_POST
 import io.mosip.openID4VP.constants.ResponseMode.DIRECT_POST_JWT
@@ -32,6 +31,10 @@ class RedirectUriSchemeAuthorizationRequestHandler(
         return true
     }
 
+    override fun clientIdScheme(): String {
+        return ClientIdScheme.REDIRECT_URI.value
+    }
+
     override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
         throw UnsupportedOperationException("Public key extraction is not supported for Redirect URI scheme")
     }
@@ -40,13 +43,6 @@ class RedirectUriSchemeAuthorizationRequestHandler(
         val updatedWalletMetadata = walletMetadata
         updatedWalletMetadata.requestObjectSigningAlgValuesSupported = null
         return updatedWalletMetadata
-    }
-
-    override fun getHeadersForAuthorizationRequestUri(): Map<String, String> {
-        return mapOf(
-            "content-type" to APPLICATION_FORM_URL_ENCODED.value,
-            "accept" to APPLICATION_JSON.value
-        )
     }
 
     override fun validateAndParseRequestFields(){

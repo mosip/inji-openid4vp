@@ -59,18 +59,6 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
-        )
-
-        val headers = handler.getHeadersForAuthorizationRequestUri()
-
-        assertEquals(ContentType.APPLICATION_FORM_URL_ENCODED.value, headers["content-type"])
-        assertEquals(ContentType.APPLICATION_JSON.value, headers["accept"])
-    }
-
-    @Test
     fun `validateAndParseRequestFields should succeed with valid direct_post response mode`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
             authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce

@@ -131,22 +131,6 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         assertNull(processedMetadata.requestObjectSigningAlgValuesSupported)
     }
 
-    @Test
-    fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers,
-            authorizationRequestParameters,
-            walletMetadata,
-            true,
-            setResponseUri,
-            walletNonce
-        )
-
-        val headers = handler.getHeadersForAuthorizationRequestUri()
-
-        assertEquals(ContentType.APPLICATION_FORM_URL_ENCODED.value, headers["content-type"])
-        assertEquals(ContentType.APPLICATION_JSON.value, headers["accept"])
-    }
 
     @Test
     fun `validateAndParseRequestFields should pass for trusted client with valid response URI`() {
@@ -347,7 +331,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, "non-existent")
         }
 
-        assertTrue(ex.message.contains("No JWK found for kid"))
+        assertTrue(ex.message.contains("Public key extraction failed for kid"))
     }
 
     @Test
@@ -409,7 +393,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, null)
         }
 
-        assertTrue(ex.message!!.contains("Multiple keys with 'use=sig'"))
+        assertTrue(ex.message!!.contains("Multiple ambiguous keys found for EdDSA with signature usage"))
     }
 
     @Test
@@ -441,7 +425,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, null)
         }
 
-        assertTrue(ex.message!!.contains("No matching Keys found"))
+        assertTrue(ex.message!!.contains("No public key found for algorithm: EdDSA with signature usage"))
     }
 
 }

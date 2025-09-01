@@ -107,7 +107,7 @@ sealed class OpenID4VPExceptions(
     class KidExtractionFailed(message: String, className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
 
-    class PublicKeyResolutionFailed(message: String, className: String) :
+    class PublicKeyResolutionFailed(message: String, className: String, code: String? = OpenID4VPErrorCodes.INVALID_REQUEST) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
 
     class InvalidSignature(message: String, className: String) :

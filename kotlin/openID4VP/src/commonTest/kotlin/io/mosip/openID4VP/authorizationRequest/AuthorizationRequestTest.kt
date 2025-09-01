@@ -386,7 +386,7 @@ class AuthorizationRequestTest {
                 any()
             )
         } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/json").build(),
+            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
             "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
         )
 
@@ -427,7 +427,7 @@ class AuthorizationRequestTest {
                 any()
             )
         } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/json").build(),
+            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
             "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
         )
 
@@ -592,7 +592,7 @@ class AuthorizationRequestTest {
                 any()
             )
         } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/json").build(),
+            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
             "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
         )
 

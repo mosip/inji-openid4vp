@@ -35,7 +35,8 @@ class JWSHandler {
                         ED25519SignatureVerifierImpl().verify(
                             publicKey = publicKey,
                             signData = messageBytes,
-                            signature = signature
+                            signature = signature,
+                            provider = null
                         )
                     }
 

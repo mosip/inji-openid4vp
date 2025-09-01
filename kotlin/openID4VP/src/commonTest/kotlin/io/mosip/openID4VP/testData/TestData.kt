@@ -308,7 +308,7 @@ val authRequestWithDidByValue = listOf(
     CLIENT_METADATA.value
 )
 
-val requestParams: Map<String, String> = mapOf(
+val requestParams: MutableMap<String, String> = mapOf(
     REDIRECT_URI.value to "https://mock-verifier.com",
     RESPONSE_URI.value to responseUrl,
     REQUEST_URI.value to requestUrl,
@@ -320,7 +320,7 @@ val requestParams: Map<String, String> = mapOf(
     NONCE.value to "VbRRB/LTxLiXmVNZuyMO8A==",
     STATE.value to "+mRQe1d6pBoJqF6Ab28klg==",
     CLIENT_METADATA.value to clientMetadataString
-)
+).toMutableMap()
 
 val authorisationRequestListToClientIdSchemeMap = mapOf(
     DID to authRequestWithDidByValue,

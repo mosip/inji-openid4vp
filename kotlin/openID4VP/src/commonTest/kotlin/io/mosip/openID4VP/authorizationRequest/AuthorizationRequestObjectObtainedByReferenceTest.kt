@@ -142,7 +142,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         }
 
         assertEquals(
-            "VP sharing failed due to connection timeout",
+            "Network error while fetching request_uri: VP sharing failed due to connection timeout",
             exceptionWhenRequestUriNetworkCallFails.message
         )
     }
@@ -172,7 +172,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         }
 
         assertEquals(
-            "request object is not supported for given client_id_scheme",
+            "request object is not supported for given client_id_scheme - did",
             invalidDataException.message
         )
     }

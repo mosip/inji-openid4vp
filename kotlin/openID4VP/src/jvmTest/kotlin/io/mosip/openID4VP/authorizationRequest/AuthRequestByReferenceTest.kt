@@ -64,6 +64,7 @@ class AuthRequestByReferenceTest {
 
 
     }
+
     @AfterTest
     fun tearDown() {
         clearAllMocks()
@@ -286,41 +287,41 @@ class AuthRequestByReferenceTest {
     }
 
 
-      @Test
-      fun `should validate request_uri response with valid JWS and correct content type for DID scheme`() {
-          val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
-              AuthorizationRequestFieldConstants.REQUEST_URI.value to requestUrl,
-              AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "get"
-          )
+    @Test
+    fun `should validate request_uri response with valid JWS and correct content type for DID scheme`() {
+        val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
+            AuthorizationRequestFieldConstants.REQUEST_URI.value to requestUrl,
+            AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "get"
+        )
 
-          val validJwt = createAuthorizationRequestObject(
-              clientIdScheme = DID,
-             authorizationRequestParamsMap,
-          )
+        val validJwt = createAuthorizationRequestObject(
+            clientIdScheme = DID,
+            authorizationRequestParamsMap,
+        )
 
-          every {
-              NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
-          } returns mapOf(
-              "header" to Headers.Builder()
-                  .add("content-type", "application/oauth-authz-req+jwt")
-                  .build(),
-              "body" to validJwt
-          )
+        every {
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns mapOf(
+            "header" to Headers.Builder()
+                .add("content-type", "application/oauth-authz-req+jwt")
+                .build(),
+            "body" to validJwt
+        )
 
-          val encodedAuthorizationRequest = createUrlEncodedData(
-              authorizationRequestParamsMap,
-              true,
-              DID
-          )
+        val encodedAuthorizationRequest = createUrlEncodedData(
+            authorizationRequestParamsMap,
+            true,
+            DID
+        )
 
-          assertDoesNotThrow {
-              openID4VP.authenticateVerifier(
-                  encodedAuthorizationRequest,
-                  trustedVerifiers,
-                  shouldValidateClient = true
-              )
-          }
-      }
+        assertDoesNotThrow {
+            openID4VP.authenticateVerifier(
+                encodedAuthorizationRequest,
+                trustedVerifiers,
+                shouldValidateClient = true
+            )
+        }
+    }
 
 
     @Test
@@ -351,7 +352,7 @@ class AuthRequestByReferenceTest {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -389,7 +390,7 @@ class AuthRequestByReferenceTest {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -436,7 +437,7 @@ class AuthRequestByReferenceTest {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.VerificationFailure> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -447,37 +448,37 @@ class AuthRequestByReferenceTest {
         assertTrue(exception.message.contains("JWS signature verification failed"))
     }
 
-//
-@Test
-fun `should throw exception when request_uri response is empty`() {
-    val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
-        AuthorizationRequestFieldConstants.REQUEST_URI.value to requestUrl,
-        AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "get"
-    )
+    //
+    @Test
+    fun `should throw exception when request_uri response is empty`() {
+        val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
+            AuthorizationRequestFieldConstants.REQUEST_URI.value to requestUrl,
+            AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "get"
+        )
 
-    every {
-        NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
-    } returns emptyMap()
+        every {
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns emptyMap()
 
-    val encodedAuthorizationRequest = createUrlEncodedData(
-        authorizationRequestParamsMap,
-        true,
-        DID
-    )
+        val encodedAuthorizationRequest = createUrlEncodedData(
+            authorizationRequestParamsMap,
+            true,
+            DID
+        )
 
-    val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
-        openID4VP.authenticateVerifier(
-            encodedAuthorizationRequest,
-            trustedVerifiers,
-            shouldValidateClient = true
+        val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
+            openID4VP.authenticateVerifier(
+                encodedAuthorizationRequest,
+                trustedVerifiers,
+                shouldValidateClient = true
+            )
+        }
+        print(exception.message)
+        assertEquals(
+            "Missing Input: request_uri param is required",
+            exception.message
         )
     }
-    print(exception.message)
-    assertEquals(
-        "Missing Input: request_uri param is required",
-        exception.message
-    )
-}
 
     @Test
     fun `should throw exception when signing algorithm is not supported`() {
@@ -510,7 +511,7 @@ fun `should throw exception when request_uri response is empty`() {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<OpenID4VPExceptions.VerificationFailure> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -519,7 +520,7 @@ fun `should throw exception when request_uri response is empty`() {
         }
 
         assertEquals(
-            "Unsupported signing algorithm 'HS256' in JWS header",
+            "Request URI response validation failed No enum constant io.mosip.openID4VP.constants.RequestSigningAlgorithm.HS256",
             exception.message
         )
     }
@@ -563,7 +564,8 @@ fun `should throw exception when request_uri response is empty`() {
                     put("typ", "oauth-authz-req+jwt")
                     put("alg", "EdDSA")
                 },
-                byReference = true
+                isPresentationDefinitionUriPresent = true
+
             )
         )
 
@@ -586,33 +588,6 @@ fun `should throw exception when request_uri response is empty`() {
         assertEquals(PRE_REGISTERED.value, authorizationRequest.clientIdScheme)
     }
 
-    @Test
-    fun `should throw exception when header is missing in request_uri response`() {
-        val authorizationRequestParamsMap = requestParams + clientIdOfDid + mapOf(
-            AuthorizationRequestFieldConstants.REQUEST_URI.value to requestUrl,
-            AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "get"
-        )
-
-        val validJwt = createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
-
-        every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
-        } returns mapOf( // No "header" key
-            "body" to validJwt
-        )
-
-        val encodedAuthorizationRequest = createUrlEncodedData(authorizationRequestParamsMap, true, DID)
-
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
-            openID4VP.authenticateVerifier(
-                encodedAuthorizationRequest,
-                trustedVerifiers,
-                shouldValidateClient = true
-            )
-        }
-
-        assertEquals("Missing HTTP headers in request_uri response", exception.message)
-    }
 
     @Test
     fun `should throw exception when body is missing in request_uri response`() {
@@ -629,9 +604,10 @@ fun `should throw exception when request_uri response is empty`() {
                 .build()
         )
 
-        val encodedAuthorizationRequest = createUrlEncodedData(authorizationRequestParamsMap, true, DID)
+        val encodedAuthorizationRequest =
+            createUrlEncodedData(authorizationRequestParamsMap, true, DID)
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -652,7 +628,12 @@ fun `should throw exception when request_uri response is empty`() {
         val jwt = createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
 
         mockkStatic("io.mosip.openID4VP.authorizationRequest.AuthorizationRequestUtilsKt")
-        every { validateWalletNonce(any(), any()) } throws IllegalArgumentException("wallet_nonce mismatch")
+        every {
+            validateWalletNonce(
+                any(),
+                any()
+            )
+        } throws IllegalArgumentException("wallet_nonce mismatch")
 
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
@@ -669,7 +650,7 @@ fun `should throw exception when request_uri response is empty`() {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             OpenID4VP("test", walletMetadata).authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -677,7 +658,7 @@ fun `should throw exception when request_uri response is empty`() {
             )
         }
 
-        assertTrue(exception.message!!.contains("Wallet nonce validation failed"))
+        assertTrue(exception.message.contains("Wallet nonce validation failed"))
     }
 
     @Test
@@ -704,11 +685,14 @@ fun `should throw exception when request_uri response is empty`() {
 
         val encoded = createUrlEncodedData(requestParamsMap, true, DID)
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(encoded, trustedVerifiers, true)
         }
 
-        assertEquals("Request URI response validation failed - 'alg' is missing in JWS header", exception.message)
+        assertEquals(
+            "Request URI response validation failed - 'alg' is not present in JWS header",
+            exception.message
+        )
     }
 
 //MARK: Pre-registered
@@ -736,7 +720,7 @@ fun `should throw exception when request_uri response is empty`() {
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 jwtHeader = jwtHeader,
-                byReference = true
+                isPresentationDefinitionUriPresent = true
             )
         )
 
@@ -773,7 +757,7 @@ fun `should throw exception when request_uri response is empty`() {
                     CLIENT_ID.value to "wrong-client-id",
                     CLIENT_ID_SCHEME.value to PRE_REGISTERED.value,
                 ),
-                byReference = true,
+
                 jwtHeader = jwtHeader
             )
         )
@@ -783,7 +767,7 @@ fun `should throw exception when request_uri response is empty`() {
             createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
 
         val invalidClientIdException =
-            assertFailsWith<OpenID4VPExceptions.InvalidData> {
+            assertFailsWith<InvalidData> {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest,
                     trustedVerifiers,
@@ -802,7 +786,7 @@ fun `should throw exception when request_uri response is empty`() {
     fun `should succeed when alg is supported in wallet metadata`() {
 
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered +
-            mapOf(AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "post")
+                mapOf(AuthorizationRequestFieldConstants.REQUEST_URI_METHOD.value to "post")
         openID4VP = OpenID4VP("test-OpenID4VP", walletMetadata)
         val jwtHeader = buildJsonObject {
             put("typ", "oauth-authz-req+jwt")
@@ -815,8 +799,8 @@ fun `should throw exception when request_uri response is empty`() {
                 .build(),
             "body" to createAuthorizationRequestObject(
                 PRE_REGISTERED, authorizationRequestParamsMap,
-                byReference = true,
-                jwtHeader = jwtHeader
+                jwtHeader = jwtHeader,
+                isPresentationDefinitionUriPresent = true
             )
         )
 
@@ -842,21 +826,23 @@ fun `should throw exception when request_uri response is empty`() {
                 PRE_REGISTERED, requestParams + clientIdOfPreRegistered + mapOf(
                     "request_uri_method" to "post"
                 ),
-                byReference = true,
+
                 jwtHeader = jwtHeader
             )
         )
 
-        val encoded = createUrlEncodedData(requestParams + clientIdOfPreRegistered + mapOf(
-            "request_uri_method" to "post"
-        ), true, PRE_REGISTERED)
+        val encoded = createUrlEncodedData(
+            requestParams + clientIdOfPreRegistered + mapOf(
+                "request_uri_method" to "post"
+            ), true, PRE_REGISTERED
+        )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(encoded, trustedVerifiers, true)
         }
 
         assertEquals(
-            "request_object_signing_alg is not supported by wallet",
+            "Request URI response validation failed - request_object_signing_alg is not supported by wallet",
             exception.message
         )
 
@@ -876,13 +862,14 @@ fun `should throw exception when request_uri response is empty`() {
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
         } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
+            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
+                .build(),
             "body" to createAuthorizationRequestObject(
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 jwtHeader = jwtHeader,
-                byReference = true
-            )
+
+                )
         )
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
@@ -910,19 +897,20 @@ fun `should throw exception when request_uri response is empty`() {
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
         } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
+            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
+                .build(),
             "body" to createAuthorizationRequestObject(
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 jwtHeader = jwtHeader,
-                byReference = true,
+
                 removeClientId = true
             )
         )
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(encoded, trustedVerifiers, shouldValidateClient = true)
         }
 
@@ -945,7 +933,6 @@ fun `should throw exception when request_uri response is empty`() {
             clientIdScheme = ClientIdScheme.REDIRECT_URI,
             authorizationRequestParams = requestParams + clientIdOfReDirectUriDraft23,
             jwtHeader = jwtHeader,
-            byReference = false
         ) as String
 
         val encoded = createUrlEncodedData(
@@ -966,12 +953,12 @@ fun `should throw exception when request_uri response is empty`() {
             applicableFields = authRequestWithRedirectUriByValue + listOf("request_uri")
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(encoded, trustedVerifiers, shouldValidateClient = true)
         }
 
         assertEquals(
-            "request_uri is not supported for given client_id_scheme",
+            "request_uri is not supported for given client_id_scheme - redirect_uri",
             exception.message
         )
     }

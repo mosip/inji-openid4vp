@@ -49,7 +49,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     private val setResponseUri: (String) -> Unit,
     val walletNonce: String,
 ) {
-    protected var shouldValidateWithWalletMetadata = false
+    private var shouldValidateWithWalletMetadata = false
 
     open fun validateClientId() {
         return
@@ -59,6 +59,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
     abstract fun isRequestObjectSupported(): Boolean
 
+    abstract fun clientIdScheme(): String
 
     fun fetchAuthorizationRequest() {
         val requestUriResponse: Map<String, Any>
@@ -68,7 +69,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
         if (requestUri != null) {
             if (!isRequestUriSupported()) {
                 throw OpenID4VPExceptions.InvalidData(
-                    "request_uri is not supported for given client_id_scheme",
+                    "request_uri is not supported for given client_id_scheme - ${this.clientIdScheme()}",
                     className
                 )
             }
@@ -107,18 +108,30 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                             className
                         )
                     )
-                    headers = getHeadersForAuthorizationRequestUri()
+                    headers = mapOf(
+                        "content-type" to ContentType.APPLICATION_FORM_URL_ENCODED.value,
+                        "accept" to ContentType.APPLICATION_JWT.value
+                    )
                     shouldValidateWithWalletMetadata = true
                 }
                 body = body?.plus(mapOf("wallet_nonce" to walletNonce))
             }
+            try {
+                requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
+            } catch (e: OpenID4VPExceptions) {
+                throw e
+            } catch (e: Exception) {
+                throw OpenID4VPExceptions.GenericFailure(
+                    "Network error while fetching request_uri: ${e.message}",
+                    className,
+                )
+            }
 
-            requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
-            this.validateRequestUriResponse(requestUriResponse,walletNonce)
+            this.validateRequestUriResponse(requestUriResponse, walletNonce)
         } else {
             if (!isRequestObjectSupported()) {
                 throw OpenID4VPExceptions.InvalidData(
-                    "request object is not supported for given client_id_scheme",
+                    "request object is not supported for given client_id_scheme - ${this.clientIdScheme()}",
                     className
                 )
             }
@@ -134,11 +147,13 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value), "", className)
         }
 
-        val headers = requestUriResponse["header"] as? Headers
-            ?: throw OpenID4VPExceptions.InvalidData("Missing HTTP headers in request_uri response", className)
+        val headers = requestUriResponse["header"] as Headers
 
         val responseBody = requestUriResponse["body"]?.toString()
-            ?: throw OpenID4VPExceptions.InvalidData("Missing body in request_uri response", className)
+            ?: throw OpenID4VPExceptions.InvalidData(
+                "Missing body in request_uri response",
+                className
+            )
 
         if (!isValidContentType(headers)) {
             throw OpenID4VPExceptions.InvalidData(
@@ -154,18 +169,8 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        val jwtHeader = try {
-            JWSHandler.extractDataJsonFromJws(responseBody, JWSHandler.JwsPart.HEADER)
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "Failed to parse JWS header: ${e.message}",
-                className
-            )
-        }
-
         try {
-            validateAuthorizationRequestSigningAlgorithm(jwtHeader)
-            verifyJwt(responseBody)
+            validateJWTRequest(responseBody)
         } catch (e: OpenID4VPExceptions) {
             throw e
         } catch (e: Exception) {
@@ -184,18 +189,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        try {
-            validateAuthorizationRequestObjectAndParameters(
-                authorizationRequestParameters,
-                authorizationRequestObject
-            )
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.InvalidData(
-                "Authorization Request Object validation failed: ${e.message}",
-                className
-            )
-        }
-
         val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)
             ?.let { determineHttpMethod(it) } ?: HttpMethod.GET
 
@@ -210,49 +203,64 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             }
         }
 
+        try {
+            validateAuthorizationRequestObjectAndParameters(
+                authorizationRequestParameters,
+                authorizationRequestObject
+            )
+        } catch (e: Exception) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Authorization Request Object validation failed: ${e.message}",
+                className
+            )
+        }
+
         authorizationRequestParameters = authorizationRequestObject
     }
 
 
-    private fun verifyJwt(jws: String) {
-        val header = try {
-            JWSHandler.extractDataJsonFromJws(jws, JWSHandler.JwsPart.HEADER)
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "JWS header extraction failed: ${e.message}",
-                className
-            )
-        }
-
-        val algString = header["alg"] as? String
-            ?: throw OpenID4VPExceptions.InvalidData(
-                "Request URI response validation failed - 'alg' is missing in JWS header",
-                className
-            )
-
-        val algorithm = RequestSigningAlgorithm.valueOf(algString)
-
-        val kid = header["kid"] as? String
-
-        val publicKey = try {
-            extractPublicKey(algorithm = algorithm, kid = kid)
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "Failed to extract public key: ${e.message}",
-                className
-            )
-        }
-
+    private fun validateJWTRequest(jws: String) {
         try {
-            JWSHandler.verify(jws, publicKey)
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "JWS signature verification failed: ${e.message}",
-                className
+            val header = try {
+                JWSHandler.extractDataJsonFromJws(jws, JWSHandler.JwsPart.HEADER)
+            } catch (e: Exception) {
+                throw OpenID4VPExceptions.VerificationFailure(
+                    "JWS header extraction failed: ${e.message}",
+                    className,
+                )
+            }
+
+            val algString = header["alg"] as? String
+                ?: throw OpenID4VPExceptions.InvalidData(
+                    "'alg' is not present in JWS header",
+                    className,
+                    OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
+                )
+
+            validateAuthorizationRequestSigningAlgorithm(algString)
+
+            val algorithm = RequestSigningAlgorithm.valueOf(algString)
+
+            val kid = header["kid"] as? String
+
+            val publicKey = extractPublicKey(algorithm = algorithm, kid = kid)
+
+            try {
+                JWSHandler.verify(jws, publicKey)
+            } catch (e: Exception) {
+                throw OpenID4VPExceptions.VerificationFailure(
+                    "JWS signature verification failed: ${e.message}",
+                    className
+                )
+            }
+        } catch (e: OpenID4VPExceptions) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Request URI response validation failed - ${e.message}",
+                className,
+                OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
         }
     }
-
 
 
     abstract fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey
@@ -263,13 +271,15 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             ignoreCase = true
         ) == true
 
-    private fun validateAuthorizationRequestSigningAlgorithm(headers: MutableMap<String, Any>) {
+    private fun validateAuthorizationRequestSigningAlgorithm(
+        algorithm: String,
+    ) {
+
         if (shouldValidateWithWalletMetadata) {
-            val alg = headers["alg"] as String
             walletMetadata?.let {
                 if (!it.requestObjectSigningAlgValuesSupported!!.contains(
                         RequestSigningAlgorithm.fromValue(
-                            alg
+                            algorithm
                         )
                     )
                 )
@@ -284,7 +294,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
     abstract fun process(walletMetadata: WalletMetadata): WalletMetadata
 
-    abstract fun getHeadersForAuthorizationRequestUri(): Map<String, String>
 
     fun setResponseUrl() {
         val responseMode = getStringValue(authorizationRequestParameters, RESPONSE_MODE.value)
