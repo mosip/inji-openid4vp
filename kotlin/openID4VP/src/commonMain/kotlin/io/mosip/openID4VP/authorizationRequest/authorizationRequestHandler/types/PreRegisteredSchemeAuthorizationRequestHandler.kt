@@ -88,14 +88,14 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
             )
         val clientMetadata = verifier.clientMetadata
             ?: throw OpenID4VPExceptions.InvalidData(
-                "Public key extraction failed - Either client_metadat not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
+                "Public key extraction failed - Either client_metadata not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
 
         val jwks = clientMetadata.jwks
             ?: throw OpenID4VPExceptions.InvalidData(
-                "Public key extraction failed - Either client_metadat not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
+                "Public key extraction failed - Either client_metadata not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
@@ -155,10 +155,10 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         return when (kty.uppercase()) {
             "OKP" -> when (crv) {
                 "Ed25519" -> buildEd25519PublicKey(x)
-                else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Unsupported OKP curve: $crv",className)
+                else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Public key extraction failed - Curve - ${crv} is not supported. Supported: Ed25519",className)
             }
 
-            else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Unsupported key type: $kty",className)
+            else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Public key extraction failed - KeyType - $kty is not supported. Supported: OKP",className)
         }
     }
 

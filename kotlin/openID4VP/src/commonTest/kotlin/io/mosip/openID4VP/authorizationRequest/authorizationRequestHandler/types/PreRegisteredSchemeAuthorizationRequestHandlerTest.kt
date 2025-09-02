@@ -428,5 +428,36 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         assertTrue(ex.message!!.contains("No public key found for algorithm: EdDSA with signature usage"))
     }
 
+    @Test
+    fun `should throw if curve is unsupported in matching key`() {
+        val key = buildTestJwk(crv = "XYZ")
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(key)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val ex = assertFailsWith<OpenID4VPExceptions.PublicKeyResolutionFailed> {
+            handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, "test-kid")
+        }
+        assertTrue(ex.message!!.contains("Public key extraction failed - Curve - XYZ is not supported. Supported: Ed25519"))
+    }
+
 }
 

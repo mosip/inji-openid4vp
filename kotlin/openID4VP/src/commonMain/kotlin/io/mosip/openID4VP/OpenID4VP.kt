@@ -16,10 +16,10 @@ class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,
     private var walletMetadata: WalletMetadata? =  null
 ) {
-    private val authorizationResponseHandler = AuthorizationResponseHandler()
+    private  var authorizationResponseHandler = AuthorizationResponseHandler()
     private var responseUri: String? = null
     private lateinit var walletNonce: String
-    lateinit var authorizationRequest: AuthorizationRequest
+    var authorizationRequest: AuthorizationRequest? = null
 
 
     private val logTag: String
@@ -34,7 +34,10 @@ class OpenID4VP @JvmOverloads constructor(
     ): AuthorizationRequest {
         return try {
             walletNonce = generateNonce()
-            authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
+            authorizationRequest = null
+            responseUri = null
+            authorizationResponseHandler = AuthorizationResponseHandler()
+            val authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
                 urlEncodedAuthorizationRequest,
                 trustedVerifiers,
                 walletMetadata,
@@ -42,6 +45,7 @@ class OpenID4VP @JvmOverloads constructor(
                 shouldValidateClient,
                 walletNonce
             )
+            this.authorizationRequest = authorizationRequest
             authorizationRequest
         } catch (exception: OpenID4VPExceptions) {
             this.sendErrorToVerifier(exception)
@@ -58,7 +62,7 @@ class OpenID4VP @JvmOverloads constructor(
         return try {
             authorizationResponseHandler.constructUnsignedVPToken(
                 credentialsMap = verifiableCredentials,
-                authorizationRequest = authorizationRequest,
+                authorizationRequest = authorizationRequest!!,
                 responseUri = responseUri!!,
                 holderId = holderId,
                 signatureSuite = signatureSuite,
@@ -76,7 +80,7 @@ class OpenID4VP @JvmOverloads constructor(
     ): String {
         return try {
             authorizationResponseHandler.shareVP(
-                authorizationRequest = authorizationRequest,
+                authorizationRequest = authorizationRequest!!,
                 vpTokenSigningResults = vpTokenSigningResults,
                 responseUri = responseUri!!
             )
@@ -97,7 +101,7 @@ class OpenID4VP @JvmOverloads constructor(
                         className = OpenID4VP::class.simpleName.orEmpty()
                     ).toErrorResponse()
                 }.apply {
-                    authorizationRequest.state?.takeIf { it.isNotBlank() }?.let {
+                    authorizationRequest!!.state?.takeIf { it.isNotBlank() }?.let {
                         this[OpenID4VPErrorFields.STATE] = it
                     }
                 }
@@ -123,7 +127,7 @@ class OpenID4VP @JvmOverloads constructor(
     ): AuthorizationRequest {
         return try {
             walletNonce = generateNonce()
-            authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
+            val authorizationRequest = AuthorizationRequest.validateAndCreateAuthorizationRequest(
                 urlEncodedAuthorizationRequest,
                 trustedVerifiers,
                 walletMetadata,
@@ -131,6 +135,7 @@ class OpenID4VP @JvmOverloads constructor(
                 shouldValidateClient,
                 walletNonce
             )
+            this.authorizationRequest = authorizationRequest
             authorizationRequest
         } catch (exception: OpenID4VPExceptions) {
             this.sendErrorToVerifier(exception)
@@ -143,7 +148,7 @@ class OpenID4VP @JvmOverloads constructor(
         return try {
             authorizationResponseHandler.constructUnsignedVPTokenV1(
                 verifiableCredentials,
-                authorizationRequest,
+                authorizationRequest!!,
                 responseUri!!
             )
         } catch (exception: Exception) {
@@ -157,7 +162,7 @@ class OpenID4VP @JvmOverloads constructor(
         return try {
             authorizationResponseHandler.shareVPV1(
                 vpResponseMetadata,
-                authorizationRequest,
+                authorizationRequest!!,
                 responseUri!!
             )
         } catch (exception: Exception) {
