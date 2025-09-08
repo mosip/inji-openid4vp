@@ -36,6 +36,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     }
 
     override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
+        //TODO: check error message
         throw UnsupportedOperationException("Public key extraction is not supported for Redirect URI scheme")
     }
 

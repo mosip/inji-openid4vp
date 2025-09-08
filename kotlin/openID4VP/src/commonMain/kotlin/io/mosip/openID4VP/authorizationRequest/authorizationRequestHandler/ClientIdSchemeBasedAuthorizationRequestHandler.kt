@@ -98,23 +98,23 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             var headers: Map<String, String>? = null
 
             if (httpMethod == HttpMethod.POST) {
+                body = mapOf("wallet_nonce" to walletNonce)
                 walletMetadata?.let { walletMetadata ->
                     isClientIdSchemeSupported(walletMetadata)
                     val processedWalletMetadata = process(walletMetadata)
-                    body = mapOf(
+                    body = body.plus(mapOf(
                         "wallet_metadata" to encodeToJsonString(
                             processedWalletMetadata,
                             "wallet_metadata",
                             className
                         )
-                    )
+                    ))
                     headers = mapOf(
                         "content-type" to ContentType.APPLICATION_FORM_URL_ENCODED.value,
                         "accept" to ContentType.APPLICATION_JWT.value
                     )
                     shouldValidateWithWalletMetadata = true
                 }
-                body = body?.plus(mapOf("wallet_nonce" to walletNonce))
             }
             try {
                 requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
