@@ -2,39 +2,66 @@ package io.mosip.openID4VP.authorizationResponse
 
 import io.mockk.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
+import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinitionSerializer
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult
 import io.mosip.openID4VP.common.DateUtil
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.FormatType
+import io.mosip.openID4VP.constants.FormatType.*
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 import io.mosip.openID4VP.testData.*
 import java.io.IOException
+import kotlin.collections.mapOf
 import kotlin.test.*
 
 class AuthorizationResponseHandlerTest {
     private val ldpVcList1 = listOf(ldpCredential1, ldpCredential2)
     private val ldpVcList2 = listOf(ldpCredential2)
     private val mdocVcList = listOf(mdocCredential)
+
     private val selectedLdpVcCredentialsList = mapOf(
-        "456" to mapOf(FormatType.LDP_VC to ldpVcList1),
-        "789" to mapOf(FormatType.LDP_VC to ldpVcList2)
+        "456" to mapOf(LDP_VC to ldpVcList1),
+        "789" to mapOf(LDP_VC to ldpVcList2)
     )
     private val selectedMdocCredentialsList = mapOf(
-        "123" to mapOf(FormatType.MSO_MDOC to mdocVcList)
+        "123" to mapOf(MSO_MDOC to mdocVcList)
+    )
+
+    private val selectedSdJwtCredentialsList = mapOf(
+        "142" to mapOf(VC_SD_JWT to listOf(sdJwtCredential1))
     )
     private val credentialsMap = mapOf(
-        "input1" to mapOf(FormatType.LDP_VC to listOf(ldpCredential1)),
-        "input2" to mapOf(FormatType.MSO_MDOC to listOf(mdocCredential))
+        "input1" to mapOf(LDP_VC to listOf(ldpCredential1)),
+        "input2" to mapOf(MSO_MDOC to listOf(mdocCredential))
     )
+
+    private val credentialMap2 = mapOf(
+        "input1" to mapOf(LDP_VC to listOf(ldpCredential1)),
+        "input2" to mapOf(MSO_MDOC to listOf(mdocCredential)),
+        "input3" to mapOf(VC_SD_JWT to listOf(sdJwtCredential1))
+    )
+
+    private val unsignedKBJwt = "eyJhbGciOiJFUzI1NksifQ.eyJub25jZSI6Im5vbmNlIn0"
+    private val kbJwtSignature = "dummy_signature"
 
     private lateinit var authorizationResponseHandler: AuthorizationResponseHandler
     private val mockResponseHandler = mockk<ResponseModeBasedHandler>()
@@ -49,7 +76,11 @@ class AuthorizationResponseHandlerTest {
         mockkConstructor(MdocVPTokenBuilder::class)
         every { anyConstructed<MdocVPTokenBuilder>().build() } returns mdocVPToken
 
-        setField(authorizationResponseHandler, "credentialsMap", selectedLdpVcCredentialsList + selectedMdocCredentialsList)
+        setField(
+            authorizationResponseHandler,
+            "credentialsMap",
+            selectedLdpVcCredentialsList + selectedMdocCredentialsList
+        )
         setField(authorizationResponseHandler, "unsignedVPTokens", unsignedVPTokens)
         setField(authorizationResponseHandler, "walletNonce", "bMHvX1HGhbh8zqlSWf/fuQ==")
 
@@ -74,9 +105,22 @@ class AuthorizationResponseHandlerTest {
             "vpTokenSigningPayload" to listOf(mdocCredential)
         )
 
+        mockkConstructor(UnsignedSdJwtVPTokenBuilder::class)
+        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build() } returns mapOf(
+            "unsignedVPToken" to unsignedSdJwtVPToken,
+            "vpTokenSigningPayload" to listOf(sdJwtCredential1)
+        )
+
         mockkObject(ResponseModeBasedHandlerFactory)
         every { ResponseModeBasedHandlerFactory.get(any()) } returns mockResponseHandler
-        every { mockResponseHandler.sendAuthorizationResponse(any(), any(), any(), any()) } returns "success"
+        every {
+            mockResponseHandler.sendAuthorizationResponse(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns "success"
     }
 
     @AfterTest
@@ -87,8 +131,8 @@ class AuthorizationResponseHandlerTest {
     @Test
     fun `should successfully construct unsigned VP tokens for both LDP_VC and MSO_MDOC formats`() {
         val expectedUnsignedVPToken = mapOf(
-            FormatType.LDP_VC to unsignedLdpVPToken,
-            FormatType.MSO_MDOC to unsignedMdocVPToken
+            LDP_VC to unsignedLdpVPToken,
+            MSO_MDOC to unsignedMdocVPToken,
         )
 
         val unsignedVPToken = authorizationResponseHandler.constructUnsignedVPToken(
@@ -102,8 +146,40 @@ class AuthorizationResponseHandlerTest {
 
         assertNotNull(unsignedVPToken)
         assertEquals(2, unsignedVPToken.size)
-        assertEquals(expectedUnsignedVPToken[FormatType.LDP_VC], unsignedVPToken[FormatType.LDP_VC])
-        assertEquals(expectedUnsignedVPToken[FormatType.MSO_MDOC], unsignedVPToken[FormatType.MSO_MDOC])
+        assertEquals(expectedUnsignedVPToken[LDP_VC], unsignedVPToken[LDP_VC])
+        assertEquals(
+            expectedUnsignedVPToken[MSO_MDOC],
+            unsignedVPToken[MSO_MDOC]
+        )
+    }
+
+    @Test
+    fun `should successfully construct unsigned VP tokens for both LDP_VC, MSO_MDOC, SD_JWT formats`() {
+        val expectedUnsignedVPToken = mapOf(
+            LDP_VC to unsignedLdpVPToken,
+            MSO_MDOC to unsignedMdocVPToken,
+            VC_SD_JWT to unsignedSdJwtVPToken
+        )
+        authorizationRequest.presentationDefinition = deserializeAndValidate( presentationDefinitionMapWithSdJwt,
+            PresentationDefinitionSerializer
+        )
+        val unsignedVPToken = authorizationResponseHandler.constructUnsignedVPToken(
+            credentialsMap = selectedMdocCredentialsList + selectedLdpVcCredentialsList + selectedSdJwtCredentialsList,
+            holderId = holderId,
+            authorizationRequest = authorizationRequest,
+            responseUri = "https://mock-verifier.com",
+            signatureSuite = signatureSuite,
+            nonce = walletNonce
+        )
+
+        assertNotNull(unsignedVPToken)
+        assertEquals(3, unsignedVPToken.size)
+        assertEquals(expectedUnsignedVPToken[LDP_VC], unsignedVPToken[LDP_VC])
+        assertEquals(expectedUnsignedVPToken[VC_SD_JWT], unsignedVPToken[VC_SD_JWT])
+        assertEquals(
+            expectedUnsignedVPToken[MSO_MDOC],
+            unsignedVPToken[MSO_MDOC]
+        )
     }
 
     @Test
@@ -139,7 +215,11 @@ class AuthorizationResponseHandlerTest {
 
     @Test
     fun `should throw error when a credential format entry is not available in unsignedVPTokens but available in vpTokenSigningResults`() {
-        setField(authorizationResponseHandler, "unsignedVPTokens", emptyMap<FormatType, UnsignedVPToken>())
+        setField(
+            authorizationResponseHandler,
+            "unsignedVPTokens",
+            emptyMap<FormatType, UnsignedVPToken>()
+        )
 
         val exception = assertFailsWith<InvalidData> {
             authorizationResponseHandler.shareVP(
@@ -188,8 +268,8 @@ class AuthorizationResponseHandlerTest {
         val result = authorizationResponseHandler.shareVP(
             authorizationRequest = authorizationRequest,
             vpTokenSigningResults = mapOf(
-                FormatType.LDP_VC to ldpVPTokenSigningResult,
-                FormatType.MSO_MDOC to mdocVPTokenSigningResult
+                LDP_VC to ldpVPTokenSigningResult,
+                MSO_MDOC to mdocVPTokenSigningResult
             ),
             responseUri = responseUrl
         )
@@ -238,7 +318,7 @@ class AuthorizationResponseHandlerTest {
     fun `should throw exception when unsupported response mode is provided`() {
         val request = authorizationRequest.copy(responseMode = "unsupported_mode")
         every { ResponseModeBasedHandlerFactory.get("unsupported_mode") } throws
-                InvalidData("Unsupported response mode: unsupported_mode","")
+                InvalidData("Unsupported response mode: unsupported_mode", "")
 
         authorizationResponseHandler.constructUnsignedVPToken(
             credentialsMap = credentialsMap,
@@ -292,7 +372,7 @@ class AuthorizationResponseHandlerTest {
 
     @Test
     fun `should throw exception when format in signing results not found in unsigned tokens`() {
-        val ldpOnly = mapOf("input1" to mapOf(FormatType.LDP_VC to listOf(ldpCredential1)))
+        val ldpOnly = mapOf("input1" to mapOf(LDP_VC to listOf(ldpCredential1)))
         authorizationResponseHandler.constructUnsignedVPToken(
             credentialsMap = ldpOnly,
             holderId = holderId,
@@ -345,8 +425,8 @@ class AuthorizationResponseHandlerTest {
     @Test
     fun `should ignore empty credential lists for input descriptors`() {
         val input = mapOf(
-            "input1" to mapOf(FormatType.LDP_VC to listOf(ldpCredential1)),
-            "input2" to mapOf(FormatType.LDP_VC to emptyList())
+            "input1" to mapOf(LDP_VC to listOf(ldpCredential1)),
+            "input2" to mapOf(LDP_VC to emptyList())
         )
 
         val result = authorizationResponseHandler.constructUnsignedVPToken(
@@ -360,7 +440,7 @@ class AuthorizationResponseHandlerTest {
 
         assertNotNull(result)
         assertEquals(1, result.size)
-        assertEquals(unsignedLdpVPToken, result[FormatType.LDP_VC])
+        assertEquals(unsignedLdpVPToken, result[LDP_VC])
     }
 
     @Test
@@ -440,9 +520,20 @@ class AuthorizationResponseHandlerTest {
         val mockVPResponseMetadata = mockk<VPResponseMetadata>()
         every { mockVPResponseMetadata.publicKey } returns ""
         every { mockVPResponseMetadata.jws } returns jws
-        every { mockVPResponseMetadata.validate() } throws InvalidData("Public key cannot be empty","")
+        every { mockVPResponseMetadata.validate() } throws InvalidData(
+            "Public key cannot be empty",
+            ""
+        )
 
-        val credentials = mapOf("input1" to listOf(encodeToJsonString(ldpCredential1, "ldpCredential1", "LDP_VC")))
+        val credentials = mapOf(
+            "input1" to listOf(
+                encodeToJsonString(
+                    ldpCredential1,
+                    "ldpCredential1",
+                    "LDP_VC"
+                )
+            )
+        )
 
         authorizationResponseHandler.constructUnsignedVPTokenV1(
             verifiableCredentials = credentials,
@@ -470,7 +561,15 @@ class AuthorizationResponseHandlerTest {
             signatureAlgorithm = "Ed25519Signature2020"
         )
 
-        val credentials = mapOf("input1" to listOf(encodeToJsonString(ldpCredential1, "ldpCredential1", "LDP_VC")))
+        val credentials = mapOf(
+            "input1" to listOf(
+                encodeToJsonString(
+                    ldpCredential1,
+                    "ldpCredential1",
+                    "LDP_VC"
+                )
+            )
+        )
 
         authorizationResponseHandler.constructUnsignedVPTokenV1(
             verifiableCredentials = credentials,
@@ -498,7 +597,7 @@ class AuthorizationResponseHandlerTest {
     fun ` wallet nonce is different for every construct unsignedVPToken call`() {
         val verifiableCredentials = mapOf(
             "input_descriptor1" to mapOf(
-                FormatType.LDP_VC to listOf(ldpCredential1)
+                LDP_VC to listOf(ldpCredential1)
             )
         )
         // First call
@@ -512,7 +611,8 @@ class AuthorizationResponseHandlerTest {
         )
 
         // Get the nonce from the first call using reflection
-        val walletNonceField = AuthorizationResponseHandler::class.java.getDeclaredField("walletNonce")
+        val walletNonceField =
+            AuthorizationResponseHandler::class.java.getDeclaredField("walletNonce")
         walletNonceField.isAccessible = true
         val firstNonce = walletNonceField.get(authorizationResponseHandler) as String
 
@@ -528,7 +628,217 @@ class AuthorizationResponseHandlerTest {
 
         val secondNonce = walletNonceField.get(authorizationResponseHandler) as String
 
-        assertNotEquals("Wallet nonce should be different for every constructUnsignedVPTokenV1 call", firstNonce, secondNonce)
+        assertNotEquals(
+            "Wallet nonce should be different for every constructUnsignedVPTokenV1 call",
+            firstNonce,
+            secondNonce
+        )
     }
+
+    @Test
+    fun `should successfully construct unsigned VP token for SD-JWT`() {
+        val sdJwtVcList = listOf(sdJwtCredential1, sdJwtCredential2)
+        val sdJwtCredentialMap = mapOf("sdjwt-input" to mapOf(VC_SD_JWT to sdJwtVcList))
+
+        mockkConstructor(UnsignedSdJwtVPTokenBuilder::class)
+        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build() } returns mapOf(
+            "unsignedVPToken" to UnsignedSdJwtVPToken(
+                mapOf(
+                    "uuid-1" to unsignedKBJwt,
+                    "uuid-2" to "mock-unsigned-kb-jwt"
+                )
+            ),
+            "vpTokenSigningPayload" to mapOf(
+                "uuid-1" to sdJwtCredential1,
+                "uuid-2" to sdJwtCredential2
+            )
+        )
+
+        val result = authorizationResponseHandler.constructUnsignedVPToken(
+            credentialsMap = sdJwtCredentialMap,
+            holderId = holderId,
+            authorizationRequest = authorizationRequest,
+            responseUri = responseUrl,
+            signatureSuite = signatureSuite,
+            nonce = walletNonce
+        )
+
+        assertNotNull(result)
+        assertTrue(result.containsKey(VC_SD_JWT))
+        assertEquals(
+            UnsignedSdJwtVPToken(
+                mapOf(
+                    "uuid-1" to unsignedKBJwt,
+                    "uuid-2" to "mock-unsigned-kb-jwt"
+                )
+            ), result[VC_SD_JWT]
+        )
+    }
+
+    @Test
+    fun `should share SD-JWT VP successfully`() {
+        val mockSigningResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
+        every { mockSigningResult.uuidToKbJWTSignature } returns mapOf("uuid-1" to "mock-signature")
+        val mockUnsignedSdJwtVPToken = UnsignedSdJwtVPToken(
+            uuidToUnsignedKBT = mapOf("uuid-1" to "mock-kb-jwt")
+        )
+        val mockVpTokenSigningPayload = mapOf("uuid-1" to sdJwtCredential1)
+
+        val unsignedVPTokenMap = mapOf(
+            "unsignedVPToken" to mockUnsignedSdJwtVPToken,
+            "vpTokenSigningPayload" to mockVpTokenSigningPayload
+        )
+
+        setField(
+            authorizationResponseHandler,
+            "unsignedVPTokens",
+            mapOf(VC_SD_JWT to unsignedVPTokenMap)
+        )
+
+        setField(
+            authorizationResponseHandler,
+            "credentialsMap",
+            mapOf("sdjwt-input" to mapOf(VC_SD_JWT to listOf(sdJwtCredential1)))
+        )
+
+        mockkObject(ResponseModeBasedHandlerFactory)
+        every { ResponseModeBasedHandlerFactory.get("direct_post") } returns mockResponseHandler
+
+        val result = authorizationResponseHandler.shareVP(
+            authorizationRequest = authorizationRequest.copy(responseType = "vp_token"),
+            vpTokenSigningResults = mapOf(VC_SD_JWT to mockSigningResult),
+            responseUri = responseUrl
+        )
+
+        assertEquals("success", result)
+
+
+        verify(exactly = 1) {
+            mockResponseHandler.sendAuthorizationResponse(
+                authorizationRequest = any(),
+                url = eq(responseUrl),
+                authorizationResponse = any(),
+                walletNonce = any()
+            )
+        }
+
+    }
+
+    @Test
+    fun `should throw if SD-JWT format not found in unsigned tokens during shareVP`() {
+        val mockSigningResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
+
+        setField(authorizationResponseHandler, "unsignedVPTokens", emptyMap<FormatType, Any>())
+
+        assertFailsWith<OpenID4VPExceptions.InvalidData> {
+            authorizationResponseHandler.shareVP(
+                authorizationRequest.copy(responseType = "vp_token"),
+                mapOf(VC_SD_JWT to mockSigningResult),
+                responseUrl
+            )
+        }
+    }
+
+    @Test
+    fun `should share 2 SD-JWT credentials successfully`() {
+        val sdJwt = UnsignedSdJwtVPToken(
+            mapOf("uuid-1" to "kbjwt1", "uuid-2" to "kbjwt2")
+        )
+        val payloadMap = mapOf("uuid-1" to "cred1", "uuid-2" to "cred2")
+
+        setField(authorizationResponseHandler, "unsignedVPTokens", mapOf(
+            VC_SD_JWT to mapOf(
+                "unsignedVPToken" to sdJwt,
+                "vpTokenSigningPayload" to payloadMap
+            )
+        ))
+
+        val signingResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
+        every { signingResult.uuidToKbJWTSignature  } returns mapOf("uuid-1" to "mock-signature", "uuid-2" to "mock-signature2")
+        mockkObject(ResponseModeBasedHandlerFactory)
+        every { ResponseModeBasedHandlerFactory.get(any()) } returns mockResponseHandler
+
+        val result = authorizationResponseHandler.shareVP(
+            authorizationRequest.copy(responseType = "vp_token"),
+            mapOf(VC_SD_JWT to signingResult),
+            responseUrl
+        )
+
+        assertEquals("success", result)
+    }
+
+
+    @Test
+    fun `should successfully share VP with valid signing results`() {
+        authorizationResponseHandler.constructUnsignedVPToken(
+            credentialsMap = credentialsMap,
+            holderId = holderId,
+            authorizationRequest = authorizationRequest,
+            responseUri = responseUrl,
+            signatureSuite = signatureSuite,
+            nonce = walletNonce
+        )
+
+        val result = authorizationResponseHandler.shareVP(
+            authorizationRequest = authorizationRequest,
+            vpTokenSigningResults = mapOf(
+                LDP_VC to ldpVPTokenSigningResult,
+                MSO_MDOC to mdocVPTokenSigningResult
+            ),
+            responseUri = responseUrl
+        )
+
+        assertEquals("success", result)
+
+        verify {
+            ResponseModeBasedHandlerFactory.get("direct_post")
+            mockResponseHandler.sendAuthorizationResponse(
+                authorizationRequest = authorizationRequest,
+                url = responseUrl,
+                authorizationResponse = any(),
+                walletNonce = any()
+            )
+        }
+    }
+
+    //TODO::make this real test.
+    @Test
+    fun `should share 2 credentials for each format`() {
+        setField(authorizationResponseHandler, "unsignedVPTokens", mapOf(
+            VC_SD_JWT to mapOf(
+                "unsignedVPToken" to UnsignedSdJwtVPToken(
+                    mapOf("uuid-1" to "kb1", "uuid-2" to "kb2")
+                ),
+                "vpTokenSigningPayload" to mapOf("uuid-1" to "cred1", "uuid-2" to "cred2")
+            ),
+            LDP_VC to mapOf(
+                "unsignedVPToken" to UnsignedLdpVPToken("ldp-vp-token"),
+                "vpTokenSigningPayload" to "ldp-payload"
+            ),
+            MSO_MDOC to mapOf(
+                "unsignedVPToken" to UnsignedMdocVPToken(mapOf("doc-type" to "mdoc-vp-token")),
+                "vpTokenSigningPayload" to "mdoc-payload"
+            )
+        ))
+
+        val signingResults = mapOf(
+            VC_SD_JWT to mockk<SdJwtVPTokenSigningResult>(relaxed = true),
+            LDP_VC to mockk<LdpVPTokenSigningResult>(relaxed = true),
+            MSO_MDOC to mockk<MdocVPTokenSigningResult>(relaxed = true)
+        )
+
+        mockkObject(ResponseModeBasedHandlerFactory)
+        every { ResponseModeBasedHandlerFactory.get(any()) } returns mockResponseHandler
+        every { mockResponseHandler.sendAuthorizationResponse(any(), any(), any(), any()) } just Awaits
+
+        val result = authorizationResponseHandler.shareVP(
+            authorizationRequest.copy(responseType = "vp_token"),
+            signingResults,
+            responseUrl
+        )
+
+        assertEquals("success", result)
+    }
+
 
 }
