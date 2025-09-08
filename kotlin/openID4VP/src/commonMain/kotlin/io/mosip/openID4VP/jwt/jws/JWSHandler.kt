@@ -9,9 +9,11 @@ import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.SIGNATURE
 import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
 import java.nio.charset.StandardCharsets
 import java.security.PublicKey
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.mosip.openID4VP.common.encodeToBase64Url
+import io.mosip.openID4VP.common.getObjectMapper
 
 private val className = JWSHandler::class.simpleName!!
-
 class JWSHandler {
     enum class JwsPart(val number: Int) {
         HEADER(0),
@@ -64,6 +66,17 @@ class JWSHandler {
             val payload = components[part.number]
             val decodedString = decodeFromBase64Url(payload)
             return convertJsonToMap(String(decodedString, Charsets.UTF_8))
+        }
+
+        fun createUnsignedJWS(header: Map<String, Any>, payload: Map<String, Any>): String {
+            val encodedHeader =
+                encodeToBase64Url(
+                    getObjectMapper().writeValueAsString(header).toByteArray(StandardCharsets.UTF_8)
+                )
+            val encodedPayload = encodeToBase64Url(
+                getObjectMapper().writeValueAsString(payload).toByteArray(StandardCharsets.UTF_8)
+            )
+            return "$encodedHeader.$encodedPayload."
         }
     }
 }
