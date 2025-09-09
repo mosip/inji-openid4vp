@@ -98,14 +98,17 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             var headers: Map<String, String>? = null
 
             if (httpMethod == HttpMethod.POST) {
+                body = mapOf("wallet_nonce" to walletNonce)
                 walletMetadata?.let { walletMetadata ->
                     isClientIdSchemeSupported(walletMetadata)
                     val processedWalletMetadata = process(walletMetadata)
-                    body = mapOf(
-                        "wallet_metadata" to encodeToJsonString(
-                            processedWalletMetadata,
-                            "wallet_metadata",
-                            className
+                    body = body.plus(
+                        mapOf(
+                            "wallet_metadata" to encodeToJsonString(
+                                processedWalletMetadata,
+                                "wallet_metadata",
+                                className
+                            )
                         )
                     )
                     headers = mapOf(
@@ -114,7 +117,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                     )
                     shouldValidateWithWalletMetadata = true
                 }
-                body = body?.plus(mapOf("wallet_nonce" to walletNonce))
             }
             try {
                 requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
@@ -127,7 +129,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 )
             }
 
-            this.validateRequestUriResponse(requestUriResponse, walletNonce)
+            this.validateRequestUriResponse(requestUriResponse,httpMethod)
         } else {
             if (!isRequestObjectSupported()) {
                 throw OpenID4VPExceptions.InvalidData(
@@ -141,7 +143,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
     private fun validateRequestUriResponse(
         requestUriResponse: Map<String, Any>,
-        walletNonce: String,
+        httpMethod: HttpMethod
     ) {
         if (requestUriResponse.isEmpty()) {
             throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value), "", className)
@@ -188,9 +190,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 className
             )
         }
-
-        val httpMethod = getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value)
-            ?.let { determineHttpMethod(it) } ?: HttpMethod.GET
 
         if (httpMethod == HttpMethod.POST) {
             try {

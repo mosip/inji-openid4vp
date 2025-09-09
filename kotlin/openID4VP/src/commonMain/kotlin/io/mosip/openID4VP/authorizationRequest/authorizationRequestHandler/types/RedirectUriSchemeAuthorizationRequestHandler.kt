@@ -36,7 +36,7 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     }
 
     override fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey {
-        throw UnsupportedOperationException("Public key extraction is not supported for Redirect URI scheme")
+        throw UnsupportedOperationException("Public key extraction is not supported for redirect_uri client_id_scheme")
     }
 
     override fun process(walletMetadata: WalletMetadata): WalletMetadata {
