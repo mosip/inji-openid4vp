@@ -76,7 +76,7 @@ class JWSHandler {
             val encodedPayload = encodeToBase64Url(
                 getObjectMapper().writeValueAsString(payload).toByteArray(StandardCharsets.UTF_8)
             )
-            return "$encodedHeader.$encodedPayload."
+            return "$encodedHeader.$encodedPayload"
         }
     }
 }

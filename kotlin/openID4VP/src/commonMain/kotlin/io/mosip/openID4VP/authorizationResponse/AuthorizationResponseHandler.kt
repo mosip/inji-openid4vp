@@ -157,7 +157,7 @@ internal class AuthorizationResponseHandler {
 
         vpTokenSigningResults.entries.forEach { (credentialFormat, vpTokenSigningResult) ->
             val payloadMap = unsignedVPTokens[credentialFormat]
-                ?: throw OpenID4VPExceptions.InvalidData("No unsigned VP payloads found for format: $credentialFormat", className)
+                ?: throw OpenID4VPExceptions.InvalidData("unable to find the related credential format - $credentialFormat in the unsignedVPTokens map", className)
             //TODO: check ios code
             when (credentialFormat) {
                 FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
@@ -289,12 +289,17 @@ internal class AuthorizationResponseHandler {
         // group all formats together, call specific creator and pass the grouped credentials
         return groupedVcs.mapValues { (format, credentialsArray) ->
             when (format) {
-                //TODO:: holder ID mandate error
                 FormatType.LDP_VC -> {
+                    require(holderId != null) {
+                        OpenID4VPExceptions.InvalidData(
+                            "Holder ID cannot be null for LDP VC format",
+                            className
+                        )
+                    }
                     UnsignedLdpVPTokenBuilder(
                         verifiableCredential = credentialsArray,
                         id = UUIDGenerator.generateUUID(),
-                        holder = holderId!!,
+                        holder = holderId,
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,
                         signatureSuite = signatureSuite!!

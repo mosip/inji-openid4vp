@@ -2,10 +2,11 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkClass
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mosip.openID4VP.common.hashData
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
@@ -13,6 +14,7 @@ import java.lang.reflect.InvocationTargetException
 import java.security.PublicKey
 import java.util.Collections.emptyMap
 import kotlin.test.*
+
 
 class UnsignedSdJwtVPTokenBuilderTest {
 
@@ -24,9 +26,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
     private val mockSdJwt1= "header.payload.signature~disclosure1~"
 
     private val mockSdJwt2= "header.payload.signature~disclosure2~"
-    private val mockCredentials = listOf(mockSdJwt1, mockSdJwt2)
-
-    private val credentials = listOf(sdJwt1,sdJwt2)
 
     private val mockPublicKey = mockk<PublicKey>()
 
@@ -34,6 +33,9 @@ class UnsignedSdJwtVPTokenBuilderTest {
     fun setup() {
         mockkConstructor(DidPublicKeyResolver::class)
         mockkObject(JWSHandler)
+
+        mockkStatic("io.mosip.openID4VP.common.UtilsKt") // Full path to the file containing hashData
+        every { hashData(any(), any()) } returns "mocked-sdhash"
 
         every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } answers {
             mutableMapOf(
@@ -58,32 +60,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
     }
 
     @Test
-    fun `test build with valid Ed25519 key returns proper result`() {
-        val builder = UnsignedSdJwtVPTokenBuilder(
-            clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = mockCredentials
-        )
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertTrue(result.containsKey("unsignedVPToken"))
-        assertTrue(result.containsKey("vpTokenSigningPayload"))
-
-        val token = result["unsignedVPToken"] as UnsignedSdJwtVPToken
-        val payload = result["vpTokenSigningPayload"] as Map<*, *>
-
-        assertEquals(2, token.uuidToUnsignedKBT.size)
-        assertEquals(2, payload.size)
-
-        token.uuidToUnsignedKBT.values.forEach {
-            assertTrue(it.contains("unsigned"))
-        }
-    }
-
-    @Test
-    fun `test throws if cnf is missing`() {
+    fun `test should not throw  if  cnf is missing`() {
         every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns emptyMap()
 
         val builder = UnsignedSdJwtVPTokenBuilder(
@@ -92,11 +69,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
             sdJwtCredentials = listOf(sdJwt1)
         )
 
-        val ex = assertFailsWith<InvalidData> {
-            builder.build()
-        }
-
-        assertEquals("cnf missing or empty in sdJWT", ex.message)
+       builder.build() //should not throw
     }
 
     @Test
@@ -175,4 +148,119 @@ class UnsignedSdJwtVPTokenBuilderTest {
 
         assertEquals("ES256", alg)
     }
+
+    @Test
+    fun `should generate KB-JWT for credential with cnf`() {
+
+        every {
+            JWSHandler.extractDataJsonFromJws(sdJwt1, JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256",
+            "cnf" to mapOf("kid" to "did:jwk:example")
+        )
+
+        val builder = UnsignedSdJwtVPTokenBuilder(
+            clientId = clientId,
+            nonce = nonce,
+            sdJwtCredentials = listOf(sdJwt1),
+        )
+
+        val result = builder.build()
+        val unsigned = result["unsignedVPToken"] as UnsignedSdJwtVPToken
+        val payloadMap = result["vpTokenSigningPayload"] as Map<*, *>
+
+        assertEquals(1, unsigned.uuidToUnsignedKBT.size)
+        assertEquals(1, payloadMap.size)
+    }
+
+    @Test
+    fun `should not generate KB-JWT for credential without cnf`() {
+
+        every {
+            JWSHandler.extractDataJsonFromJws(sdJwt1, JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256"
+        )
+
+        val builder = UnsignedSdJwtVPTokenBuilder(
+            clientId = clientId,
+            nonce = nonce,
+            sdJwtCredentials = listOf(sdJwt1),
+        )
+
+        val result = builder.build()
+        val unsigned = result["unsignedVPToken"] as UnsignedSdJwtVPToken
+        val payloadMap = result["vpTokenSigningPayload"] as Map<*, *>
+
+        assertEquals(1, unsigned.uuidToUnsignedKBT.size)
+        assertEquals(1, payloadMap.size)
+    }
+
+    @Test
+    fun `should generate KB-JWT only for credential with cnf but payloadMap should contain both`() {
+
+        val credentials = listOf(sdJwt1, sdJwt2)
+
+        every {
+            JWSHandler.extractDataJsonFromJws(eq(sdJwt1), JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256",
+            "cnf" to mapOf("kid" to "did:jwk:example")
+        )
+
+        every {
+            JWSHandler.extractDataJsonFromJws(eq(sdJwt2), JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256"
+        )
+
+        val builder = UnsignedSdJwtVPTokenBuilder(
+            clientId = clientId,
+            nonce = nonce,
+            sdJwtCredentials = credentials,
+        )
+
+        val result = builder.build()
+
+        val unsigned = result["unsignedVPToken"] as UnsignedSdJwtVPToken
+        val payloadMap = result["vpTokenSigningPayload"] as Map<*, *>
+
+        assertEquals(2, unsigned.uuidToUnsignedKBT.size)
+        assertEquals(2, payloadMap.size)
+    }
+
+    @Test
+    fun `should generate KB-JWT for both credentials with cnf and have both in payloadMap`() {
+
+        val credentials = listOf(sdJwt1, sdJwt2)
+
+        every {
+            JWSHandler.extractDataJsonFromJws(eq(sdJwt1), JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256",
+            "cnf" to mapOf("kid" to "did:jwk:example")
+        )
+
+        every {
+            JWSHandler.extractDataJsonFromJws(eq(sdJwt2), JWSHandler.JwsPart.PAYLOAD)
+        } returns mutableMapOf(
+            "_sd_alg" to "SHA-256",
+            "cnf" to mapOf("kid" to "did:jwk:example")
+        )
+
+        val builder = UnsignedSdJwtVPTokenBuilder(
+            clientId = clientId,
+            nonce = nonce,
+            sdJwtCredentials = credentials,
+        )
+
+        val result = builder.build()
+
+        val unsigned = result["unsignedVPToken"] as UnsignedSdJwtVPToken
+        val payloadMap = result["vpTokenSigningPayload"] as Map<*, *>
+
+        assertEquals(2, unsigned.uuidToUnsignedKBT.size)
+        assertEquals(2, payloadMap.size)
+    }
+
 }
