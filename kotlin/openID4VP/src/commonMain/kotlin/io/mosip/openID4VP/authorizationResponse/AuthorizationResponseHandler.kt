@@ -157,7 +157,7 @@ internal class AuthorizationResponseHandler {
 
         vpTokenSigningResults.entries.forEach { (credentialFormat, vpTokenSigningResult) ->
             val payloadMap = unsignedVPTokens[credentialFormat]
-                ?: throw OpenID4VPExceptions.InvalidData("No unsigned VP payloads found for format: $credentialFormat", className)
+                ?: throw OpenID4VPExceptions.InvalidData("unable to find the related credential format - $credentialFormat in the unsignedVPTokens map", className)
             //TODO: check ios code
             when (credentialFormat) {
                 FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {

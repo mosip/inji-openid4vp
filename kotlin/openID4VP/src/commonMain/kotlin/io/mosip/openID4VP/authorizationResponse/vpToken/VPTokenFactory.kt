@@ -11,7 +11,6 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
 
 class VPTokenFactory(
@@ -43,8 +42,8 @@ class VPTokenFactory(
                 )
 
                 SdJwtVPTokenBuilder(
-                    sdJwtVPTokenSigningResult = vpTokenSigningResult as SdJwtVPTokenSigningResult,
-                    sdJwtCredentials = vpTokenSigningPayload as MutableMap<String, String>,
+                    VPTokenSigningResult = vpTokenSigningResult as SdJwtVPTokenSigningResult,
+                    credentials = vpTokenSigningPayload as MutableMap<String, String>,
                     unsignedKBJwts = unsignedVPTokens as UnsignedSdJwtVPToken,
                     uuid = uuid
                 )

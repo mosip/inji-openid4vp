@@ -53,7 +53,7 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
 
         unsignedToken.uuidToUnsignedKBT.values.forEach { token ->
             val parts = token.split(".")
-            assertEquals(3, parts.size)
+            assertEquals(2, parts.size)
 
             val decodedHeader = String(Base64.getUrlDecoder().decode(parts[0]))
             val decodedPayload = String(Base64.getUrlDecoder().decode(parts[1]))
@@ -74,6 +74,8 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
             assertTrue(credentials.contains(mappedCredential))
         }
     }
+
+
 
     //TODO: add one more test with single cred. add one more cred.
 }

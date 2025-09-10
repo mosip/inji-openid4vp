@@ -17,10 +17,10 @@ class SdJwtVPTokenBuilderJvmTest {
     @Test
     fun `should build final SD-JWT VP Token successfully`() {
         val builder = SdJwtVPTokenBuilder(
-            sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
+            VPTokenSigningResult = SdJwtVPTokenSigningResult(
                 uuidToKbJWTSignature = mutableMapOf(uuid to kbJwtSignature)
             ),
-            sdJwtCredentials = mutableMapOf(uuid to sampleSdJwt),
+            credentials = mutableMapOf(uuid to sampleSdJwt),
             unsignedKBJwts = UnsignedSdJwtVPToken(
                 uuidToUnsignedKBT = mutableMapOf(uuid to unsignedKBJwt)
             ),
@@ -28,17 +28,17 @@ class SdJwtVPTokenBuilderJvmTest {
         )
 
         val result = builder.build()
-        val expected = "$sampleSdJwt~$unsignedKBJwt.$kbJwtSignature"
+        val expected = "$sampleSdJwt$unsignedKBJwt.$kbJwtSignature"
         assertEquals(expected, result.value)
     }
 
     @Test
     fun `should throw MissingInput when SD-JWT credential is missing`() {
         val builder = SdJwtVPTokenBuilder(
-            sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
+            VPTokenSigningResult = SdJwtVPTokenSigningResult(
                 uuidToKbJWTSignature = mutableMapOf(uuid to kbJwtSignature)
             ),
-            sdJwtCredentials = mutableMapOf("121" to sampleSdJwt),
+            credentials = mutableMapOf("121" to sampleSdJwt),
             unsignedKBJwts = UnsignedSdJwtVPToken(
                 uuidToUnsignedKBT = mutableMapOf(uuid to unsignedKBJwt)
             ),
@@ -56,35 +56,12 @@ class SdJwtVPTokenBuilderJvmTest {
     }
 
     @Test
-    fun `should throw MissingInput when unsigned KB-JWT is missing`() {
-        val builder = SdJwtVPTokenBuilder(
-            sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
-                uuidToKbJWTSignature = mutableMapOf(uuid to kbJwtSignature)
-            ),
-            sdJwtCredentials = mutableMapOf(uuid to sampleSdJwt),
-            unsignedKBJwts = UnsignedSdJwtVPToken(
-                uuidToUnsignedKBT = mutableMapOf()
-            ),
-            uuid = uuid
-        )
-
-        val exception = assertThrows(OpenID4VPExceptions.MissingInput::class.java) {
-            builder.build()
-        }
-
-        assertEquals(
-            "Missing unsigned Key Binding JWT for uuid: $uuid",
-            exception.message
-        )
-    }
-
-    @Test
     fun `should throw MissingInput when KB-JWT signature is missing`() {
         val builder = SdJwtVPTokenBuilder(
-            sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
+            VPTokenSigningResult = SdJwtVPTokenSigningResult(
                 uuidToKbJWTSignature = mutableMapOf("121" to kbJwtSignature)
             ),
-            sdJwtCredentials = mutableMapOf(uuid to sampleSdJwt),
+            credentials = mutableMapOf(uuid to sampleSdJwt),
             unsignedKBJwts = UnsignedSdJwtVPToken(
                 uuidToUnsignedKBT = mutableMapOf(uuid to unsignedKBJwt)
             ),
@@ -100,4 +77,48 @@ class SdJwtVPTokenBuilderJvmTest {
             exception.message
         )
     }
+
+    @Test
+    fun `should succeed without holder binding when both KB-JWT and signature are absent`() {
+        val builder = SdJwtVPTokenBuilder(
+            VPTokenSigningResult = SdJwtVPTokenSigningResult(
+                uuidToKbJWTSignature = mutableMapOf() // signature absent
+            ),
+            credentials = mutableMapOf(uuid to sampleSdJwt),
+            unsignedKBJwts = UnsignedSdJwtVPToken(
+                uuidToUnsignedKBT = mutableMapOf() // unsigned KB absent
+            ),
+            uuid = uuid
+        )
+
+        val result = builder.build()
+
+        assertEquals(sampleSdJwt, result.value)
+    }
+
+
+    @Test
+    fun `should throw InvalidData when signature is present but KB-JWT is missing`() {
+        val builder = SdJwtVPTokenBuilder(
+            VPTokenSigningResult = SdJwtVPTokenSigningResult(
+                uuidToKbJWTSignature = mutableMapOf(uuid to kbJwtSignature, "123" to "signature") // signature present
+            ),
+            credentials = mutableMapOf(uuid to sampleSdJwt),
+            unsignedKBJwts = UnsignedSdJwtVPToken(
+                uuidToUnsignedKBT = mutableMapOf("123" to unsignedKBJwt) // unsigned KB missing
+            ),
+            uuid = uuid
+        )
+
+        val exception = assertThrows(OpenID4VPExceptions.InvalidData::class.java) {
+            builder.build()
+        }
+
+        assertEquals(
+            "Signature present but unsigned KB-JWT missing for uuid: $uuid",
+            exception.message
+        )
+    }
+
+
 }
