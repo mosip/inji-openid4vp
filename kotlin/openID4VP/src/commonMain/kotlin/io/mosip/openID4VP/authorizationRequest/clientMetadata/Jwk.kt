@@ -2,6 +2,7 @@ package io.mosip.openID4VP.authorizationRequest.clientMetadata
 
 import Generated
 import io.mosip.openID4VP.common.FieldDeserializer
+import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -31,7 +32,7 @@ object JwkSerializer : KSerializer<Jwk> {
         val jsonDecoder = try {
             decoder as JsonDecoder
         } catch (e: ClassCastException) {
-            throw  OpenID4VPExceptions.DeserializationFailure(listOf("jwk"),e.message!!, className)
+            throw OpenID4VPExceptions.DeserializationFailure(listOf("jwk"), e.message!!, className)
         }
 
         val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
@@ -77,16 +78,15 @@ object JwkSerializer : KSerializer<Jwk> {
     }
 
 
-
     @Generated
     override fun serialize(encoder: Encoder, value: Jwk) {
         val builtInEncoder = encoder.beginStructure(descriptor)
         builtInEncoder.encodeStringElement(descriptor, 0, value.kty)
-        builtInEncoder.encodeStringElement(descriptor, 1, value.use)
-        builtInEncoder.encodeStringElement(descriptor, 2, value.crv)
+        value.use?.let { builtInEncoder.encodeStringElement(descriptor, 1, it) }
+        value.crv?.let { builtInEncoder.encodeStringElement(descriptor, 2, it) }
         builtInEncoder.encodeStringElement(descriptor, 3, value.x)
-        builtInEncoder.encodeStringElement(descriptor, 4, value.alg)
-        builtInEncoder.encodeStringElement(descriptor, 5, value.kid)
+        value.alg?.let { builtInEncoder.encodeStringElement(descriptor, 4, it) }
+        value.kid?.let { builtInEncoder.encodeStringElement(descriptor, 5, it) }
         value.y?.let { builtInEncoder.encodeStringElement(descriptor, 6, it) }
         builtInEncoder.endStructure(descriptor)
     }
@@ -95,10 +95,20 @@ object JwkSerializer : KSerializer<Jwk> {
 @Serializable(with = JwkSerializer::class)
 data class Jwk(
     val kty: String,
-    val use: String,
-    val crv: String,
+    val use: String? = null,
+    val crv: String? = null,
     val x: String,
-    val alg: String,
-    val kid: String,
-    val y: String? = null
-)
+    val alg: String? = null,
+    val kid: String? = null,
+    val y: String? = null,
+
+    ) {
+
+    fun supports(algorithm: RequestSigningAlgorithm): Boolean {
+        return when (algorithm) {
+            RequestSigningAlgorithm.EdDSA ->
+                kty.equals("OKP", ignoreCase = true) &&
+                        crv.equals("Ed25519", ignoreCase = true)
+        }
+    }
+}

@@ -2,8 +2,8 @@ package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.type
 
 import io.mockk.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
-import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
+import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.parseAndValidateClientMetadata
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.parseAndValidatePresentationDefinition
 import io.mosip.openID4VP.constants.ClientIdScheme
@@ -14,7 +14,7 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.presentationDefinitionString
 import io.mosip.openID4VP.testData.responseUrl
-import okhttp3.Headers
+import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class RedirectUriSchemeAuthorizationRequestHandlerTest {
@@ -48,78 +48,6 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `validateRequestUriResponse should succeed with valid JSON content type`() {
-        val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
-        )
-
-        val headers = Headers.Builder()
-            .add("content-type", ContentType.APPLICATION_JSON.value)
-            .build()
-
-        val requestUriResponse = mapOf(
-            "header" to headers,
-            "body" to """
-                {
-                    "client_id": "$responseUrl",
-                    "response_type": "vp_token",
-                    "response_uri": "$responseUrl",
-                    "presentation_definition": $presentationDefinitionString,
-                    "response_mode": "direct_post",
-                    "nonce": "VbRRB/LTxLiXmVNZuyMO8A==",
-                    "client_id_scheme": "redirect_uri"
-                }
-            """.trimIndent()
-        )
-
-        try {
-            handler.validateRequestUriResponse(requestUriResponse)
-        } catch (e: Throwable) {
-            fail("Expected no exception, but got: ${e.message}")
-        }
-    }
-
-    @Test
-    fun `validateRequestUriResponse should handle empty request URI response`() {
-        val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
-        )
-
-        try {
-            handler.validateRequestUriResponse(emptyMap())
-        } catch (e: Throwable) {
-            fail("Expected no exception, but got: ${e.message}")
-        }
-    }
-
-    @Test
-    fun `validateRequestUriResponse should throw exception with invalid content type`() {
-        val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
-        )
-
-        val headers = Headers.Builder()
-            .add("content-type", ContentType.APPLICATION_JWT.value)
-            .build()
-
-        val requestUriResponse = mapOf(
-            "header" to headers,
-            "body" to """
-                {
-                    "client_id": "https://example.com/response",
-                    "response_type": "vp_token",
-                    "response_uri": "https://example.com/response"
-                }
-            """.trimIndent()
-        )
-
-        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
-            handler.validateRequestUriResponse(requestUriResponse)
-        }
-        assertTrue(exception.message?.contains("Authorization Request must not be signed") == true)
-    }
-
-    @Test
     fun `process should return wallet metadata with requestObjectSigningAlgValuesSupported set to null`() {
         val handler = RedirectUriSchemeAuthorizationRequestHandler(
             authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
@@ -128,18 +56,6 @@ class RedirectUriSchemeAuthorizationRequestHandlerTest {
         val result = handler.process(walletMetadata)
 
         assertNull(result.requestObjectSigningAlgValuesSupported)
-    }
-
-    @Test
-    fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = RedirectUriSchemeAuthorizationRequestHandler(
-            authorizationRequestParameters, walletMetadata, setResponseUri, walletNonce
-        )
-
-        val headers = handler.getHeadersForAuthorizationRequestUri()
-
-        assertEquals(ContentType.APPLICATION_FORM_URL_ENCODED.value, headers["content-type"])
-        assertEquals(ContentType.APPLICATION_JSON.value, headers["accept"])
     }
 
     @Test

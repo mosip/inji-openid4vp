@@ -1,17 +1,20 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types
 
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
-import io.mosip.openID4VP.authorizationRequest.WalletMetadata
-import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
-import io.mosip.openID4VP.constants.ContentType
-import io.mosip.openID4VP.testData.*
-import okhttp3.Headers
 import io.mockk.*
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
 import io.mosip.openID4VP.authorizationRequest.Verifier
+import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
 import io.mosip.openID4VP.constants.ClientIdScheme
+import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.VPFormatType
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.testData.*
+import io.mosip.openID4VP.testData.JWSUtil.Companion.buildTestJwk
+import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class PreRegisteredSchemeAuthorizationRequestHandlerTest {
@@ -24,7 +27,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         clientName = "mock-client",
         vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("ES256"))),
     )
-    private val trustedVerifiers: List<Verifier> = listOf(
+    private var trustedVerifiers: MutableList<Verifier> = mutableListOf(
         Verifier(
             "mock-client", listOf(
                 "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
@@ -109,55 +112,6 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `validateRequestUriResponse should accept valid JSON response`() {
-        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers,
-            authorizationRequestParameters,
-            walletMetadata,
-            true,
-            setResponseUri,
-            walletNonce
-        )
-
-        val headers = Headers.Builder()
-            .add("content-type", ContentType.APPLICATION_JSON.value)
-            .build()
-
-        val responseBody = """{"client_id":"$validClientId","response_uri":"$responseUrl"}"""
-        val requestUriResponse = mapOf("header" to headers, "body" to responseBody)
-
-        try {
-            handler.validateRequestUriResponse(requestUriResponse)
-        } catch (e: Throwable) {
-            fail("Expected no exception, but got: ${e.message}")
-        }
-    }
-
-    @Test
-    fun `validateRequestUriResponse should throw exception for invalid content type`() {
-        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers,
-            authorizationRequestParameters,
-            walletMetadata,
-            true,
-            setResponseUri,
-            walletNonce
-        )
-
-        val headers = Headers.Builder()
-            .add("content-type", "application/jwt")
-            .build()
-
-        val responseBody = """{"client_id":"$validClientId","response_uri":"$responseUrl"}"""
-        val requestUriResponse = mapOf("header" to headers, "body" to responseBody)
-
-        val exception = assertFailsWith<Exception> {
-            handler.validateRequestUriResponse(requestUriResponse)
-        }
-        assertTrue(exception.message?.contains("Authorization Request must not be signed") == true)
-    }
-
-    @Test
     fun `process should return wallet metadata with null requestObjectSigningAlgValuesSupported`() {
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers,
@@ -168,29 +122,15 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             walletNonce
         )
 
-        val processedMetadata = handler.process(walletMetadata.copy(
-            requestObjectSigningAlgValuesSupported =listOf(RequestSigningAlgorithm.EdDSA)
-        ))
+        val processedMetadata = handler.process(
+            walletMetadata.copy(
+                requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA)
+            )
+        )
 
         assertNull(processedMetadata.requestObjectSigningAlgValuesSupported)
     }
 
-    @Test
-    fun `getHeadersForAuthorizationRequestUri should return correct headers`() {
-        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers,
-            authorizationRequestParameters,
-            walletMetadata,
-            true,
-            setResponseUri,
-            walletNonce
-        )
-
-        val headers = handler.getHeadersForAuthorizationRequestUri()
-
-        assertEquals(ContentType.APPLICATION_FORM_URL_ENCODED.value, headers["content-type"])
-        assertEquals(ContentType.APPLICATION_JSON.value, headers["accept"])
-    }
 
     @Test
     fun `validateAndParseRequestFields should pass for trusted client with valid response URI`() {
@@ -226,15 +166,20 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         val exception = assertFailsWith<Exception> {
             handler.validateAndParseRequestFields()
         }
-        assertEquals("client_metadata provided despite pre-registered metadata already existing for the Client Identifier.", exception.message)
+        assertEquals(
+            "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
+            exception.message
+        )
     }
 
     @Test
     fun `validateAndParseRequestFields should not throw exception when client metadata of the pre-registered verifier is not known and its available in authorization request`() {
         val trustedVerifiersWithoutClientMetadata: List<Verifier> = listOf(
             Verifier(
-                "mock-client", listOf(
-                    "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
+                "mock-client",
+                listOf(
+                    "https://mock-verifier.com/response-uri",
+                    "https://verifier.env2.com/responseUri"
                 ),
             )
         )
@@ -269,7 +214,10 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         try {
             handler.validateAndParseRequestFields()
 
-            assertEquals(handler.authorizationRequestParameters[CLIENT_METADATA.value], clientMetadata)
+            assertEquals(
+                handler.authorizationRequestParameters[CLIENT_METADATA.value],
+                clientMetadata
+            )
         } catch (e: Throwable) {
             fail("Expected no exception, but got: ${e.message}")
         }
@@ -277,7 +225,8 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateAndParseRequestFields should throw exception when response URI is not trusted`() {
-        authorizationRequestParameters[RESPONSE_URI.value] = "https://untrusted.verifier.com/response"
+        authorizationRequestParameters[RESPONSE_URI.value] =
+            "https://untrusted.verifier.com/response"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers,
             authorizationRequestParameters,
@@ -295,7 +244,8 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `validateAndParseRequestFields should skip validation when shouldValidateClient is false`() {
-        authorizationRequestParameters[RESPONSE_URI.value] = "https://untrusted.verifier.com/response"
+        authorizationRequestParameters[RESPONSE_URI.value] =
+            "https://untrusted.verifier.com/response"
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers,
             authorizationRequestParameters,
@@ -311,4 +261,203 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             fail("Expected no exception, but got: ${e.message}")
         }
     }
+
+    @Test
+    fun `should extract key successfully when kid is present`() {
+
+        val testKid = "test-key"
+        val testJwk = buildTestJwk(kid = testKid)
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(testJwk)),
+                vpFormats = mapOf(
+                    "ldp_vc" to mapOf("signing_alg" to listOf("EdDSA"))
+                )
+            )
+        )
+
+        trustedVerifiers.add(verifier)
+
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri,
+            walletNonce
+        )
+
+        val publicKey = handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, testKid)
+
+        assertNotNull(publicKey)
+        assertEquals(publicKey.algorithm, "Ed25519")
+        assertTrue(publicKey.encoded.isNotEmpty())
+    }
+
+
+    @Test
+    fun `should throw when kid is present and not found in client metadata`() {
+        val testKid = "some-other-key"
+        val testJwk = buildTestJwk(kid = testKid)
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(testJwk)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val ex = assertFailsWith<OpenID4VPExceptions.PublicKeyResolutionFailed> {
+            handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, "non-existent")
+        }
+
+        assertTrue(ex.message.contains("Public key extraction failed for kid"))
+    }
+
+    @Test
+    fun `should pick key by alg if no kid and one matching key present`() {
+        val testJwk = buildTestJwk(kid = null)
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(testJwk)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val publicKey = handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, null)
+        assertNotNull(publicKey)
+    }
+
+    @Test
+    fun `should throw if multiple sig-use keys present and no kid`() {
+        val key1 = buildTestJwk(kid = "k1")
+        val key2 = buildTestJwk(kid = "k2")
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(key1, key2)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val ex = assertFailsWith<OpenID4VPExceptions.PublicKeyResolutionFailed> {
+            handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, null)
+        }
+
+        assertTrue(ex.message!!.contains("Multiple ambiguous keys found for EdDSA with signature usage"))
+    }
+
+    @Test
+    fun `should throw if no matching keys for alg`() {
+        val key = buildTestJwk(kty = "RSA", crv = "") // non-EdDSA key
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(key)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val ex = assertFailsWith<OpenID4VPExceptions.PublicKeyResolutionFailed> {
+            handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, null)
+        }
+
+        assertTrue(ex.message!!.contains("No public key found for algorithm: EdDSA with signature usage"))
+    }
+
+    @Test
+    fun `should throw if curve is unsupported in matching key`() {
+        val key = buildTestJwk(crv = "XYZ")
+
+        val verifier = Verifier(
+            clientId = "test-client",
+            responseUris = listOf("https://example.com/callback"),
+            clientMetadata = ClientMetadata(
+                clientName = "Test Client",
+                jwks = Jwks(keys = listOf(key)),
+                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
+            )
+        )
+        trustedVerifiers.add(verifier)
+        authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = false,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+
+        val ex = assertFailsWith<OpenID4VPExceptions.PublicKeyResolutionFailed> {
+            handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, "test-kid")
+        }
+        assertTrue(ex.message!!.contains("Public key extraction failed - Curve - XYZ is not supported. Supported: Ed25519"))
+    }
+
 }
+

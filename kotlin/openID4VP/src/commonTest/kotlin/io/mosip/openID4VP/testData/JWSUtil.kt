@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.testData
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -44,6 +45,26 @@ class JWSUtil {
             signer.update(messageBytes, 0, messageBytes.size)
             val signature = signer.generateSignature()
             return replaceCharactersInB64(Base64.getEncoder().encodeToString(signature))
+        }
+
+        fun buildTestJwk(
+            kid: String? = "test-kid",
+            alg: String = "EdDSA",
+            kty: String = "OKP",
+            use: String = "sig",
+            crv: String = "Ed25519",
+            x: String = "11qYAYdk9J6r9xWhG7f8z1FMvx6bAQJz2-LU8C5QWAc",
+            y: String? = null
+        ): Jwk {
+            return Jwk(
+                kty = kty,
+                use = use,
+                alg = alg,
+                crv = crv,
+                x = x,
+                y = y,
+                kid = kid
+            )
         }
 
         fun createJWS(

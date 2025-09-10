@@ -1,34 +1,46 @@
 package io.mosip.openID4VP.testData
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.NONCE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REDIRECT_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REQUEST_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REQUEST_URI_METHOD
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_TYPE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.STATE
+import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
+import io.mosip.openID4VP.authorizationRequest.Verifier
+import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSerializer
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinitionSerializer
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponse
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PathNested
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PresentationSubmission
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.Proof
-import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
-import io.mosip.openID4VP.authorizationRequest.Verifier
+import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPToken
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
-import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
-import io.mosip.openID4VP.authorizationRequest.WalletMetadata
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.DeviceAuthentication
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
-import io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc.MdocVPToken
 import io.mosip.openID4VP.common.convertJsonToMap
+import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.VPFormatType
@@ -140,20 +152,29 @@ val clientMetadataString = """{
         "use": "enc",
         "x": "BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4",
         "alg": "ECDH-ES",
-        "kid": "ed-key1"
+        "kid": "enc-key1"
+      },
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "use": "sig",
+        "x": "-Fy3lMapzR3wpaYNCFq29GDEn_NoR3pBsc511q1Cxqw", 
+        "alg": "EdDSA",
+        "kid": "sig-key1"
       }
     ]
   },
   "vp_formats": {
-      "ldp_vc": {
-          "proof_type": [
-          "Ed25519Signature2018",
-          "Ed25519Signature2020"
-          ]
-      }
+    "ldp_vc": {
+      "proof_type": [
+        "Ed25519Signature2018",
+        "Ed25519Signature2020"
+      ]
+    }
   }
 }
 """.trimIndent()
+
 
 val presentationDefinitionMap = mapOf(
     "id" to "649d581c-f891-4969-9cd5-2c27385a348f",
@@ -287,7 +308,7 @@ val authRequestWithDidByValue = listOf(
     CLIENT_METADATA.value
 )
 
-val requestParams: Map<String, String> = mapOf(
+val requestParams: MutableMap<String, String> = mapOf(
     REDIRECT_URI.value to "https://mock-verifier.com",
     RESPONSE_URI.value to responseUrl,
     REQUEST_URI.value to requestUrl,
@@ -299,7 +320,7 @@ val requestParams: Map<String, String> = mapOf(
     NONCE.value to "VbRRB/LTxLiXmVNZuyMO8A==",
     STATE.value to "+mRQe1d6pBoJqF6Ab28klg==",
     CLIENT_METADATA.value to clientMetadataString
-)
+).toMutableMap()
 
 val authorisationRequestListToClientIdSchemeMap = mapOf(
     DID to authRequestWithDidByValue,
