@@ -231,7 +231,7 @@ class AuthorizationResponseHandlerTest {
         }
 
         assertEquals(
-            "unable to find the related credential format - LDP_VC in the unsignedVPTokens map",
+            "VPTokenSigningResult not provided for the required formats",
             exception.message
         )
     }
@@ -333,7 +333,7 @@ class AuthorizationResponseHandlerTest {
         val exception = assertFailsWith<InvalidData> {
             authorizationResponseHandler.shareVP(
                 authorizationRequest = request,
-                vpTokenSigningResults = ldpvpTokenSigningResults,
+                vpTokenSigningResults = ldpvpTokenSigningResults + mdocvpTokenSigningResults,
                 responseUri = responseUrl
             )
         }
@@ -392,7 +392,7 @@ class AuthorizationResponseHandlerTest {
         }
 
         assertEquals(
-            "unable to find the related credential format - MSO_MDOC in the unsignedVPTokens map",
+            "VPTokenSigningResult not provided for the required formats",
             exception.message
         )
     }
@@ -415,7 +415,7 @@ class AuthorizationResponseHandlerTest {
         val exception = assertFailsWith<IOException> {
             authorizationResponseHandler.shareVP(
                 authorizationRequest = authorizationRequest,
-                vpTokenSigningResults = ldpvpTokenSigningResults,
+                vpTokenSigningResults = ldpvpTokenSigningResults + mdocvpTokenSigningResults,
                 responseUri = responseUrl
             )
         }

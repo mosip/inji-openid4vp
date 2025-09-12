@@ -30,10 +30,10 @@ class EncoderTest {
                 "hello world".toByteArray(),
                 any()
             )
-        } returns "aGVsbG8gd29ybGQ="
+        } returns "aGVsbG8gd29ybGQ"
 
         val encodedData = encodeToBase64Url("hello world".toByteArray())
 
-        assertEquals("aGVsbG8gd29ybGQ=", encodedData)
+        assertEquals("aGVsbG8gd29ybGQ", encodedData)
     }
 }

@@ -153,19 +153,31 @@ internal class AuthorizationResponseHandler {
         authorizationRequest: AuthorizationRequest,
         credentialFormatIndex: MutableMap<FormatType, Int>,
     ): VPTokenType {
-        val vpTokens: MutableList<VPToken> = mutableListOf()
 
-        vpTokenSigningResults.entries.forEach { (credentialFormat, vpTokenSigningResult) ->
+        if (unsignedVPTokens.keys != vpTokenSigningResults.keys) {
+            throw OpenID4VPExceptions.InvalidData(
+                message = "VPTokenSigningResult not provided for the required formats",
+                className = className
+            )
+        }
+
+        val vpTokens: MutableList<VPToken> = mutableListOf()
+        var count = 0
+
+        vpTokenSigningResults.forEach { (credentialFormat, vpTokenSigningResult) ->
             val payloadMap = unsignedVPTokens[credentialFormat]
-                ?: throw OpenID4VPExceptions.InvalidData("unable to find the related credential format - $credentialFormat in the unsignedVPTokens map", className)
-            //TODO: check ios code
+                ?: throw OpenID4VPExceptions.InvalidData(
+                    "unable to find the related credential format - $credentialFormat in the unsignedVPTokens map",
+                    className
+                )
+
             when (credentialFormat) {
                 FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
                     val signingResult = vpTokenSigningResult as SdJwtVPTokenSigningResult
                     val payloads = payloadMap["vpTokenSigningPayload"] as Map<*, *>
                     val unsignedKbJwts = payloadMap["unsignedVPToken"] as UnsignedSdJwtVPToken
 
-                    payloads.entries.forEachIndexed { index,(uuid,_)->
+                    payloads.forEach { (uuid, _) ->
                         val vpToken = VPTokenFactory(
                             vpTokenSigningResult = signingResult,
                             vpTokenSigningPayload = payloads,
@@ -175,7 +187,8 @@ internal class AuthorizationResponseHandler {
                         ).getVPTokenBuilder(credentialFormat).build()
 
                         vpTokens.add(vpToken)
-                        credentialFormatIndex[credentialFormat] = vpTokens.size - 1
+                        credentialFormatIndex[credentialFormat] = count
+                        count++
                     }
                 }
 
@@ -189,7 +202,8 @@ internal class AuthorizationResponseHandler {
                     ).getVPTokenBuilder(credentialFormat).build()
 
                     vpTokens.add(vpToken)
-                    credentialFormatIndex[credentialFormat] = vpTokens.size - 1
+                    credentialFormatIndex[credentialFormat] = count
+                    count++
                 }
             }
         }
@@ -198,6 +212,7 @@ internal class AuthorizationResponseHandler {
             ?.let { VPTokenElement(it[0]) }
             ?: VPTokenArray(vpTokens)
     }
+
 
 
     private fun createPresentationSubmission(
@@ -290,16 +305,10 @@ internal class AuthorizationResponseHandler {
         return groupedVcs.mapValues { (format, credentialsArray) ->
             when (format) {
                 FormatType.LDP_VC -> {
-                    require(holderId != null) {
-                        OpenID4VPExceptions.InvalidData(
-                            "Holder ID cannot be null for LDP VC format",
-                            className
-                        )
-                    }
                     UnsignedLdpVPTokenBuilder(
                         verifiableCredential = credentialsArray,
                         id = UUIDGenerator.generateUUID(),
-                        holder = holderId,
+                        holder = holderId!!,
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,
                         signatureSuite = signatureSuite!!

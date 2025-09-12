@@ -18,7 +18,7 @@ actual fun encodeToBase64Url(data: ByteArray): String {
 
 @SuppressLint("NewApi")
 private fun javaBase64UrlEncode(data: ByteArray): String =
-    getUrlEncoder().encodeToString(data)
+    getUrlEncoder().withoutPadding().encodeToString(data)
 
 private fun androidBase64UrlEncode(data: ByteArray): String {
     val base64 = encodeToString(data, NO_PADDING)

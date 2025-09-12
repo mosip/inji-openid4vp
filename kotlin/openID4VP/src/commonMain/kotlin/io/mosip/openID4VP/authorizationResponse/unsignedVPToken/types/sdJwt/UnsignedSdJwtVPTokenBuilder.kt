@@ -44,6 +44,9 @@ class UnsignedSdJwtVPTokenBuilder(
                     val confirmationKey = didResolver.resolve(kid.trimEnd('='), null)
                     jwtSigningAlgorithm = mapKeyAlgorithmToJwtAlg(confirmationKey)
                 }
+                else{
+                    throw UnsupportedOperationException("Unsupported cnf format, only 'kid' is supported")
+                }
 
                 val jwtHeader = mapOf(
                     "alg" to jwtSigningAlgorithm,
