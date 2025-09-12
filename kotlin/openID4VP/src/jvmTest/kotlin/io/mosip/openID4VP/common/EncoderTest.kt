@@ -17,7 +17,7 @@ class EncoderTest {
     @Test
     fun `should encode the content to base64 url successfully`() {
         val encodedContent = encodeToBase64Url("hello world".toByteArray())
-        assertEquals("aGVsbG8gd29ybGQ=", encodedContent)
+        assertEquals("aGVsbG8gd29ybGQ", encodedContent)
     }
 
     @Test

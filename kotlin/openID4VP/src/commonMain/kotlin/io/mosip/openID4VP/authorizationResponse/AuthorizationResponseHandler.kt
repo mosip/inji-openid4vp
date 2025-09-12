@@ -19,8 +19,11 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSign
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
@@ -150,26 +153,67 @@ internal class AuthorizationResponseHandler {
         authorizationRequest: AuthorizationRequest,
         credentialFormatIndex: MutableMap<FormatType, Int>,
     ): VPTokenType {
-        val vpTokens: MutableList<VPToken> = mutableListOf()
 
-        vpTokenSigningResults.entries.forEachIndexed { index, (credentialFormat, vpTokenSigningResult) ->
-            vpTokens.add(
-                VPTokenFactory(
-                    vpTokenSigningResult = vpTokenSigningResult,
-                    vpTokenSigningPayload = unsignedVPTokens[credentialFormat]?.get("vpTokenSigningPayload")
-                        ?: throw OpenID4VPExceptions.InvalidData("unable to find the related credential format - $credentialFormat in the unsignedVPTokens map", className),
-                    nonce = authorizationRequest.nonce
-                ).getVPTokenBuilder(credentialFormat).build()
+        if (unsignedVPTokens.keys != vpTokenSigningResults.keys) {
+            throw OpenID4VPExceptions.InvalidData(
+                message = "VPTokenSigningResult not provided for the required formats",
+                className = className
             )
-            credentialFormatIndex[credentialFormat] = index
         }
 
-        val vpToken: VPTokenType = vpTokens.takeIf { it.size == 1 }
+        val vpTokens: MutableList<VPToken> = mutableListOf()
+        var count = 0
+
+        vpTokenSigningResults.forEach { (credentialFormat, vpTokenSigningResult) ->
+            val payloadMap = unsignedVPTokens[credentialFormat]
+                ?: throw OpenID4VPExceptions.InvalidData(
+                    "unable to find the related credential format - $credentialFormat in the unsignedVPTokens map",
+                    className
+                )
+
+            when (credentialFormat) {
+                FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
+                    val signingResult = vpTokenSigningResult as SdJwtVPTokenSigningResult
+                    val payloads = payloadMap["vpTokenSigningPayload"] as Map<*, *>
+                    val unsignedKbJwts = payloadMap["unsignedVPToken"] as UnsignedSdJwtVPToken
+
+                    payloads.forEach { (uuid, _) ->
+                        val vpToken = VPTokenFactory(
+                            vpTokenSigningResult = signingResult,
+                            vpTokenSigningPayload = payloads,
+                            unsignedVPTokens = unsignedKbJwts,
+                            uuid = uuid as String?,
+                            nonce = authorizationRequest.nonce
+                        ).getVPTokenBuilder(credentialFormat).build()
+
+                        vpTokens.add(vpToken)
+                        credentialFormatIndex[credentialFormat] = count
+                        count++
+                    }
+                }
+
+                else -> {
+                    val vpToken = VPTokenFactory(
+                        vpTokenSigningResult = vpTokenSigningResult,
+                        unsignedVPTokens = payloadMap["unsignedVPToken"],
+                        vpTokenSigningPayload = payloadMap["vpTokenSigningPayload"]
+                            ?: throw OpenID4VPExceptions.InvalidData("Missing vpTokenSigningPayload for format $credentialFormat", className),
+                        nonce = authorizationRequest.nonce
+                    ).getVPTokenBuilder(credentialFormat).build()
+
+                    vpTokens.add(vpToken)
+                    credentialFormatIndex[credentialFormat] = count
+                    count++
+                }
+            }
+        }
+
+        return vpTokens.takeIf { it.size == 1 }
             ?.let { VPTokenElement(it[0]) }
             ?: VPTokenArray(vpTokens)
-
-        return vpToken
     }
+
+
 
     private fun createPresentationSubmission(
         authorizationRequest: AuthorizationRequest,
@@ -219,6 +263,13 @@ internal class AuthorizationResponseHandler {
                             FormatType.MSO_MDOC -> {
                                 vpFormat = VPFormatType.MSO_MDOC.value
                             }
+                            FormatType.DC_SD_JWT -> {
+                                vpFormat = VPFormatType.DC_SD_JWT.value
+                            }
+                            FormatType.VC_SD_JWT -> {
+                                vpFormat = VPFormatType.VC_SD_JWT.value
+                            }
+                            else -> throw OpenID4VPExceptions.InvalidData("Unsupported credential format - $credentialFormat", className)
                         }
                         formatTypeToCredentialIndex[credentialFormat] = credentialIndex
 
@@ -271,6 +322,14 @@ internal class AuthorizationResponseHandler {
                         responseUri = responseUri,
                         verifierNonce = authorizationRequest.nonce,
                         mdocGeneratedNonce = walletNonce
+                    ).build()
+                }
+
+                FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
+                    UnsignedSdJwtVPTokenBuilder(
+                        sdJwtCredentials = credentialsArray as List<String>,
+                        nonce = authorizationRequest.nonce,
+                        clientId = authorizationRequest.clientId
                     ).build()
                 }
             }
