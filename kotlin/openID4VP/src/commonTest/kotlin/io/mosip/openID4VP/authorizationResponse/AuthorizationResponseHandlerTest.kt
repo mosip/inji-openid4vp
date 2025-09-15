@@ -152,6 +152,10 @@ class AuthorizationResponseHandlerTest {
             null,
             unsignedSdJwtVPToken,
         )
+        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build(any()) } returns Pair(
+            null,
+            unsignedSdJwtVPToken,
+        )
 
         mockkObject(ResponseModeBasedHandlerFactory)
         every { ResponseModeBasedHandlerFactory.get(any()) } returns mockResponseHandler
@@ -755,14 +759,14 @@ class AuthorizationResponseHandlerTest {
         )
         setField(
             authorizationResponseHandler, "formatToCredentialInputDescriptorMapping", mapOf(
-            VC_SD_JWT to listOf(
-                CredentialInputDescriptorMapping(
-                    VC_SD_JWT,
-                    sdJwtCredential1,
-                    "sdjwt-input"
-                ).apply { identifier = "uuid-1" }
-            )
-        ))
+                VC_SD_JWT to listOf(
+                    CredentialInputDescriptorMapping(
+                        VC_SD_JWT,
+                        sdJwtCredential1,
+                        "sdjwt-input"
+                    ).apply { identifier = "uuid-1" }
+                )
+            ))
 
         mockkObject(ResponseModeBasedHandlerFactory)
         every { ResponseModeBasedHandlerFactory.get("direct_post") } returns mockResponseHandler
@@ -863,7 +867,6 @@ class AuthorizationResponseHandlerTest {
 
     @Test
     fun `should share credentials for 2LDP, 2SD-JWT and 2MSO-MDOC VC`() {
-
         every { anyConstructed<UnsignedLdpVPTokenBuilder>().build(any()) } returns Pair(
             vpTokenSigningPayload2,
             unsignedLdpVPToken
@@ -889,6 +892,25 @@ class AuthorizationResponseHandlerTest {
             nonce = walletNonce
         )
         print(unsignedtokens)
+        setField(
+            authorizationResponseHandler, "formatToCredentialInputDescriptorMapping", mapOf(
+                LDP_VC to listOf(
+                    CredentialInputDescriptorMapping(LDP_VC, ldpCredential1, "input1"),
+                    CredentialInputDescriptorMapping(LDP_VC, ldpCredential2, "input1")
+                ),
+                MSO_MDOC to listOf(
+                    CredentialInputDescriptorMapping(
+                        MSO_MDOC,
+                        mdocCredential,
+                        "input2"
+                    ).apply { identifier = "org.iso.18013.5.1.mDL" }
+                ),
+                VC_SD_JWT to listOf(
+                    CredentialInputDescriptorMapping(VC_SD_JWT, sdJwtCredential1, "input3").apply { identifier = "123" },
+                    CredentialInputDescriptorMapping(VC_SD_JWT, sdJwtCredential2, "input3").apply { identifier = "456" }
+                )
+            )
+        )
 
         val result = authorizationResponseHandler.shareVP(
             authorizationRequest = authorizationRequest,
