@@ -1,5 +1,17 @@
 package io.mosip.openID4VP.authorizationResponse.vpToken
 
-interface VPTokenBuilder {
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.InputDescriptor
+import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
+
+internal interface VPTokenBuilder {
     fun build(): VPToken
+    fun build(
+        credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
+        unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,
+        vpTokenSigningResult: VPTokenSigningResult,
+        rootIndex: Int
+    ): Triple<List<VPToken>, List<DescriptorMap>, Int>
 }
