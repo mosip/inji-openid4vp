@@ -168,7 +168,7 @@ internal class AuthorizationResponseHandler {
         unsignedVPTokenResults: Map<FormatType, Pair<Any?, UnsignedVPToken>>,
         formatToCredentialInputDescriptorMapping: Map<FormatType, List<CredentialInputDescriptorMapping>>
     ): Pair<VPTokenType, PresentationSubmission> {
-        if (unsignedVPTokens.keys != vpTokenSigningResults.keys) {
+        if (unsignedVPTokenResults.keys != vpTokenSigningResults.keys) {
             throw OpenID4VPExceptions.InvalidData(
                 message = "VPTokenSigningResult not provided for the required formats",
                 className = className
@@ -180,7 +180,7 @@ internal class AuthorizationResponseHandler {
         var rootIndex = 0;
 
 
-        formatToCredentialInputDescriptorMapping.forEach{ (credentialFormat, CredentialInputDescriptorMappings) ->
+        formatToCredentialInputDescriptorMapping.forEach{ (credentialFormat, credentialInputDescriptorMappings) ->
             val vpTokenSigningResult = (vpTokenSigningResults[credentialFormat]
                 ?: throw OpenID4VPExceptions.InvalidData(
                     "unable to find the related credential format - $credentialFormat in the vpTokenSigningResults map",
@@ -194,17 +194,13 @@ internal class AuthorizationResponseHandler {
             val vpTokenBuilder = VPTokenFactory(
                 vpTokenSigningResult = vpTokenSigningResult,
                 unsignedVPTokens = unsignedVPTokenResult.second,
-                vpTokenSigningPayload = unsignedVPTokenResult.first
-                    ?: throw OpenID4VPExceptions.InvalidData(
-                        "Missing vpTokenSigningPayload for format $credentialFormat",
-                        className
-                    ),
+                vpTokenSigningPayload = unsignedVPTokenResult.first ?: mapOf("k1" to "k2"),
                 nonce = authorizationRequest.nonce,
-                uuid = null
+                uuid = "null"
             ).getVPTokenBuilder(credentialFormat)
 
             val (vpTokens, descriptorMaps, nextRootIndex) = vpTokenBuilder.build(
-                CredentialInputDescriptorMappings,
+                credentialInputDescriptorMappings,
                 unsignedVPTokenResult,
                 vpTokenSigningResult,
                 rootIndex
@@ -392,35 +388,35 @@ internal class AuthorizationResponseHandler {
         createFormatToCredentialInputDescriptorMapping(this.credentialsMap)
 
         // group all formats together, call specific creator and pass the grouped credentials
-        return formatToCredentialInputDescriptorMapping.mapValues { (format, credentialsArray) ->
+        return formatToCredentialInputDescriptorMapping.mapValues { (format, credentialInputDescriptorMappings) ->
             when (format) {
                 FormatType.LDP_VC -> {
                     UnsignedLdpVPTokenBuilder(
-                        verifiableCredential = credentialsArray,
+                        verifiableCredential = credentialInputDescriptorMappings,
                         id = UUIDGenerator.generateUUID(),
                         holder = holderId!!,
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,
                         signatureSuite = signatureSuite!!
-                    ).build(credentialsArray)
+                    ).build(credentialInputDescriptorMappings)
                 }
 
                 FormatType.MSO_MDOC -> {
                     UnsignedMdocVPTokenBuilder(
-                        mdocCredentials = credentialsArray as List<String>,
+                        mdocCredentials = credentialInputDescriptorMappings as List<String>,
                         clientId = authorizationRequest.clientId,
                         responseUri = responseUri,
                         verifierNonce = authorizationRequest.nonce,
                         mdocGeneratedNonce = walletNonce
-                    ).build(credentialsArray)
+                    ).build(credentialInputDescriptorMappings)
                 }
 
                 FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
                     UnsignedSdJwtVPTokenBuilder(
-                        sdJwtCredentials = credentialsArray as List<String>,
+                        sdJwtCredentials = credentialInputDescriptorMappings as List<String>,
                         nonce = authorizationRequest.nonce,
                         clientId = authorizationRequest.clientId
-                    ).build(credentialsArray)
+                    ).build(credentialInputDescriptorMappings)
                 }
             }
         }

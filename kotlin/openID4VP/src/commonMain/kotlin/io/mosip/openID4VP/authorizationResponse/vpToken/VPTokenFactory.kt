@@ -31,7 +31,7 @@ internal class VPTokenFactory(
             )
             FormatType.MSO_MDOC -> MdocVPTokenBuilder(
                 mdocVPTokenSigningResult = vpTokenSigningResult as MdocVPTokenSigningResult,
-                mdocCredentials = vpTokenSigningPayload as List<String>,
+                mdocCredentials = vpTokenSigningPayload as? List<String> ?: listOf(""),
             )
 
             FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {

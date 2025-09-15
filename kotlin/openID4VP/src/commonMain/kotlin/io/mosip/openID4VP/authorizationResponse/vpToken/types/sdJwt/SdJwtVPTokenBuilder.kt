@@ -73,7 +73,10 @@ internal class SdJwtVPTokenBuilder(
         val vpTokens = mutableListOf<SdJwtVPToken>()
         val descriptorMaps = mutableListOf<DescriptorMap>()
         credentialInputDescriptorMappings.forEach { mapping ->
-            val uuid = mapping.identifier as String
+            val uuid = mapping.identifier ?: throw OpenID4VPExceptions.InvalidData(
+                "identifier is null in CredentialInputDescriptorMapping for SD-JWT",
+                className
+            )
             val sdJwtCredential = mapping.credential as? String ?: throw OpenID4VPExceptions.InvalidData(
                 "SD-JWT credential is not a String",
                 className

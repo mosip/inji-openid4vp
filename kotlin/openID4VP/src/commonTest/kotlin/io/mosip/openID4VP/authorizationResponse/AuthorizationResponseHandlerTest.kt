@@ -1,9 +1,11 @@
 package io.mosip.openID4VP.authorizationResponse
 
+import foundation.identity.jsonld.JsonLDObject
 import io.mockk.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinitionSerializer
+import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
@@ -19,6 +21,7 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.V
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult
 import io.mosip.openID4VP.common.DateUtil
+import io.mosip.openID4VP.common.URDNA2015Canonicalization
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.FormatType
@@ -74,19 +77,58 @@ class AuthorizationResponseHandlerTest {
         every { anyConstructed<LdpVPTokenBuilder>().build() } returns ldpVPToken
 
         mockkConstructor(MdocVPTokenBuilder::class)
-        every { anyConstructed<MdocVPTokenBuilder>().build() } returns mdocVPToken
+        every {
+            anyConstructed<MdocVPTokenBuilder>().build(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns Triple(
+            listOf(mdocVPToken), listOf(), 0
+        )
 
         setField(
             authorizationResponseHandler,
             "credentialsMap",
             selectedLdpVcCredentialsList + selectedMdocCredentialsList
         )
+        setField(
+            authorizationResponseHandler,
+            "formatToCredentialInputDescriptorMapping",
+            mapOf(
+                LDP_VC to listOf(
+                    CredentialInputDescriptorMapping(LDP_VC, ldpCredential1, "456"),
+                    CredentialInputDescriptorMapping(LDP_VC, ldpCredential2, "789"),
+                )
+            ) + mapOf(
+                MSO_MDOC to listOf(
+                    CredentialInputDescriptorMapping(
+                        MSO_MDOC,
+                        mdocVcList.first(),
+                        "123"
+                    )
+                )
+            )
+        )
         setField(authorizationResponseHandler, "unsignedVPTokens", unsignedVPTokens)
+        setField(
+            authorizationResponseHandler, "unsignedVPTokenResults", mapOf(
+                LDP_VC to Pair(vpTokenSigningPayload, unsignedLdpVPToken),
+                MSO_MDOC to Pair(null, unsignedMdocVPToken),
+            )
+        )
         setField(authorizationResponseHandler, "walletNonce", "bMHvX1HGhbh8zqlSWf/fuQ==")
 
 
         mockkObject(UUIDGenerator)
         every { UUIDGenerator.generateUUID() } returns "649d581c-f291-4969-9cd5-2c27385a348f"
+
+        mockkObject(URDNA2015Canonicalization)
+        mockkStatic(JsonLDObject::class)
+
+        every { URDNA2015Canonicalization.canonicalize(any()) } returns "base64EncodedCanonicalisedData"
+        every { JsonLDObject.fromJson(any<String>()) } returns JsonLDObject()
 
         mockkObject(DateUtil)
         every { DateUtil.formattedCurrentDateTime() } returns "2024-02-13T10:00:00Z"
@@ -100,15 +142,15 @@ class AuthorizationResponseHandlerTest {
         )
 
         mockkConstructor(UnsignedMdocVPTokenBuilder::class)
-        every { anyConstructed<UnsignedMdocVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to unsignedMdocVPToken,
-            "vpTokenSigningPayload" to listOf(mdocCredential)
+        every { anyConstructed<UnsignedMdocVPTokenBuilder>().build(any()) } returns Pair(
+            null,
+            unsignedMdocVPToken,
         )
 
         mockkConstructor(UnsignedSdJwtVPTokenBuilder::class)
-        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to unsignedSdJwtVPToken,
-            "vpTokenSigningPayload" to mapOf("123" to sdJwtCredential1, "456" to sdJwtCredential2)
+        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build(any()) } returns Pair(
+            null,
+            unsignedSdJwtVPToken,
         )
 
         mockkObject(ResponseModeBasedHandlerFactory)
@@ -155,6 +197,7 @@ class AuthorizationResponseHandlerTest {
 
     @Test
     fun `should successfully construct unsigned VP tokens for both LDP_VC, MSO_MDOC, SD_JWT formats`() {
+
         val expectedUnsignedVPToken = mapOf(
             LDP_VC to unsignedLdpVPToken,
             MSO_MDOC to unsignedMdocVPToken,
@@ -220,6 +263,12 @@ class AuthorizationResponseHandlerTest {
             authorizationResponseHandler,
             "unsignedVPTokens",
             emptyMap<FormatType, UnsignedVPToken>()
+        )
+
+        setField(
+            authorizationResponseHandler,
+            "unsignedVPTokenResults",
+            emptyMap<FormatType, Pair<Any?, UnsignedVPToken>>()
         )
 
         val exception = assertFailsWith<InvalidData> {
@@ -642,16 +691,13 @@ class AuthorizationResponseHandlerTest {
         val sdJwtCredentialMap = mapOf("sdjwt-input" to mapOf(VC_SD_JWT to sdJwtVcList))
 
         mockkConstructor(UnsignedSdJwtVPTokenBuilder::class)
-        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to UnsignedSdJwtVPToken(
+        every { anyConstructed<UnsignedSdJwtVPTokenBuilder>().build(any()) } returns Pair(
+            null,
+            UnsignedSdJwtVPToken(
                 mapOf(
                     "uuid-1" to unsignedKBJwt,
                     "uuid-2" to "mock-unsigned-kb-jwt"
                 )
-            ),
-            "vpTokenSigningPayload" to mapOf(
-                "uuid-1" to sdJwtCredential1,
-                "uuid-2" to sdJwtCredential2
             )
         )
 
@@ -690,10 +736,16 @@ class AuthorizationResponseHandlerTest {
             "vpTokenSigningPayload" to mockVpTokenSigningPayload
         )
 
+        //TODO: remove unused field setting after refactoring
         setField(
             authorizationResponseHandler,
             "unsignedVPTokens",
             mapOf(VC_SD_JWT to unsignedVPTokenMap)
+        )
+        setField(
+            authorizationResponseHandler,
+            "unsignedVPTokenResults",
+            mapOf(VC_SD_JWT to Pair(null, mockUnsignedSdJwtVPToken))
         )
 
         setField(
@@ -701,6 +753,16 @@ class AuthorizationResponseHandlerTest {
             "credentialsMap",
             mapOf("sdjwt-input" to mapOf(VC_SD_JWT to listOf(sdJwtCredential1)))
         )
+        setField(
+            authorizationResponseHandler, "formatToCredentialInputDescriptorMapping", mapOf(
+            VC_SD_JWT to listOf(
+                CredentialInputDescriptorMapping(
+                    VC_SD_JWT,
+                    sdJwtCredential1,
+                    "sdjwt-input"
+                ).apply { identifier = "uuid-1" }
+            )
+        ))
 
         mockkObject(ResponseModeBasedHandlerFactory)
         every { ResponseModeBasedHandlerFactory.get("direct_post") } returns mockResponseHandler
@@ -730,6 +792,11 @@ class AuthorizationResponseHandlerTest {
         val mockSigningResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
 
         setField(authorizationResponseHandler, "unsignedVPTokens", emptyMap<FormatType, Any>())
+        setField(
+            authorizationResponseHandler,
+            "unsignedVPTokenResults",
+            emptyMap<FormatType, Pair<Any?, UnsignedVPToken>>()
+        )
 
         assertFailsWith<OpenID4VPExceptions.InvalidData> {
             authorizationResponseHandler.shareVP(
@@ -756,6 +823,27 @@ class AuthorizationResponseHandlerTest {
             )
         )
 
+        setField(
+            authorizationResponseHandler, "formatToCredentialInputDescriptorMapping", mapOf(
+                VC_SD_JWT to listOf(
+                    CredentialInputDescriptorMapping(
+                        VC_SD_JWT,
+                        sdJwtCredential1,
+                        "142"
+                    ).apply { identifier = "uuid-1" },
+                    CredentialInputDescriptorMapping(
+                        VC_SD_JWT,
+                        sdJwtCredential2,
+                        "143"
+                    ).apply { identifier = "uuid-2" }
+                )
+            ))
+        setField(
+            authorizationResponseHandler, "unsignedVPTokenResults", mapOf(
+                VC_SD_JWT to Pair(null, sdJwt)
+            )
+        )
+
         val signingResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
         every { signingResult.uuidToKbJWTSignature } returns mapOf(
             "uuid-1" to "mock-signature",
@@ -776,11 +864,20 @@ class AuthorizationResponseHandlerTest {
     @Test
     fun `should share credentials for 2LDP, 2SD-JWT and 2MSO-MDOC VC`() {
 
-        every { anyConstructed<UnsignedLdpVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to unsignedLdpVPToken,
-            "vpTokenSigningPayload" to vpTokenSigningPayload2
+        every { anyConstructed<UnsignedLdpVPTokenBuilder>().build(any()) } returns Pair(
+            vpTokenSigningPayload2,
+            unsignedLdpVPToken
         )
-        every { anyConstructed<LdpVPTokenBuilder>().build() } returns ldpVPToken2
+        every {
+            anyConstructed<LdpVPTokenBuilder>().build(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns Triple(
+            listOf(ldpVPToken2), listOf(), 1
+        )
 
 
         val unsignedtokens = authorizationResponseHandler.constructUnsignedVPToken(

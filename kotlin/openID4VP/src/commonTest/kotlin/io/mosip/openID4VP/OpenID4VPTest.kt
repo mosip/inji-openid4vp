@@ -157,19 +157,19 @@ class OpenID4VPTest {
         mockkStatic(JsonLDObject::class)
 
         every { UUIDGenerator.generateUUID() } returns "test-uuid-123"
-        every { URDNA2015Canonicalization.canonicalize(any()) } returns "{\"valid\":\"json\"}"
+        every { URDNA2015Canonicalization.canonicalize(any()) } returns "base64EncodedCanonicalisedData"
         every { JsonLDObject.fromJson(any<String>()) } returns JsonLDObject()
 
         mockkConstructor(UnsignedLdpVPTokenBuilder::class)
-        every { anyConstructed<UnsignedLdpVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to unsignedLdpVPToken,
-            "vpTokenSigningPayload" to vpTokenSigningPayload
+        every { anyConstructed<UnsignedLdpVPTokenBuilder>().build(any()) } returns Pair(
+            vpTokenSigningPayload,
+            unsignedLdpVPToken
         )
 
         mockkConstructor(UnsignedMdocVPTokenBuilder::class)
-        every { anyConstructed<UnsignedMdocVPTokenBuilder>().build() } returns mapOf(
-            "unsignedVPToken" to unsignedMdocVPToken,
-            "vpTokenSigningPayload" to listOf(mdocCredential)
+        every { anyConstructed<UnsignedMdocVPTokenBuilder>().build(any()) } returns Pair(
+            null,
+            unsignedMdocVPToken
         )
 
         val actualUnsignedVPTokens = openID4VP.constructUnsignedVPToken(
