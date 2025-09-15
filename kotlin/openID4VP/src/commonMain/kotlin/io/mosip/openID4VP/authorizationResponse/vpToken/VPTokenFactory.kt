@@ -13,7 +13,7 @@ import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 
-class VPTokenFactory(
+internal class VPTokenFactory(
     private val vpTokenSigningResult: VPTokenSigningResult,
     private val unsignedVPTokens: Any?,
     private val vpTokenSigningPayload: Any,

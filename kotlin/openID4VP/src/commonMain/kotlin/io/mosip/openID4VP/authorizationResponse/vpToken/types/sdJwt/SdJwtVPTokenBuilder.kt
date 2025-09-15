@@ -72,7 +72,7 @@ internal class SdJwtVPTokenBuilder(
         val unsignedSdJwtVPToken = unsignedVPTokenResult.second as UnsignedSdJwtVPToken
         val vpTokens = mutableListOf<SdJwtVPToken>()
         val descriptorMaps = mutableListOf<DescriptorMap>()
-        credentialInputDescriptorMappings.forEachIndexed { idx, mapping ->
+        credentialInputDescriptorMappings.forEach { mapping ->
             val uuid = mapping.identifier as String
             val sdJwtCredential = mapping.credential as? String ?: throw OpenID4VPExceptions.InvalidData(
                 "SD-JWT credential is not a String",

@@ -9,7 +9,6 @@ import io.mosip.openID4VP.jwt.jws.JWSHandler.JwsPart.SIGNATURE
 import io.mosip.vercred.vcverifier.signature.impl.ED25519SignatureVerifierImpl
 import java.nio.charset.StandardCharsets
 import java.security.PublicKey
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mosip.openID4VP.common.encodeToBase64Url
 import io.mosip.openID4VP.common.getObjectMapper
 
