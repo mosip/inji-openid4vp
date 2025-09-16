@@ -93,11 +93,6 @@ class AuthorizationResponseHandlerTest {
 
         setField(
             authorizationResponseHandler,
-            "credentialsMap",
-            selectedLdpVcCredentialsList + selectedMdocCredentialsList
-        )
-        setField(
-            authorizationResponseHandler,
             "formatToCredentialInputDescriptorMapping",
             mapOf(
                 LDP_VC to listOf(
@@ -114,7 +109,6 @@ class AuthorizationResponseHandlerTest {
                 )
             )
         )
-        setField(authorizationResponseHandler, "unsignedVPTokens", unsignedVPTokens)
         setField(
             authorizationResponseHandler, "unsignedVPTokenResults", mapOf(
                 LDP_VC to Pair(vpTokenSigningPayload, unsignedLdpVPToken),
@@ -266,12 +260,6 @@ class AuthorizationResponseHandlerTest {
 
     @Test
     fun `should throw error when a credential format entry is not available in unsignedVPTokens but available in vpTokenSigningResults`() {
-        setField(
-            authorizationResponseHandler,
-            "unsignedVPTokens",
-            emptyMap<FormatType, UnsignedVPToken>()
-        )
-
         setField(
             authorizationResponseHandler,
             "unsignedVPTokenResults",
@@ -742,23 +730,10 @@ class AuthorizationResponseHandlerTest {
             "unsignedVPToken" to mockUnsignedSdJwtVPToken,
             "vpTokenSigningPayload" to mockVpTokenSigningPayload
         )
-
-        //TODO: remove unused field setting after refactoring
-        setField(
-            authorizationResponseHandler,
-            "unsignedVPTokens",
-            mapOf(VC_SD_JWT to unsignedVPTokenMap)
-        )
         setField(
             authorizationResponseHandler,
             "unsignedVPTokenResults",
             mapOf(VC_SD_JWT to Pair(null, mockUnsignedSdJwtVPToken))
-        )
-
-        setField(
-            authorizationResponseHandler,
-            "credentialsMap",
-            mapOf("sdjwt-input" to mapOf(VC_SD_JWT to listOf(sdJwtCredential1)))
         )
         setField(
             authorizationResponseHandler, "formatToCredentialInputDescriptorMapping", mapOf(
@@ -798,7 +773,6 @@ class AuthorizationResponseHandlerTest {
     fun `should throw if SD-JWT format not found in unsigned tokens during shareVP`() {
         val mockSigningResult = mockk<SdJwtVPTokenSigningResult>(relaxed = true)
 
-        setField(authorizationResponseHandler, "unsignedVPTokens", emptyMap<FormatType, Any>())
         setField(
             authorizationResponseHandler,
             "unsignedVPTokenResults",
@@ -818,16 +792,6 @@ class AuthorizationResponseHandlerTest {
     fun `should share 2 SD-JWT credentials successfully`() {
         val sdJwt = UnsignedSdJwtVPToken(
             mapOf("uuid-1" to "kbjwt1", "uuid-2" to "kbjwt2")
-        )
-        val payloadMap = mapOf("uuid-1" to "cred1", "uuid-2" to "cred2")
-
-        setField(
-            authorizationResponseHandler, "unsignedVPTokens", mapOf(
-                VC_SD_JWT to mapOf(
-                    "unsignedVPToken" to sdJwt,
-                    "vpTokenSigningPayload" to payloadMap
-                )
-            )
         )
 
         setField(
