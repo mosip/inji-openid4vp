@@ -7,13 +7,15 @@ import io.mosip.openID4VP.constants.SignatureSuiteAlgorithm
 import io.mosip.openID4VP.testData.ldpVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPToken
-import io.mosip.openID4VP.constants.FormatType
+import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import kotlin.test.*
 
 class LdpVPTokenBuilderTest {
 
     private lateinit var mockLdpVPTokenSigningResult: LdpVPTokenSigningResult
     private lateinit var mockUnsignedLdpVPToken: VPTokenSigningPayload
+    private lateinit var mockUnsignedVPToken: UnsignedLdpVPToken
+    
     private lateinit var mockProof: Proof
     private val testNonce = "test-nonce-123"
 
@@ -29,6 +31,8 @@ class LdpVPTokenBuilderTest {
             jws = null,
             domain = "example.com"
         )
+
+        mockUnsignedVPToken = UnsignedLdpVPToken("dataToSign")
 
         mockUnsignedLdpVPToken = VPTokenSigningPayload(
             context = listOf("https://www.w3.org/2018/credentials/v1"),
@@ -47,36 +51,14 @@ class LdpVPTokenBuilderTest {
     }
 
     @Test
-    fun `should build LdpVPToken with Ed25519Signature2020 successfully - old`() {
-        val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
-            testNonce
-        )
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertEquals(mockUnsignedLdpVPToken.context, result.context)
-        assertEquals(mockUnsignedLdpVPToken.type, result.type)
-        assertEquals(mockUnsignedLdpVPToken.verifiableCredential, result.verifiableCredential)
-        assertEquals(mockUnsignedLdpVPToken.id, result.id)
-        assertEquals(mockUnsignedLdpVPToken.holder, result.holder)
-        assertEquals(mockLdpVPTokenSigningResult.proofValue, result.proof?.proofValue)
-        assertEquals(null, result.proof?.jws)
-    }
-
-    @Test
     fun `should build LdpVPToken with Ed25519Signature2020 successfully`() {
         val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
             testNonce
         )
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
-                CredentialInputDescriptorMapping(FormatType.LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
+                CredentialInputDescriptorMapping(LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
             ),
             unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString())),
             vpTokenSigningResult = mockLdpVPTokenSigningResult,
@@ -96,27 +78,6 @@ class LdpVPTokenBuilderTest {
     }
 
     @Test
-    fun `should build LdpVPToken with JsonWebSignature2020 successfully - old`() {
-        mockLdpVPTokenSigningResult = LdpVPTokenSigningResult(
-            jws = "test-jws-signature",
-            proofValue = null,
-            signatureAlgorithm = SignatureSuiteAlgorithm.JsonWebSignature2020.value
-        )
-
-        val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
-            testNonce
-        )
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertEquals(mockLdpVPTokenSigningResult.jws, result.proof?.jws)
-        assertEquals(null, result.proof?.proofValue)
-    }
-
-    @Test
     fun `should build LdpVPToken with JsonWebSignature2020 successfully`() {
         mockLdpVPTokenSigningResult = LdpVPTokenSigningResult(
             jws = "test-jws-signature",
@@ -125,14 +86,12 @@ class LdpVPTokenBuilderTest {
         )
 
         val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
             testNonce
         )
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
-                CredentialInputDescriptorMapping(FormatType.LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
+                CredentialInputDescriptorMapping(LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
             ),
             unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString())),
             vpTokenSigningResult = mockLdpVPTokenSigningResult,
@@ -147,26 +106,6 @@ class LdpVPTokenBuilderTest {
     }
 
     @Test
-    fun `should build LdpVPToken with RSASignature2018 successfully - old`() {
-        mockLdpVPTokenSigningResult = LdpVPTokenSigningResult(
-            jws = "test-rsa-signature",
-            proofValue = null,
-            signatureAlgorithm = SignatureSuiteAlgorithm.RSASignature2018.value
-        )
-
-        val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
-            testNonce
-        )
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertEquals(mockLdpVPTokenSigningResult.jws, result.proof?.jws)
-    }
-
-    @Test
     fun `should build LdpVPToken with RSASignature2018 successfully`() {
         mockLdpVPTokenSigningResult = LdpVPTokenSigningResult(
             jws = "test-rsa-signature",
@@ -175,14 +114,12 @@ class LdpVPTokenBuilderTest {
         )
 
         val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
             testNonce
         )
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
-                CredentialInputDescriptorMapping(FormatType.LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
+                CredentialInputDescriptorMapping(LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
             ),
             unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString())),
             vpTokenSigningResult = mockLdpVPTokenSigningResult,
@@ -193,26 +130,6 @@ class LdpVPTokenBuilderTest {
         assertEquals(mockLdpVPTokenSigningResult.jws, vpToken.proof?.jws)
         assertEquals( """DescriptorMap(id=input-descriptor-id1, format=ldp_vp, path=${'$'}[0], pathNested=null)""", descriptorMaps.first().toString())
         assertEquals(1, nextIndex)
-    }
-
-    @Test
-    fun `should build LdpVPToken with Ed25519Signature2018 successfully - old`() {
-        mockLdpVPTokenSigningResult = LdpVPTokenSigningResult(
-            jws = "test-ed25519-2018-signature",
-            proofValue = null,
-            signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2018.value
-        )
-
-        val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
-            testNonce
-        )
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertEquals(mockLdpVPTokenSigningResult.jws, result.proof?.jws)
     }
 
     @Test
@@ -223,14 +140,12 @@ class LdpVPTokenBuilderTest {
             signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2018.value
         )
         val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            mockUnsignedLdpVPToken,
             testNonce
         )
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
-                CredentialInputDescriptorMapping(FormatType.LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
+                CredentialInputDescriptorMapping(LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
             ),
             unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString())),
             vpTokenSigningResult = mockLdpVPTokenSigningResult,
@@ -241,40 +156,6 @@ class LdpVPTokenBuilderTest {
         assertEquals(mockLdpVPTokenSigningResult.jws, vpToken.proof?.jws)
         assertEquals( """DescriptorMap(id=input-descriptor-id1, format=ldp_vp, path=${'$'}[0], pathNested=null)""", descriptorMaps.first().toString())
         assertEquals(1, nextIndex)
-    }
-
-    @Test
-    fun `should use existing LdpVPToken from testData - old`() {
-        val testToken = ldpVPToken as LdpVPToken
-        val unsignedToken = VPTokenSigningPayload(
-            context = testToken.context,
-            type = testToken.type,
-            verifiableCredential = testToken.verifiableCredential,
-            id = testToken.id,
-            holder = testToken.holder,
-            proof = testToken.proof?.apply {
-                proofValue = null
-                jws = null
-            }
-        )
-
-        val signingResult = LdpVPTokenSigningResult(
-            jws = null,
-            proofValue = "new-proof-value",
-            signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2020.value
-        )
-
-        val builder = LdpVPTokenBuilder(signingResult, unsignedToken, "test-nonce")
-
-        val result = builder.build()
-
-        assertNotNull(result)
-        assertEquals(testToken.context, result.context)
-        assertEquals(testToken.type, result.type)
-        assertEquals(testToken.verifiableCredential, result.verifiableCredential)
-        assertEquals(testToken.id, result.id)
-        assertEquals(testToken.holder, result.holder)
-        assertEquals("new-proof-value", result.proof?.proofValue)
     }
 
     @Test
@@ -297,11 +178,11 @@ class LdpVPTokenBuilderTest {
             proofValue = "new-proof-value",
             signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2020.value
         )
-        val builder = LdpVPTokenBuilder(signingResult, unsignedToken, "test-nonce")
+        val builder = LdpVPTokenBuilder("test-nonce")
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
-                CredentialInputDescriptorMapping(FormatType.LDP_VC, unsignedToken.verifiableCredential[0], "input-descriptor-id1")
+                CredentialInputDescriptorMapping(LDP_VC, unsignedToken.verifiableCredential[0], "input-descriptor-id1")
             ),
             unsignedVPTokenResult = Pair(unsignedToken, UnsignedLdpVPToken(listOf(unsignedToken).toString())),
             vpTokenSigningResult = signingResult,
@@ -320,34 +201,17 @@ class LdpVPTokenBuilderTest {
     }
 
     @Test
-    fun `should handle null proof in unsigned token - old`() {
-        val unsignedTokenWithNullProof = mockUnsignedLdpVPToken.copy(proof = null)
-
-        val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            unsignedTokenWithNullProof,
-            testNonce
-        )
-
-        assertFailsWith<NullPointerException> {
-            builder.build()
-        }
-    }
-
-    @Test
     fun `should handle null proof in unsigned token`() {
         val payloadWithNullProof = mockUnsignedLdpVPToken.copy(proof = null)
 
         val builder = LdpVPTokenBuilder(
-            mockLdpVPTokenSigningResult,
-            payloadWithNullProof,
             testNonce
         )
 
         assertFailsWith<NullPointerException> {
             builder.build(
                 credentialInputDescriptorMappings = listOf(
-                    CredentialInputDescriptorMapping(FormatType.LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
+                    CredentialInputDescriptorMapping(LDP_VC, mockUnsignedLdpVPToken.verifiableCredential[0], "input-descriptor-id1")
                 ),
                 unsignedVPTokenResult = Pair(payloadWithNullProof, UnsignedLdpVPToken(listOf(payloadWithNullProof).toString())),
                 vpTokenSigningResult = mockLdpVPTokenSigningResult,
@@ -359,12 +223,12 @@ class LdpVPTokenBuilderTest {
     @Test
     fun `should build LdpVPToken using build method and return correct vp token, descriptor map & next index`() {
         val mapping = io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping(
-            format = io.mosip.openID4VP.constants.FormatType.LDP_VC,
+            format = LDP_VC,
             credential = mockUnsignedLdpVPToken.verifiableCredential[0],
             inputDescriptorId = "input-descriptor-id1"
         )
         val unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString()))
-        val builder = LdpVPTokenBuilder(mockLdpVPTokenSigningResult, mockUnsignedLdpVPToken, testNonce)
+        val builder = LdpVPTokenBuilder(testNonce)
         val result = builder.build(
             credentialInputDescriptorMappings = listOf(mapping),
             unsignedVPTokenResult = unsignedVPTokenResult,

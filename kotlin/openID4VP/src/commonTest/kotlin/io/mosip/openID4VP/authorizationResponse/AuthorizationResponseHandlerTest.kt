@@ -74,7 +74,23 @@ class AuthorizationResponseHandlerTest {
         authorizationResponseHandler = AuthorizationResponseHandler()
 
         mockkConstructor(LdpVPTokenBuilder::class)
-        every { anyConstructed<LdpVPTokenBuilder>().build() } returns ldpVPToken
+        every { anyConstructed<LdpVPTokenBuilder>().build(any(), any(), any(), any()) } returns Triple(
+            listOf(ldpVPToken), listOf(
+                DescriptorMap(
+                    "input1",
+                    "ldp_vp",
+                    "$[2]",
+                    PathNested("input1", "ldp_vc", "$.verifiableCredential[0]")
+                ),
+                DescriptorMap(
+                    "input1",
+                    "ldp_vp",
+                    "$[2]",
+                    PathNested("input1", "ldp_vc", "$.verifiableCredential[1]")
+                )
+            ),
+                2
+        )
 
         mockkConstructor(MdocVPTokenBuilder::class)
         every {

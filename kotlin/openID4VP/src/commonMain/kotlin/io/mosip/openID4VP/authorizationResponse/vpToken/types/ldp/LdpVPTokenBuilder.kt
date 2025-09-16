@@ -11,26 +11,8 @@ import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.VPFormatType
 
 internal class LdpVPTokenBuilder(
-    val ldpVPTokenSigningResult: LdpVPTokenSigningResult,
-    val unsignedLdpVPToken: VPTokenSigningPayload,
     val nonce: String
 ) : VPTokenBuilder {
-    override fun build(): LdpVPToken {
-        ldpVPTokenSigningResult.validate()
-        val ldpVPToken = LdpVPToken(
-            unsignedLdpVPToken.context,
-            unsignedLdpVPToken.type,
-            unsignedLdpVPToken.verifiableCredential,
-            unsignedLdpVPToken.id,
-            unsignedLdpVPToken.holder,
-            unsignedLdpVPToken.proof!!.apply {
-                proofValue = ldpVPTokenSigningResult.proofValue
-                jws = ldpVPTokenSigningResult.jws
-            }
-        )
-        return ldpVPToken
-    }
-
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
         unsignedVPTokenResult: Pair<Any?, io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken>,

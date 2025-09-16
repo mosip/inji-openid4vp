@@ -7,7 +7,6 @@ import co.nstant.`in`.cbor.model.UnicodeString
 import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.common.cborArrayOf
@@ -25,44 +24,7 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = MdocVPTokenBuilder::class.java.simpleName
 
-internal class MdocVPTokenBuilder(
-    private val mdocVPTokenSigningResult: MdocVPTokenSigningResult,
-    private val mdocCredentials: List<String>,
-) : VPTokenBuilder {
-    override fun build(): MdocVPToken {
-        mdocVPTokenSigningResult.validate()
-        val documents = mdocCredentials.map { credential ->
-            val document = getDecodedMdocCredential(credential)
-            val credentialDocType =  document.get(UnicodeString("docType")).toString()
-
-            val deviceAuthentication = mdocVPTokenSigningResult.docTypeToDeviceAuthentication[credentialDocType]
-                ?: throwMissingInput("Device authentication signature not found for mdoc credential docType $credentialDocType")
-
-            val signature = deviceAuthentication.signature
-            val mdocAuthenticationAlgorithm = deviceAuthentication.algorithm
-
-            val deviceSignature = createDeviceSignature(mdocAuthenticationAlgorithm, signature)
-
-            val deviceNamespacesBytes = tagEncodedCbor(cborMapOf())
-            val deviceAuth = cborMapOf("deviceSignature" to deviceSignature)
-            val deviceSigned = cborMapOf(
-                "deviceAuth" to deviceAuth,
-                "nameSpaces" to deviceNamespacesBytes
-            )
-
-            document.put(UnicodeString("deviceSigned"), deviceSigned)
-            document
-        }
-
-        val response = cborMapOf(
-            "version" to "1.0",
-            "documents" to cborArrayOf(*documents.toTypedArray()),
-            "status" to 0
-        )
-
-        return MdocVPToken(encodeToBase64Url(encodeCbor(response)))
-    }
-
+internal class MdocVPTokenBuilder : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
         unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,

@@ -36,25 +36,6 @@ class MdocVPTokenBuilderJvmTest {
             )
         )
         mdocCredentials = listOf(mdocCredential)
-
-
-    }
-
-    @Test
-    fun `should decode base64 using JVM decoder - old`() {
-        val input = "aGVsbG8=" // "hello"
-        val decoded = decodeFromBase64Url(input)
-        assertEquals("hello", decoded.toString(Charsets.UTF_8))
-        val result = MdocVPTokenBuilder(mdocVPTokenSigningResult, mdocCredentials).build()
-
-        assertNotNull(result)
-
-        val decodedResult = decodeFromBase64Url(result.base64EncodedDeviceResponse)
-        val decodedCbor = CborDecoder(decodedResult.inputStream()).decode()[0] as Map
-
-        assertEquals("1.0", decodedCbor[UnicodeString("version")].toString())
-        assertEquals(0, decodedCbor[UnicodeString("status")].toString().toInt())
-        assertNotNull(decodedCbor[UnicodeString("documents")])
     }
 
     @Test
@@ -62,7 +43,7 @@ class MdocVPTokenBuilderJvmTest {
         val input = "aGVsbG8=" // "hello"
         val decoded = decodeFromBase64Url(input)
         assertEquals("hello", decoded.toString(Charsets.UTF_8))
-        val (vpTokens, descriptorMaps, nextIndex) = MdocVPTokenBuilder(mdocVPTokenSigningResult, mdocCredentials).build(
+        val (vpTokens, descriptorMaps, nextIndex) = MdocVPTokenBuilder().build(
             credentialInputDescriptorMappings = listOf(
                 CredentialInputDescriptorMapping(
                     FormatType.MSO_MDOC,
@@ -91,33 +72,6 @@ class MdocVPTokenBuilderJvmTest {
     }
 
     @Test
-    fun `should return token with multiple documents for multiple credentials - old`() {
-        val mdocCredential2 = encodeCbor(
-            cborMapOf(
-                "docType" to "org.iso.18013.5.1.elc",
-                "issuerSigned" to cborMapOf()
-            )
-        )
-        mdocVPTokenSigningResult = MdocVPTokenSigningResult(
-            docTypeToDeviceAuthentication = mapOf(
-                "org.iso.18013.5.1.mDL" to deviceAuthentication,
-                "org.iso.18013.5.1.elc" to deviceAuthentication
-            )
-        )
-        val multipleCredentials = mdocCredentials + encodeToBase64Url(mdocCredential2)
-
-        val result = MdocVPTokenBuilder(mdocVPTokenSigningResult, multipleCredentials).build()
-
-        assertNotNull(result)
-        val decodedResult = decodeFromBase64Url(result.base64EncodedDeviceResponse)
-        val decodedCbor = CborDecoder(decodedResult.inputStream()).decode()[0] as CborMap
-
-        val documents = decodedCbor[UnicodeString("documents")] as Array
-        assertNotNull(documents)
-        assertTrue(documents.dataItems.size == 2)
-    }
-
-    @Test
     fun `should return token with multiple documents for multiple credentials`() {
         val mdocCredential2 = encodeCbor(
             cborMapOf(
@@ -133,7 +87,7 @@ class MdocVPTokenBuilderJvmTest {
         )
         val multipleCredentials = mdocCredentials + encodeToBase64Url(mdocCredential2)
 
-        val (vpTokens, descriptorMaps, nextIndex) = MdocVPTokenBuilder(mdocVPTokenSigningResult, multipleCredentials).build(
+        val (vpTokens, descriptorMaps, nextIndex) = MdocVPTokenBuilder().build(
             credentialInputDescriptorMappings = listOf(
                 CredentialInputDescriptorMapping(
                     FormatType.MSO_MDOC,
@@ -171,25 +125,11 @@ class MdocVPTokenBuilderJvmTest {
     }
 
     @Test
-    fun `should throw exception when device authentication signature is missing - old`() {
-        val emptyMetadata = MdocVPTokenSigningResult(docTypeToDeviceAuthentication = mapOf())
-
-        val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
-            MdocVPTokenBuilder(emptyMetadata, mdocCredentials).build()
-        }
-
-        assertEquals(
-            "Device authentication signature not found for mdoc credential docType org.iso.18013.5.1.mDL",
-            exception.message
-        )
-    }
-
-    @Test
     fun `should throw exception when device authentication signature is missing`() {
         val emptyMetadata = MdocVPTokenSigningResult(docTypeToDeviceAuthentication = mapOf())
 
         val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
-            MdocVPTokenBuilder(emptyMetadata, mdocCredentials).build(
+            MdocVPTokenBuilder().build(
                 credentialInputDescriptorMappings = listOf(
                     CredentialInputDescriptorMapping(
                         FormatType.MSO_MDOC,
