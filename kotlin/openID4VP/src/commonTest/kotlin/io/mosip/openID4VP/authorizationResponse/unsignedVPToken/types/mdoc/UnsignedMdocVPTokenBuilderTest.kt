@@ -39,26 +39,6 @@ class UnsignedMdocVPTokenBuilderTest {
         clearAllMocks()
     }
 
-
-
-
-    @Test
-    fun `should create token with empty device auth when mdocCredentials list is empty`() {
-        val result = UnsignedMdocVPTokenBuilder(
-            emptyList(),
-            clientId,
-            responseUrl,
-            verifierNonce,
-            walletNonce
-        ).build()
-
-        val unsignedToken = result["unsignedVPToken"] as UnsignedMdocVPToken
-        assertTrue(unsignedToken.docTypeToDeviceAuthenticationBytes.isEmpty())
-
-        // Verify payload is empty list
-        assertEquals(emptyList<String>(), result["vpTokenSigningPayload"])
-    }
-
     @Test
     fun `should create token with empty device auth when credentialInputDescriptorMappings list is empty`() {
         val result = UnsignedMdocVPTokenBuilder(
@@ -75,36 +55,21 @@ class UnsignedMdocVPTokenBuilderTest {
         assertNull(result.first)
     }
 
-
-
-    @Test
-    fun `should handle multiple different mdoc credentials correctly`() {
-        every { getDecodedMdocCredential(mdocCredential) } returns firstDecodedMap
-        every { getDecodedMdocCredential(secondMdocCredential) } returns secondDecodedMap
-
-        val mdocCredentials = listOf(mdocCredential, secondMdocCredential)
-
-        val result = UnsignedMdocVPTokenBuilder(
-            mdocCredentials,
-            clientId,
-            responseUrl,
-            verifierNonce,
-            walletNonce
-        ).build()
-
-        val unsignedToken = result["unsignedVPToken"] as UnsignedMdocVPToken
-        assertEquals(2, unsignedToken.docTypeToDeviceAuthenticationBytes.size)
-        assertTrue(unsignedToken.docTypeToDeviceAuthenticationBytes.containsKey("docType1"))
-        assertTrue(unsignedToken.docTypeToDeviceAuthenticationBytes.containsKey("docType2"))
-    }
-
     @Test
     fun `should handle multiple different mdoc credentials correctly with credentialInputDescriptorMappings`() {
         every { getDecodedMdocCredential(mdocCredential) } returns firstDecodedMap
         every { getDecodedMdocCredential(secondMdocCredential) } returns secondDecodedMap
         val mappings = listOf(
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, mdocCredential, "input-descriptor-id1"),
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, secondMdocCredential, "input-descriptor-id2")
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                mdocCredential,
+                "input-descriptor-id1"
+            ),
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                secondMdocCredential,
+                "input-descriptor-id2"
+            )
         )
         val result = UnsignedMdocVPTokenBuilder(
             listOf(),
@@ -120,30 +85,15 @@ class UnsignedMdocVPTokenBuilderTest {
     }
 
     @Test
-    fun `should throw exception for malformed mdoc credential`() {
-        mockkStatic(::getDecodedMdocCredential)
-
-        every { getDecodedMdocCredential(any()) } throws IllegalArgumentException("Invalid CBOR data")
-
-        val exception = assertFailsWith<IllegalArgumentException> {
-            UnsignedMdocVPTokenBuilder(
-                listOf("invalid_mdoc_credential"),
-                clientId,
-                responseUrl,
-                verifierNonce,
-                walletNonce
-            ).build()
-        }
-
-        assertEquals("Invalid CBOR data", exception.message)
-    }
-
-    @Test
     fun `should throw exception for malformed mdoc credential with credentialInputDescriptorMappings`() {
         mockkStatic(::getDecodedMdocCredential)
         every { getDecodedMdocCredential(any()) } throws IllegalArgumentException("Invalid CBOR data")
         val mappings = listOf(
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, "invalid_mdoc_credential", "input-descriptor-id1")
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                "invalid_mdoc_credential",
+                "input-descriptor-id1"
+            )
         )
         val exception = assertFailsWith<IllegalArgumentException> {
             UnsignedMdocVPTokenBuilder(
@@ -162,8 +112,16 @@ class UnsignedMdocVPTokenBuilderTest {
         every { getDecodedMdocCredential(mdocCredential) } returns firstDecodedMap
         every { getDecodedMdocCredential(secondMdocCredential) } returns secondDecodedMap
         val mappings = listOf(
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, mdocCredential, "input-descriptor-id1"),
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, secondMdocCredential, "input-descriptor-id2")
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                mdocCredential,
+                "input-descriptor-id1"
+            ),
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                secondMdocCredential,
+                "input-descriptor-id2"
+            )
         )
         UnsignedMdocVPTokenBuilder(
             listOf(),
@@ -181,8 +139,16 @@ class UnsignedMdocVPTokenBuilderTest {
         every { getDecodedMdocCredential(mdocCredential) } returns firstDecodedMap
         every { getDecodedMdocCredential(secondMdocCredential) } returns secondDecodedMap
         val mappings = listOf(
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, mdocCredential, "input-descriptor-id1"),
-            CredentialInputDescriptorMapping(FormatType.MSO_MDOC, secondMdocCredential, "input-descriptor-id2"),
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                mdocCredential,
+                "input-descriptor-id1"
+            ),
+            CredentialInputDescriptorMapping(
+                FormatType.MSO_MDOC,
+                secondMdocCredential,
+                "input-descriptor-id2"
+            ),
         )
         UnsignedMdocVPTokenBuilder(
             listOf(),
@@ -191,7 +157,7 @@ class UnsignedMdocVPTokenBuilderTest {
             verifierNonce,
             walletNonce
         ).build(mappings)
-        assertEquals("docType1",mappings[0].identifier)
-        assertEquals("docType2",mappings[1].identifier)
+        assertEquals("docType1", mappings[0].identifier)
+        assertEquals("docType2", mappings[1].identifier)
     }
 }
