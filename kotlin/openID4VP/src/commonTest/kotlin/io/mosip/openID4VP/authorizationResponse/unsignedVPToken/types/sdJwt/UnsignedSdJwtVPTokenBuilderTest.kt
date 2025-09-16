@@ -1,6 +1,5 @@
 package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt
 
-import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
@@ -64,8 +63,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
 
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf(sdJwt1)
+            nonce = nonce
         )
 
         builder.build(
@@ -86,8 +84,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
 
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf(sdJwt1)
+            nonce = nonce
         )
 
         val ex = assertFailsWith<InvalidData> {
@@ -115,8 +112,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
         }
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf()
+            nonce = nonce
         )
 
         val unknownKey = mockk<PublicKey>()
@@ -143,8 +139,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
         }
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf()
+            nonce = nonce
         )
 
         val rsaKey = mockk<PublicKey>()
@@ -168,8 +163,7 @@ class UnsignedSdJwtVPTokenBuilderTest {
         }
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf()
+            nonce = nonce
         )
 
         val ecKey = mockk<PublicKey>()
@@ -196,7 +190,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
             nonce = nonce,
-            sdJwtCredentials = listOf(sdJwt1),
         )
 
         val (payload, unsignedVPToken) = builder.build(
@@ -225,7 +218,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
             nonce = nonce,
-            sdJwtCredentials = listOf(sdJwt1),
         )
 
         val (payload, unsignedVPToken) = builder.build(
@@ -263,7 +255,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
             nonce = nonce,
-            sdJwtCredentials = credentials,
         )
 
         val (payload, unsignedVPToken) = builder.build(
@@ -308,7 +299,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
             nonce = nonce,
-            sdJwtCredentials = credentials,
         )
 
         val (payload, unsignedVPToken) = builder.build(
@@ -337,7 +327,6 @@ class UnsignedSdJwtVPTokenBuilderTest {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
             nonce = nonce,
-            sdJwtCredentials = listOf(sdJwt1),
         )
         val ex = assertFailsWith<UnsupportedOperationException> {
             builder.build(

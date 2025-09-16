@@ -23,7 +23,6 @@ class UnsignedVPTokenBuilderJvmTest {
     fun `should use provided parameters correctly in token creation`() {
         val spyBuilder = spyk(
             UnsignedMdocVPTokenBuilder(
-                listOf(mdocCredential),
                 clientId,
                 responseUrl,
                 verifierNonce,
@@ -49,7 +48,6 @@ class UnsignedVPTokenBuilderJvmTest {
 
         val exception = assertFailsWith<InvalidData> {
             UnsignedMdocVPTokenBuilder(
-                mdocCredentials,
                 clientId,
                 responseUrl,
                 verifierNonce,
@@ -68,7 +66,6 @@ class UnsignedVPTokenBuilderJvmTest {
         val mdocCredentials = listOf(mdocCredential)
 
         val (_, unsignedVPToken) = UnsignedMdocVPTokenBuilder(
-            mdocCredentials,
             clientId,
             responseUrl,
             verifierNonce,
@@ -93,7 +90,6 @@ class UnsignedVPTokenBuilderJvmTest {
         val mdocCredentials = listOf(mdocCredential)
 
         val (payload, unsignedVPToken) = UnsignedMdocVPTokenBuilder(
-            mdocCredentials,
             clientId,
             responseUrl,
             verifierNonce,

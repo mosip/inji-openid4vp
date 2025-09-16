@@ -254,7 +254,6 @@ internal class AuthorizationResponseHandler {
             when (format) {
                 FormatType.LDP_VC -> {
                     UnsignedLdpVPTokenBuilder(
-                        verifiableCredential = credentialInputDescriptorMappings,
                         id = UUIDGenerator.generateUUID(),
                         holder = holderId!!,
                         challenge = authorizationRequest.nonce,
@@ -265,7 +264,6 @@ internal class AuthorizationResponseHandler {
 
                 FormatType.MSO_MDOC -> {
                     UnsignedMdocVPTokenBuilder(
-                        mdocCredentials = credentialInputDescriptorMappings as List<String>,
                         clientId = authorizationRequest.clientId,
                         responseUri = responseUri,
                         verifierNonce = authorizationRequest.nonce,
@@ -275,9 +273,8 @@ internal class AuthorizationResponseHandler {
 
                 FormatType.DC_SD_JWT, FormatType.VC_SD_JWT -> {
                     UnsignedSdJwtVPTokenBuilder(
-                        sdJwtCredentials = credentialInputDescriptorMappings as List<String>,
-                        nonce = authorizationRequest.nonce,
-                        clientId = authorizationRequest.clientId
+                        clientId = authorizationRequest.clientId,
+                        nonce = authorizationRequest.nonce
                     ).build(credentialInputDescriptorMappings)
                 }
             }

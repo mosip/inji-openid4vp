@@ -3,16 +3,12 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc
 import co.nstant.`in`.cbor.model.Map
 import co.nstant.`in`.cbor.model.UnicodeString
 import io.mockk.*
-import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.common.getDecodedMdocCredential
 import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.networkManager.NetworkManagerClient
-import io.mosip.openID4VP.testData.authorizationRequest
 import io.mosip.openID4VP.testData.clientId
 import io.mosip.openID4VP.testData.mdocCredential
 import io.mosip.openID4VP.testData.responseUrl
-import io.mosip.openID4VP.testData.setField
 import io.mosip.openID4VP.testData.verifierNonce
 import io.mosip.openID4VP.testData.walletNonce
 import kotlin.test.*
@@ -42,7 +38,6 @@ class UnsignedMdocVPTokenBuilderTest {
     @Test
     fun `should create token with empty device auth when credentialInputDescriptorMappings list is empty`() {
         val result = UnsignedMdocVPTokenBuilder(
-            emptyList(),
             clientId,
             responseUrl,
             verifierNonce,
@@ -72,7 +67,6 @@ class UnsignedMdocVPTokenBuilderTest {
             )
         )
         val result = UnsignedMdocVPTokenBuilder(
-            listOf(),
             clientId,
             responseUrl,
             verifierNonce,
@@ -97,7 +91,6 @@ class UnsignedMdocVPTokenBuilderTest {
         )
         val exception = assertFailsWith<IllegalArgumentException> {
             UnsignedMdocVPTokenBuilder(
-                listOf(),
                 clientId,
                 responseUrl,
                 verifierNonce,
@@ -124,7 +117,6 @@ class UnsignedMdocVPTokenBuilderTest {
             )
         )
         UnsignedMdocVPTokenBuilder(
-            listOf(),
             clientId,
             responseUrl,
             verifierNonce,
@@ -151,7 +143,6 @@ class UnsignedMdocVPTokenBuilderTest {
             ),
         )
         UnsignedMdocVPTokenBuilder(
-            listOf(),
             clientId,
             responseUrl,
             verifierNonce,

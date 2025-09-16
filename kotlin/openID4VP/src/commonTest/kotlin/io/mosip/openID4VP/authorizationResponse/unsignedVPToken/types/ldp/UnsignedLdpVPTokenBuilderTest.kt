@@ -44,7 +44,6 @@ class UnsignedLdpVPTokenBuilderTest {
             CredentialInputDescriptorMapping(FormatType.LDP_VC, ldpCredential2, "input-descriptor-id2")
         )
         val builder = UnsignedLdpVPTokenBuilder(
-            verifiableCredential = listOf(),
             id = id,
             holder = holder,
             challenge = challenge,
@@ -77,7 +76,6 @@ class UnsignedLdpVPTokenBuilderTest {
             CredentialInputDescriptorMapping(FormatType.LDP_VC, ldpCredential2, "input-descriptor-id2")
         )
         val builder = UnsignedLdpVPTokenBuilder(
-            verifiableCredential = listOf(),
             id = id,
             holder = holder,
             challenge = challenge,
@@ -102,7 +100,6 @@ class UnsignedLdpVPTokenBuilderTest {
             CredentialInputDescriptorMapping(FormatType.LDP_VC, ldpCredential2, "input-descriptor-id2")
         )
         val builder = UnsignedLdpVPTokenBuilder(
-            verifiableCredential = listOf(),
             id = id,
             holder = holder,
             challenge = challenge,
@@ -126,7 +123,6 @@ class UnsignedLdpVPTokenBuilderTest {
             CredentialInputDescriptorMapping(FormatType.LDP_VC, ldpCredential2, "input-descriptor-id2")
         )
         val builder = UnsignedLdpVPTokenBuilder(
-            verifiableCredential = listOf(),
             id = id,
             holder = holder,
             challenge = challenge,
@@ -146,7 +142,6 @@ class UnsignedLdpVPTokenBuilderTest {
             CredentialInputDescriptorMapping(FormatType.LDP_VC, ldpCredential2, "input-descriptor-id2")
         )
         val builder = UnsignedLdpVPTokenBuilder(
-            verifiableCredential = listOf(),
             id = id,
             holder = holder,
             challenge = challenge,

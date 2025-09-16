@@ -37,8 +37,7 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
     fun `test end-to-end build with real SD-JWT credentials`() {
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = credentials
+            nonce = nonce
         )
 
         val credential1 =
@@ -88,8 +87,8 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
         }
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf() // not used in this method
+            nonce = nonce
+            // not used in this method
         )
         val (vpPayload, unsignedToken) = builder.build(mappings)
         assertNull(vpPayload)
@@ -121,8 +120,8 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
         )
         val builder = UnsignedSdJwtVPTokenBuilder(
             clientId = clientId,
-            nonce = nonce,
-            sdJwtCredentials = listOf() // not used in this method
+            nonce = nonce
+            // not used in this method
         )
         val (vpPayload, unsignedToken) = builder.build(listOf(mapping))
 
