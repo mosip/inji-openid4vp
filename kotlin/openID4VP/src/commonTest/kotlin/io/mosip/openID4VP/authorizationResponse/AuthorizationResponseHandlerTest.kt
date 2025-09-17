@@ -64,7 +64,6 @@ class AuthorizationResponseHandlerTest {
     )
 
     private val unsignedKBJwt = "eyJhbGciOiJFUzI1NksifQ.eyJub25jZSI6Im5vbmNlIn0"
-    private val kbJwtSignature = "dummy_signature"
 
     private lateinit var authorizationResponseHandler: AuthorizationResponseHandler
     private val mockResponseHandler = mockk<ResponseModeBasedHandler>()
@@ -74,7 +73,14 @@ class AuthorizationResponseHandlerTest {
         authorizationResponseHandler = AuthorizationResponseHandler()
 
         mockkConstructor(LdpVPTokenBuilder::class)
-        every { anyConstructed<LdpVPTokenBuilder>().build(any(), any(), any(), any()) } returns Triple(
+        every {
+            anyConstructed<LdpVPTokenBuilder>().build(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns Triple(
             listOf(ldpVPToken), listOf(
                 DescriptorMap(
                     "input1",
@@ -89,7 +95,7 @@ class AuthorizationResponseHandlerTest {
                     PathNested("input1", "ldp_vc", "$.verifiableCredential[1]")
                 )
             ),
-                2
+            2
         )
 
         mockkConstructor(MdocVPTokenBuilder::class)
@@ -791,7 +797,7 @@ class AuthorizationResponseHandlerTest {
             emptyMap<FormatType, Pair<Any?, UnsignedVPToken>>()
         )
 
-        assertFailsWith<OpenID4VPExceptions.InvalidData> {
+        assertFailsWith<InvalidData> {
             authorizationResponseHandler.shareVP(
                 authorizationRequest.copy(responseType = "vp_token"),
                 mapOf(VC_SD_JWT to mockSigningResult),
