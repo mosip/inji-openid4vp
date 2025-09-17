@@ -116,7 +116,7 @@ class SdJwtVPTokenBuilderJvmTest {
         )
         val vpTokenSigningResult = SdJwtVPTokenSigningResult(
             uuidToKbJWTSignature = mutableMapOf(
-                "uuid-1" to "kb-jwt-signature-1",
+                "uuid-1" to "https://w3id.org/security/suites/jws-2020/v1",
                 "uuid-2" to "kb-jwt-signature-2"
             )
         )

@@ -16,7 +16,6 @@ typealias VPTokenSigningPayload = LdpVPToken
 private const val LDP_INTERNAL_PATH = "verifiableCredential"
 
 internal class UnsignedLdpVPTokenBuilder(
-    //TODO: remove this param verifiableCredential build() is removed
     private val id: String,
     private val holder: String,
     private val challenge: String,

@@ -191,11 +191,7 @@ internal class AuthorizationResponseHandler {
                     className
                 )
             val vpTokenBuilder = VPTokenFactory(
-                vpTokenSigningResult = vpTokenSigningResult,
-                unsignedVPTokens = unsignedVPTokenResult.second,
-                vpTokenSigningPayload = unsignedVPTokenResult.first ?: mapOf("k1" to "k2"),
-                nonce = authorizationRequest.nonce,
-                uuid = "null"
+                nonce = authorizationRequest.nonce
             ).getVPTokenBuilder(credentialFormat)
 
             val (vpTokens, descriptorMaps, nextRootIndex) = vpTokenBuilder.build(
