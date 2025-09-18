@@ -3,17 +3,9 @@ package io.mosip.openID4VP.jwt
 import io.mockk.clearAllMocks
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.jwt.jws.createMockJws
-import io.mosip.openID4VP.testData.JWSUtil
-import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
-import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtPayload
-import io.mosip.openID4VP.testData.assertDoesNotThrow
-import io.mosip.openID4VP.testData.didUrl
-import io.mosip.openID4VP.testData.publicKey
 import io.mosip.vercred.vcverifier.keyResolver.types.did.DidPublicKeyResolver
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
