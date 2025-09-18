@@ -2,7 +2,9 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc
 
 import io.mockk.spyk
 import io.mockk.verify
-import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
 import io.mosip.openID4VP.testData.clientId
 import io.mosip.openID4VP.testData.mdocCredential
 import io.mosip.openID4VP.testData.responseUrl
@@ -13,6 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class UnsignedVPTokenBuilderJvmTest {
@@ -20,7 +23,6 @@ class UnsignedVPTokenBuilderJvmTest {
     fun `should use provided parameters correctly in token creation`() {
         val spyBuilder = spyk(
             UnsignedMdocVPTokenBuilder(
-                listOf(mdocCredential),
                 clientId,
                 responseUrl,
                 verifierNonce,
@@ -28,9 +30,15 @@ class UnsignedVPTokenBuilderJvmTest {
             )
         )
 
-        spyBuilder.build()
+        spyBuilder.build(listOf(CredentialInputDescriptorMapping(MSO_MDOC, mdocCredential, "input-descriptor-id")))
         verify {
-            spyBuilder.build()
+            spyBuilder.build(match {
+                assertTrue(it.size == 1)
+                val credentialInputDescriptorMapping = it.first()
+                assertEquals(MSO_MDOC, credentialInputDescriptorMapping.format)
+                assertEquals(mdocCredential, credentialInputDescriptorMapping.credential)
+                ("input-descriptor-id" == credentialInputDescriptorMapping.inputDescriptorId)
+            })
         }
     }
 
@@ -40,12 +48,14 @@ class UnsignedVPTokenBuilderJvmTest {
 
         val exception = assertFailsWith<InvalidData> {
             UnsignedMdocVPTokenBuilder(
-                mdocCredentials,
                 clientId,
                 responseUrl,
                 verifierNonce,
                 walletNonce
-            ).build()
+            ).build(listOf(
+                CredentialInputDescriptorMapping(MSO_MDOC, mdocCredential, "input-descriptor-id-1"),
+                CredentialInputDescriptorMapping(MSO_MDOC, mdocCredential, "input-descriptor-id-2")
+            ))
         }
 
         assertEquals("Duplicate Mdoc Credentials with same doctype found", exception.message)
@@ -55,17 +65,15 @@ class UnsignedVPTokenBuilderJvmTest {
     fun `should create token with correct structure and payload format`() {
         val mdocCredentials = listOf(mdocCredential)
 
-        val result = UnsignedMdocVPTokenBuilder(
-            mdocCredentials,
+        val (_, unsignedVPToken) = UnsignedMdocVPTokenBuilder(
             clientId,
             responseUrl,
             verifierNonce,
             walletNonce
-        ).build()
+        ).build(listOf(CredentialInputDescriptorMapping(MSO_MDOC, mdocCredential, "input-descriptor-id")))
 
-        val unsignedToken = result["unsignedVPToken"] as UnsignedMdocVPToken
-        val docType = unsignedToken.docTypeToDeviceAuthenticationBytes.keys.first()
-        val authData = unsignedToken.docTypeToDeviceAuthenticationBytes[docType]
+        val docType = unsignedVPToken.docTypeToDeviceAuthenticationBytes.keys.first()
+        val authData = unsignedVPToken.docTypeToDeviceAuthenticationBytes[docType]
 
         assertNotNull(docType)
         assertFalse(docType.isEmpty())
@@ -74,33 +82,26 @@ class UnsignedVPTokenBuilderJvmTest {
         assertTrue(authData is String)
 
         // Check if the payload is a valid hex string
-        val hexString = authData as String
-        assertTrue(hexString.matches("[0-9A-Fa-f]+".toRegex()))
+        assertTrue(authData.matches("[0-9A-Fa-f]+".toRegex()))
     }
 
     @Test
     fun `should create UnsignedMdocVPToken with valid input`() {
         val mdocCredentials = listOf(mdocCredential)
 
-        val result = UnsignedMdocVPTokenBuilder(
-            mdocCredentials,
+        val (payload, unsignedVPToken) = UnsignedMdocVPTokenBuilder(
             clientId,
             responseUrl,
             verifierNonce,
             walletNonce
-        ).build()
-
-        // Check the overall structure
-        assertTrue(result.containsKey("vpTokenSigningPayload"))
-        assertTrue(result.containsKey("unsignedVPToken"))
+        ).build(listOf(CredentialInputDescriptorMapping(MSO_MDOC, mdocCredential, "input-descriptor-id")))
 
         // Check vpTokenSigningPayload
-        assertEquals(mdocCredentials, result["vpTokenSigningPayload"])
+        assertNull(payload)
 
         // Check unsignedVPToken
-        val unsignedToken = result["unsignedVPToken"] as UnsignedMdocVPToken
-        assertTrue(unsignedToken.docTypeToDeviceAuthenticationBytes.isNotEmpty())
-        assertEquals(1, unsignedToken.docTypeToDeviceAuthenticationBytes.size)
+        assertTrue(unsignedVPToken.docTypeToDeviceAuthenticationBytes.isNotEmpty())
+        assertEquals(1, unsignedVPToken.docTypeToDeviceAuthenticationBytes.size)
     }
 
 }

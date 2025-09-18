@@ -4,7 +4,12 @@ package io.mosip.openID4VP.authorizationResponse.vpToken.types.mdoc
 import co.nstant.`in`.cbor.model.ByteString
 import co.nstant.`in`.cbor.model.DataItem
 import co.nstant.`in`.cbor.model.UnicodeString
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.common.cborArrayOf
 import io.mosip.openID4VP.common.cborMapOf
 import io.mosip.openID4VP.common.encodeCbor
@@ -12,21 +17,31 @@ import io.mosip.openID4VP.common.getDecodedMdocCredential
 import io.mosip.openID4VP.common.mapSigningAlgorithmToProtectedAlg
 import io.mosip.openID4VP.common.tagEncodedCbor
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
+import io.mosip.openID4VP.common.createDescriptorMapPath
+import io.mosip.openID4VP.common.createNestedPath
 import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.common.encodeToBase64Url
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 
 private val className = MdocVPTokenBuilder::class.java.simpleName
 
-class MdocVPTokenBuilder(
-    private val mdocVPTokenSigningResult: MdocVPTokenSigningResult,
-    private val mdocCredentials: List<String>,
-) : VPTokenBuilder {
-    override fun build(): MdocVPToken {
+internal class MdocVPTokenBuilder : VPTokenBuilder {
+    override fun build(
+        credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
+        unsignedVPTokenResult: Pair<VPTokenSigningPayload?, UnsignedVPToken>,
+        vpTokenSigningResult: VPTokenSigningResult,
+        rootIndex: Int
+    ): Triple<List<MdocVPToken>, List<DescriptorMap>, Int> {
+        val mdocVPTokenSigningResult = vpTokenSigningResult as MdocVPTokenSigningResult
         mdocVPTokenSigningResult.validate()
-        val documents = mdocCredentials.map { credential ->
-            val document = getDecodedMdocCredential(credential)
-            val credentialDocType =  document.get(UnicodeString("docType")).toString()
+
+        val documents = mutableListOf<DataItem>()
+        val descriptorMaps = mutableListOf<DescriptorMap>()
+        credentialInputDescriptorMappings.forEach {credentialInputDescriptorMapping ->
+            val mdocCredential = credentialInputDescriptorMapping.credential as String
+
+            val document = getDecodedMdocCredential(mdocCredential)
+            val credentialDocType = document.get(UnicodeString("docType")).toString()
 
             val deviceAuthentication = mdocVPTokenSigningResult.docTypeToDeviceAuthentication[credentialDocType]
                 ?: throwMissingInput("Device authentication signature not found for mdoc credential docType $credentialDocType")
@@ -44,7 +59,16 @@ class MdocVPTokenBuilder(
             )
 
             document.put(UnicodeString("deviceSigned"), deviceSigned)
-            document
+
+            documents.add(document)
+            descriptorMaps.add(
+                DescriptorMap(
+                    id = credentialInputDescriptorMapping.inputDescriptorId,
+                    format = credentialInputDescriptorMapping.format.value,
+                    path = createDescriptorMapPath(rootIndex),
+                    pathNested = createNestedPath(credentialInputDescriptorMapping.inputDescriptorId, credentialInputDescriptorMapping.nestedPath, credentialInputDescriptorMapping.format)
+                )
+            )
         }
 
         val response = cborMapOf(
@@ -52,8 +76,9 @@ class MdocVPTokenBuilder(
             "documents" to cborArrayOf(*documents.toTypedArray()),
             "status" to 0
         )
+        val mdocVPToken = MdocVPToken(encodeToBase64Url(encodeCbor(response)))
 
-        return MdocVPToken(encodeToBase64Url(encodeCbor(response)))
+        return Triple(listOf(mdocVPToken), descriptorMaps, rootIndex + 1)
     }
 
     private fun createDeviceSignature(
@@ -75,4 +100,3 @@ class MdocVPTokenBuilder(
         throw OpenID4VPExceptions.MissingInput("",message, className)
     }
 }
-

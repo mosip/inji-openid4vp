@@ -1,12 +1,10 @@
 package io.mosip.openID4VP.jwt.jws
 
 import io.mockk.clearAllMocks
-import io.mockk.every
 import io.mockk.mockk
 import io.mosip.openID4VP.testData.JWSUtil
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtHeader
 import io.mosip.openID4VP.testData.JWSUtil.Companion.jwtPayload
-import io.mosip.openID4VP.testData.didUrl
 import io.mosip.vercred.vcverifier.keyResolver.PublicKeyResolver
 import org.junit.jupiter.api.Test
 import java.util.Base64

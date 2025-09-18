@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PathNested
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import java.security.MessageDigest
@@ -85,3 +87,14 @@ fun hashData(data: String, algorithm: String = "SHA-256"): String {
     val hash = digest.digest(data.toByteArray(Charsets.UTF_8))
     return encodeToBase64Url(hash)
 }
+
+fun createNestedPath(inputDescriptorId: String, nestedPath: String?, format: FormatType): PathNested? {
+    if (nestedPath == null) return null
+    return PathNested(
+        id = inputDescriptorId,
+        format = format.value,
+        path = nestedPath
+    )
+}
+
+fun createDescriptorMapPath(vpIndex: Int) = "$[$vpIndex]"
