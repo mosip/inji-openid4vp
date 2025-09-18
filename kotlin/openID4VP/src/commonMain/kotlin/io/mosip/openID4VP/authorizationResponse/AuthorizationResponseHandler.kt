@@ -189,9 +189,7 @@ internal class AuthorizationResponseHandler {
                     "unable to find the related credential format - $credentialFormat in the unsignedVPTokenResults map",
                     className
                 )
-            val vpTokenBuilder = VPTokenFactory(
-                nonce = authorizationRequest.nonce
-            ).getVPTokenBuilder(credentialFormat)
+            val vpTokenBuilder = VPTokenFactory.getVPTokenBuilder(credentialFormat)
 
             val (vpTokens, descriptorMaps, nextRootIndex) = vpTokenBuilder.build(
                 credentialInputDescriptorMappings,

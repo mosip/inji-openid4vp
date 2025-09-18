@@ -52,9 +52,7 @@ class LdpVPTokenBuilderTest {
 
     @Test
     fun `should build LdpVPToken with Ed25519Signature2020 successfully`() {
-        val builder = LdpVPTokenBuilder(
-            testNonce
-        )
+        val builder = LdpVPTokenBuilder()
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
@@ -85,9 +83,7 @@ class LdpVPTokenBuilderTest {
             signatureAlgorithm = SignatureSuiteAlgorithm.JsonWebSignature2020.value
         )
 
-        val builder = LdpVPTokenBuilder(
-            testNonce
-        )
+        val builder = LdpVPTokenBuilder()
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
@@ -113,9 +109,7 @@ class LdpVPTokenBuilderTest {
             signatureAlgorithm = SignatureSuiteAlgorithm.RSASignature2018.value
         )
 
-        val builder = LdpVPTokenBuilder(
-            testNonce
-        )
+        val builder = LdpVPTokenBuilder()
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
@@ -139,9 +133,7 @@ class LdpVPTokenBuilderTest {
             proofValue = null,
             signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2018.value
         )
-        val builder = LdpVPTokenBuilder(
-            testNonce
-        )
+        val builder = LdpVPTokenBuilder()
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
@@ -178,7 +170,7 @@ class LdpVPTokenBuilderTest {
             proofValue = "new-proof-value",
             signatureAlgorithm = SignatureSuiteAlgorithm.Ed25519Signature2020.value
         )
-        val builder = LdpVPTokenBuilder("test-nonce")
+        val builder = LdpVPTokenBuilder()
 
         val (vpTokens, descriptorMaps, nextIndex) = builder.build(
             credentialInputDescriptorMappings = listOf(
@@ -204,9 +196,7 @@ class LdpVPTokenBuilderTest {
     fun `should handle null proof in unsigned token`() {
         val payloadWithNullProof = mockUnsignedLdpVPToken.copy(proof = null)
 
-        val builder = LdpVPTokenBuilder(
-            testNonce
-        )
+        val builder = LdpVPTokenBuilder()
 
         assertFailsWith<NullPointerException> {
             builder.build(
@@ -228,7 +218,7 @@ class LdpVPTokenBuilderTest {
             inputDescriptorId = "input-descriptor-id1"
         )
         val unsignedVPTokenResult = Pair(mockUnsignedLdpVPToken, UnsignedLdpVPToken(listOf(mockUnsignedLdpVPToken).toString()))
-        val builder = LdpVPTokenBuilder(testNonce)
+        val builder = LdpVPTokenBuilder()
         val result = builder.build(
             credentialInputDescriptorMappings = listOf(mapping),
             unsignedVPTokenResult = unsignedVPTokenResult,

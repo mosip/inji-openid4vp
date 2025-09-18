@@ -12,10 +12,7 @@ import io.mosip.openID4VP.common.createNestedPath
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.VPFormatType
 
-internal class LdpVPTokenBuilder(
-    //TODO: Remove this unused param nonce
-    val nonce: String
-) : VPTokenBuilder {
+internal class LdpVPTokenBuilder : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
         unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,
@@ -43,7 +40,11 @@ internal class LdpVPTokenBuilder(
                 id = mapping.inputDescriptorId,
                 format = VPFormatType.LDP_VP.value,
                 path = "$[$rootIndex]",
-                pathNested = createNestedPath(mapping.inputDescriptorId, mapping.nestedPath, FormatType.LDP_VC)
+                pathNested = createNestedPath(
+                    mapping.inputDescriptorId,
+                    mapping.nestedPath,
+                    FormatType.LDP_VC
+                )
             )
         }
         return Triple(listOf(ldpVPToken), descriptorMaps, rootIndex + 1)
