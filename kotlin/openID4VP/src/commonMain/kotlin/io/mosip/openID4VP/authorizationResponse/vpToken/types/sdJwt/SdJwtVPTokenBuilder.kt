@@ -2,8 +2,11 @@ package io.mosip.openID4VP.authorizationResponse.vpToken.types.sdJwt
 
 import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult
 import io.mosip.openID4VP.common.createNestedPath
 import io.mosip.openID4VP.common.createDescriptorMapPath
@@ -18,8 +21,8 @@ private val className = SdJwtVPTokenBuilder::class.java.simpleName
 internal class SdJwtVPTokenBuilder : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
-        unsignedVPTokenResult: Pair<Any?, io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken>,
-        vpTokenSigningResult: io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult,
+        unsignedVPTokenResult: Pair<VPTokenSigningPayload?, UnsignedVPToken>,
+        vpTokenSigningResult: VPTokenSigningResult,
         rootIndex: Int
     ): Triple<List<SdJwtVPToken>, List<DescriptorMap>, Int> {
         var vpIndex = rootIndex

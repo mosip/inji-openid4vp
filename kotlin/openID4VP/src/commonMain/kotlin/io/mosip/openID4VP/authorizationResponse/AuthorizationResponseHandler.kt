@@ -31,7 +31,7 @@ private val className = AuthorizationResponseHandler::class.java.simpleName
  */
 
 internal class AuthorizationResponseHandler {
-    private lateinit var unsignedVPTokenResults: Map<FormatType, Pair<Any?, UnsignedVPToken>>
+    private lateinit var unsignedVPTokenResults: Map<FormatType, Pair<VPTokenSigningPayload?, UnsignedVPToken>>
     private lateinit var walletNonce: String
     private lateinit var formatToCredentialInputDescriptorMapping: Map<FormatType, List<CredentialInputDescriptorMapping>>
 
@@ -163,7 +163,7 @@ internal class AuthorizationResponseHandler {
     private fun createVPTokenAndPresentationSubmission(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>,
         authorizationRequest: AuthorizationRequest,
-        unsignedVPTokenResults: Map<FormatType, Pair<Any?, UnsignedVPToken>>,
+        unsignedVPTokenResults: Map<FormatType, Pair<VPTokenSigningPayload?, UnsignedVPToken>>,
         formatToCredentialInputDescriptorMapping: Map<FormatType, List<CredentialInputDescriptorMapping>>
     ): Pair<VPTokenType, PresentationSubmission> {
         if (unsignedVPTokenResults.keys != vpTokenSigningResults.keys) {
@@ -239,7 +239,7 @@ internal class AuthorizationResponseHandler {
         holderId: String?,
         signatureSuite: String?,
         credentialsMap: Map<String, Map<FormatType, List<Any>>>
-    ): Map<FormatType, Pair<Any?, UnsignedVPToken>> {
+    ): Map<FormatType, Pair<VPTokenSigningPayload?, UnsignedVPToken>> {
         createFormatToCredentialInputDescriptorMapping(credentialsMap)
 
         // group all formats together, call specific creator and pass the grouped credentials
@@ -328,7 +328,7 @@ internal class AuthorizationResponseHandler {
                 authorizationRequest.presentationDefinition.id,
                 descriptorMap
             )
-            val (ldpVPTokenPayload: Any?, _) = unsignedVPTokenResults[FormatType.LDP_VC]
+            val (ldpVPTokenPayload: VPTokenSigningPayload?, _) = unsignedVPTokenResults[FormatType.LDP_VC]
                 ?: throw OpenID4VPExceptions.InvalidData(
                     "LDP VC format not found in the unsignedVPTokenResults map",
                     className

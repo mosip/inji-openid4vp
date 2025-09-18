@@ -15,7 +15,7 @@ import io.mosip.openID4VP.constants.VPFormatType
 internal class LdpVPTokenBuilder : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
-        unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,
+        unsignedVPTokenResult: Pair<VPTokenSigningPayload?, UnsignedVPToken>,
         vpTokenSigningResult: VPTokenSigningResult,
         rootIndex: Int
     ): Triple<List<VPToken>, List<DescriptorMap>, Int> {

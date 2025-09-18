@@ -3,7 +3,9 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc
 import co.nstant.`in`.cbor.model.DataItem
 import co.nstant.`in`.cbor.model.UnicodeString
 import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.common.cborArrayOf
 import io.mosip.openID4VP.common.cborMapOf
 import io.mosip.openID4VP.common.createHashedDataItem
@@ -21,7 +23,7 @@ internal class UnsignedMdocVPTokenBuilder(
     private val verifierNonce: String,
     private val mdocGeneratedNonce: String
 ) : UnsignedVPTokenBuilder {
-    override fun build(credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>): Pair<Any?, UnsignedMdocVPToken> {
+    override fun build(credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>): Pair<VPTokenSigningPayload?, UnsignedMdocVPToken> {
         val docTypeToDeviceAuthenticationBytes = mutableMapOf<String, String>()
 
         val clientIdHash = createHashedDataItem(clientId, mdocGeneratedNonce)

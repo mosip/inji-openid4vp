@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt
 import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.common.hashData
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
@@ -22,7 +23,7 @@ internal class UnsignedSdJwtVPTokenBuilder(
         private const val KEY_BINDING_JWT = "kb+jwt"
     }
 
-    override fun build(credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>): Pair<Any?, UnsignedVPToken> {
+    override fun build(credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>): Pair<VPTokenSigningPayload?, UnsignedVPToken> {
         val uuidToUnsignedKBJWT = mutableMapOf<String, String>()
 
         credentialInputDescriptorMappings.forEach { credentialInputDescriptorMapping ->

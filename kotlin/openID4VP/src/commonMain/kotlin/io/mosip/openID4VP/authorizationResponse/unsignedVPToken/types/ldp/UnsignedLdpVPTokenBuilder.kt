@@ -22,7 +22,7 @@ internal class UnsignedLdpVPTokenBuilder(
     private val domain: String,
     private val signatureSuite: String
 ) : UnsignedVPTokenBuilder {
-    override fun build(credentialInputDescriptorMappings : List<CredentialInputDescriptorMapping>): Pair<Any?, UnsignedVPToken> {
+    override fun build(credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>): Pair<VPTokenSigningPayload?, UnsignedVPToken> {
         val context = mutableListOf("https://www.w3.org/2018/credentials/v1")
 
         if (signatureSuite == Ed25519Signature2020.value) {

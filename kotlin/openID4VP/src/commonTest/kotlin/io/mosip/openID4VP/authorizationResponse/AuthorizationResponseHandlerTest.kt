@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationResponse.presentationSubmission.Descripto
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PathNested
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
@@ -790,7 +791,7 @@ class AuthorizationResponseHandlerTest {
         setField(
             authorizationResponseHandler,
             "unsignedVPTokenResults",
-            emptyMap<FormatType, Pair<Any?, UnsignedVPToken>>()
+            emptyMap<FormatType, Pair<VPTokenSigningPayload?, UnsignedVPToken>>()
         )
 
         assertFailsWith<InvalidData> {

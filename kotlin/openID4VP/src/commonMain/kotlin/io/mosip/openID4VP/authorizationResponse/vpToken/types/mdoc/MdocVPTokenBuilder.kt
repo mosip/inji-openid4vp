@@ -7,6 +7,7 @@ import co.nstant.`in`.cbor.model.UnicodeString
 import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.common.cborArrayOf
@@ -27,7 +28,7 @@ private val className = MdocVPTokenBuilder::class.java.simpleName
 internal class MdocVPTokenBuilder : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
-        unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,
+        unsignedVPTokenResult: Pair<VPTokenSigningPayload?, UnsignedVPToken>,
         vpTokenSigningResult: VPTokenSigningResult,
         rootIndex: Int
     ): Triple<List<MdocVPToken>, List<DescriptorMap>, Int> {
