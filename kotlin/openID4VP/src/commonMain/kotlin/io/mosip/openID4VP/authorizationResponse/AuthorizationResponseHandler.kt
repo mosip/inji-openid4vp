@@ -248,11 +248,10 @@ internal class AuthorizationResponseHandler {
                 FormatType.LDP_VC -> {
                     UnsignedLdpVPTokenBuilder(
                         id = UUIDGenerator.generateUUID(),
-                        // TODO: remove this force unwrapping
-                        holder = holderId!!,
+                        holder = holderId ?: "",
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,
-                        signatureSuite = signatureSuite!!
+                        signatureSuite = signatureSuite ?: "Ed25519Signature2020"
                     ).build(credentialInputDescriptorMappings)
                 }
 
@@ -287,10 +286,10 @@ internal class AuthorizationResponseHandler {
         }
         createUnsignedVPToken(
             credentialsMap = transformedCredentials,
-            holderId = "",
+            holderId = null,
             authorizationRequest = authorizationRequest,
             responseUri = responseUri,
-            signatureSuite = "Ed25519Signature2020",
+            signatureSuite = null,
             nonce = walletNonce
         )
         val unsignedLdpVPToken =

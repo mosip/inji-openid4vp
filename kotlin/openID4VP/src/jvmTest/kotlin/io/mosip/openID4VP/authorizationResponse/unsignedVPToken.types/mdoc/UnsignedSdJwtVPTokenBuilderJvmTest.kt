@@ -109,7 +109,6 @@ class UnsignedSdJwtVPTokenBuilderJvmTest {
             assertTrue(found, "UUID $uuid from unsigned token not found in mappings")
         }
     }
-    //TODO: add one more test with single cred. add one more cred.
 
     @Test
     fun `test build(credentialInputDescriptorMappings) update identifier in CredentialInputDescriptorMapping`() {
