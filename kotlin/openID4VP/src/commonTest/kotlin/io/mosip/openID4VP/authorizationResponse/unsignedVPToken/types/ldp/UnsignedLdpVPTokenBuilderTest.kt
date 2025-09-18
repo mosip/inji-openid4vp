@@ -3,7 +3,7 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
 import io.mosip.openID4VP.common.DateUtil
 import io.mosip.openID4VP.common.URDNA2015Canonicalization

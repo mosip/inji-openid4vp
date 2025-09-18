@@ -8,7 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.constants.FormatType
 import kotlin.test.assertNull
 

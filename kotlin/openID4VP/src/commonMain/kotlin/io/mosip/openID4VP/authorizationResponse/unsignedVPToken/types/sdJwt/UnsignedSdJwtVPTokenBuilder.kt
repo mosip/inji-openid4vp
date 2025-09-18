@@ -1,6 +1,6 @@
 package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt
 
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPTokenBuilder
 import io.mosip.openID4VP.common.UUIDGenerator

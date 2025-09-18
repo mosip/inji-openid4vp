@@ -1,4 +1,4 @@
-package io.mosip.openID4VP.authorizationResponse.mapping
+package io.mosip.openID4VP.authorizationResponse
 
 import io.mosip.openID4VP.constants.FormatType
 

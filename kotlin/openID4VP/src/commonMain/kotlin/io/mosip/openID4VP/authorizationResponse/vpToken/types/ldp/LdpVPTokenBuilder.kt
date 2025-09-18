@@ -1,22 +1,25 @@
 package io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp
 
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.common.createNestedPath
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.VPFormatType
 
 internal class LdpVPTokenBuilder(
+    //TODO: Remove this unused param nonce
     val nonce: String
 ) : VPTokenBuilder {
     override fun build(
         credentialInputDescriptorMappings: List<CredentialInputDescriptorMapping>,
-        unsignedVPTokenResult: Pair<Any?, io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken>,
-        vpTokenSigningResult: io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult,
+        unsignedVPTokenResult: Pair<Any?, UnsignedVPToken>,
+        vpTokenSigningResult: VPTokenSigningResult,
         rootIndex: Int
     ): Triple<List<VPToken>, List<DescriptorMap>, Int> {
         val ldpVPTokenSigningResult = vpTokenSigningResult as LdpVPTokenSigningResult

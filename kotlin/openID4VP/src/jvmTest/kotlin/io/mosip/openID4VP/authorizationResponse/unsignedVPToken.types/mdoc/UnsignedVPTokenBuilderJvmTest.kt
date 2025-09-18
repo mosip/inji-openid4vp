@@ -2,7 +2,7 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc
 
 import io.mockk.spyk
 import io.mockk.verify
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
 import io.mosip.openID4VP.testData.clientId

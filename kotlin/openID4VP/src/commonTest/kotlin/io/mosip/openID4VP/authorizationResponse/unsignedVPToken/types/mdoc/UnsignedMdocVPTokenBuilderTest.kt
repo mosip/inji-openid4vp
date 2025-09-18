@@ -3,7 +3,7 @@ package io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc
 import co.nstant.`in`.cbor.model.Map
 import co.nstant.`in`.cbor.model.UnicodeString
 import io.mockk.*
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.common.getDecodedMdocCredential
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.testData.clientId

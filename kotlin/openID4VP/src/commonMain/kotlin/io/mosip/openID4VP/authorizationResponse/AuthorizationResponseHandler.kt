@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.authorizationResponse
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PresentationSubmission
@@ -251,6 +250,7 @@ internal class AuthorizationResponseHandler {
                 FormatType.LDP_VC -> {
                     UnsignedLdpVPTokenBuilder(
                         id = UUIDGenerator.generateUUID(),
+                        // TODO: remove this force unwrapping
                         holder = holderId!!,
                         challenge = authorizationRequest.nonce,
                         domain = authorizationRequest.clientId,

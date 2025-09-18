@@ -1,6 +1,6 @@
 package io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp
 
-import io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping
+import io.mosip.openID4VP.authorizationResponse.CredentialInputDescriptorMapping
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult
 import io.mosip.openID4VP.constants.SignatureSuiteAlgorithm
@@ -222,7 +222,7 @@ class LdpVPTokenBuilderTest {
 
     @Test
     fun `should build LdpVPToken using build method and return correct vp token, descriptor map & next index`() {
-        val mapping = io.mosip.openID4VP.authorizationResponse.mapping.CredentialInputDescriptorMapping(
+        val mapping = CredentialInputDescriptorMapping(
             format = LDP_VC,
             credential = mockUnsignedLdpVPToken.verifiableCredential[0],
             inputDescriptorId = "input-descriptor-id1"
