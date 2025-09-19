@@ -29,13 +29,9 @@ data class AuthorizationRequest(
             walletNonce: String
         ): AuthorizationRequest {
 
-            val queryParameter = extractQueryParameters(
-                urlEncodedAuthorizationRequest.substring(
-                    urlEncodedAuthorizationRequest.indexOf('?') + 1
-                )
-            )
+            val queryParameter = extractQueryParameters(urlEncodedAuthorizationRequest)
             return getAuthorizationRequest(
-                queryParameter,
+                queryParameter.toMutableMap(),
                 trustedVerifiers,
                 walletMetadata,
                 shouldValidateClient,
