@@ -9,8 +9,8 @@ import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.constants.ResponseType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import java.net.URI
 import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 private val className = AuthorizationRequest::class.simpleName!!
 
@@ -50,13 +50,17 @@ fun getAuthorizationRequestHandler(
     }
 }
 
-fun extractQueryParameters(query: String): MutableMap<String, Any> {
+fun extractQueryParameters(query: String): Map<String, Any> {
     try {
-        val urlDecodedQueryString = URLDecoder.decode(query, StandardCharsets.UTF_8.toString())
-        return urlDecodedQueryString.split("&").map { it.split("=") }
-            .associateByTo(mutableMapOf(), { it[0] }, { it[1] })
+        val uri = URI(query)
+        val queryParams: Map<String, String> = uri.rawQuery?.split("&")?.associate {
+            val (key, value) = it.split("=")
+            key to URLDecoder.decode(value, "UTF-8")
+        } ?: throw OpenID4VPExceptions.InvalidQueryParams("Exception occurred when extracting the query params from Authorization Request : No Query params in the URI", className)
+
+        return queryParams
     } catch (exception: Exception) {
-        throw  OpenID4VPExceptions.InvalidQueryParams("Exception occurred when extracting the query params from Authorization Request : ${exception.message}", className)
+        throw OpenID4VPExceptions.InvalidQueryParams("Exception occurred when extracting the query params from Authorization Request : ${exception.message}", className)
     }
 }
 

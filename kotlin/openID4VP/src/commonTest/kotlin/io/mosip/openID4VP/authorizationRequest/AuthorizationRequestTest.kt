@@ -198,7 +198,7 @@ class AuthorizationRequestTest {
         val encodedAuthorizationRequest ="@#$$#@"
 
         val expectedExceptionMessage =
-            "Exception occurred when extracting the query params from Authorization Request : Index: 1, Size: 1"
+            "Exception occurred when extracting the query params from Authorization Request : Illegal character in fragment at index 4: @#\$\$#@"
 
         actualException =
             assertFailsWith<OpenID4VPExceptions.InvalidQueryParams> {
