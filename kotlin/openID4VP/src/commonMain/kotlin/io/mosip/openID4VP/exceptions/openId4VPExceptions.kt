@@ -16,6 +16,12 @@ sealed class OpenID4VPExceptions(
         Logger.getLogger(className).log(Level.SEVERE,"ERROR [$errorCode] - $message | Class: $className")
     }
 
+    companion object {
+        fun error(message: String, className: String) {
+            Logger.getLogger(className).log(Level.SEVERE,"ERROR : $message | Class: $className")
+        }
+    }
+
     fun toErrorResponse(): MutableMap<String, String> {
         return mutableMapOf(
             ERROR to errorCode,
@@ -124,6 +130,10 @@ sealed class OpenID4VPExceptions(
     class JweEncryptionFailure(className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "JWE Encryption failed", className)
 
+
+    // Exception while sending error to Verifier
+    class ErrorDispatchFailure(message: String, className: String) :
+        OpenID4VPExceptions(OpenID4VPErrorCodes.ERROR_DISPATCH_FAILURE, "Failed to send error to verifier: $message", className)
 
     //fallback
     class GenericFailure(

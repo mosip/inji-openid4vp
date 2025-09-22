@@ -17,6 +17,7 @@ import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
+import org.junit.jupiter.api.assertThrows
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.test.*
@@ -211,11 +212,18 @@ class OpenID4VPTest {
             NetworkManagerClient.sendHTTPRequest(
                 "https://mock-verifier.com/response-uri",
                 HttpMethod.POST,
+                any(),
                 any()
             )
-        } returns mapOf("body" to "VP share success")
+        } returns mapOf(
+                    "status" to 200,
+                    "headers" to mapOf("Content-Type" to "application/json"),
+                    "body" to """{"message":"VP share success"}"""
+                )
+        setField(openID4VP, "responseUri", "https://mock-verifier.com/response-uri")
 
-        openID4VP.sendErrorToVerifier(InvalidData("Unsupported response_mode",""))
+        val dispatchResult =
+            openID4VP.sendErrorToVerifier(InvalidData("Unsupported response_mode", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -228,12 +236,11 @@ class OpenID4VPTest {
                 any()
             )
         }
+        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"VP share success\"}, headers={})",dispatchResult.toString())
     }
 
-
     @Test
-    fun `should handle exception during sending error to verifier`() {
-
+    fun `should throw exception during sending error to verifier if any error occurs during the process`() {
         mockkStatic(Logger::class)
         val mockLogger = mockk<Logger>()
         every { Logger.getLogger(any()) } returns mockLogger
@@ -242,22 +249,32 @@ class OpenID4VPTest {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
         } throws Exception("Network error")
 
-        val field = openID4VP::class.java.getDeclaredField("responseUri")
-        field.isAccessible = true
-        field.set(openID4VP, "https://mock-verifier.com/callback")
-
         var capturedLog: String? = null
         every { mockLogger.log(eq(Level.SEVERE), any<String>()) } answers {
             capturedLog = secondArg()
         }
 
-        openID4VP.sendErrorToVerifier(Exception("Network error"))
+        val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
+            openID4VP.sendErrorToVerifier(Exception("Network error"))
+        }
 
         assertTrue(
             capturedLog?.contains("Failed to send error to verifier: Network error") == true
         )
 
         unmockkStatic(Logger::class)
+        assertEquals("Failed to send error to verifier: Failed to send error to verifier: Network error", errorDispatchFailure.message)
+    }
+
+    @Test
+    fun `should throw exception during sending error to verifier when the response uri is not available`() {
+        setField(openID4VP, "responseUri", null)
+
+        val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
+            openID4VP.sendErrorToVerifier(AccessDenied("Access denied by user", "OpenID4VPTest"))
+        }
+
+        assertEquals("Failed to send error to verifier: Response URI is not set. Cannot send error to verifier.", errorDispatchFailure.message)
     }
 
     @Test
@@ -418,7 +435,4 @@ class OpenID4VPTest {
             )
         }
     }
-
-
-
 }

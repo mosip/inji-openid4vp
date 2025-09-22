@@ -10,7 +10,7 @@ import io.mosip.openID4VP.constants.*
 import io.mosip.openID4VP.common.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
-import java.util.logging.*
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,
@@ -20,6 +20,7 @@ class OpenID4VP @JvmOverloads constructor(
     private var responseUri: String? = null
     private lateinit var walletNonce: String
     var authorizationRequest: AuthorizationRequest? = null
+    private val className = OpenID4VP::class.simpleName.orEmpty()
 
 
     private val logTag: String
@@ -48,7 +49,7 @@ class OpenID4VP @JvmOverloads constructor(
             this.authorizationRequest = authorizationRequest
             authorizationRequest
         } catch (exception: OpenID4VPExceptions) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
@@ -69,7 +70,7 @@ class OpenID4VP @JvmOverloads constructor(
                 nonce = walletNonce
             )
         } catch (exception: OpenID4VPExceptions) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
@@ -85,14 +86,19 @@ class OpenID4VP @JvmOverloads constructor(
                 responseUri = responseUri!!
             )
         } catch (exception: OpenID4VPExceptions) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
 
     /** Sends Authorization error to the verifier */
-    fun sendErrorToVerifier(exception: Exception) {
-        responseUri?.let { uri ->
+    fun sendErrorToVerifier(exception: Exception): NetworkResponse {
+        if (responseUri == null) {
+            throw OpenID4VPExceptions.ErrorDispatchFailure(
+                message = "Response URI is not set. Cannot send error to verifier.",
+                className = className
+            )
+        } else {
             try {
                 val errorPayload = when (exception) {
                     is OpenID4VPExceptions -> exception.toErrorResponse()
@@ -106,14 +112,27 @@ class OpenID4VP @JvmOverloads constructor(
                     }
                 }
 
-                sendHTTPRequest(
-                    url = uri,
+                val response = sendHTTPRequest(
+                    url = responseUri!!,
                     method = HttpMethod.POST,
                     bodyParams = errorPayload,
                     headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
                 )
+                val headers = response["header"] as okhttp3.Headers?
+                return if (headers != null) {
+                    NetworkResponse(
+                        200,
+                        response["body"].toString(),
+                        headers.toMultimap()
+                    )
+                } else {
+                    NetworkResponse(200, response["body"].toString(), emptyMap())
+                }
             } catch (err: Exception) {
-                Logger.getLogger(logTag).log(Level.SEVERE, "Failed to send error to verifier: ${err.message}")
+                throw OpenID4VPExceptions.ErrorDispatchFailure(
+                    message = "Failed to send error to verifier: ${err.message}",
+                    className = className
+                )
             }
         }
     }
@@ -138,7 +157,7 @@ class OpenID4VP @JvmOverloads constructor(
             this.authorizationRequest = authorizationRequest
             authorizationRequest
         } catch (exception: OpenID4VPExceptions) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
@@ -152,7 +171,7 @@ class OpenID4VP @JvmOverloads constructor(
                 responseUri!!
             )
         } catch (exception: Exception) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
@@ -166,7 +185,7 @@ class OpenID4VP @JvmOverloads constructor(
                 responseUri!!
             )
         } catch (exception: Exception) {
-            this.sendErrorToVerifier(exception)
+            this.safeSendError(exception)
             throw exception
         }
     }
@@ -175,4 +194,11 @@ class OpenID4VP @JvmOverloads constructor(
         this.responseUri = uri
     }
 
+    private fun safeSendError(exception: Exception) {
+        try {
+            sendErrorToVerifier(exception)
+        } catch (error: Exception) {
+            OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
+        }
+    }
 }
