@@ -10,7 +10,7 @@ import io.mosip.openID4VP.constants.*
 import io.mosip.openID4VP.common.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
-import java.util.logging.*
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,
@@ -92,7 +92,7 @@ class OpenID4VP @JvmOverloads constructor(
     }
 
     /** Sends Authorization error to the verifier */
-    fun sendErrorToVerifier(exception: Exception): Map<String, Any> {
+    fun sendErrorToVerifier(exception: Exception): NetworkResponse {
         if (responseUri == null) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Response URI is not set. Cannot send error to verifier.",
@@ -112,12 +112,22 @@ class OpenID4VP @JvmOverloads constructor(
                     }
                 }
 
-                return sendHTTPRequest(
+                val response = sendHTTPRequest(
                     url = responseUri!!,
                     method = HttpMethod.POST,
                     bodyParams = errorPayload,
                     headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
                 )
+                val headers = response["header"] as okhttp3.Headers?
+                return if (headers != null) {
+                    NetworkResponse(
+                        200,
+                        response["body"].toString(),
+                        headers.toMultimap()
+                    )
+                } else {
+                    NetworkResponse(200, response["body"].toString(), emptyMap())
+                }
             } catch (err: Exception) {
                 throw OpenID4VPExceptions.ErrorDispatchFailure(
                     message = "Failed to send error to verifier: ${err.message}",

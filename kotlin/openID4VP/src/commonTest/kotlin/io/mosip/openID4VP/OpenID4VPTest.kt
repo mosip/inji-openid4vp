@@ -236,7 +236,7 @@ class OpenID4VPTest {
                 any()
             )
         }
-        assertEquals("{status=200, headers={Content-Type=application/json}, body={\"message\":\"VP share success\"}}",dispatchResult.toString())
+        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"VP share success\"}, headers={})",dispatchResult.toString())
     }
 
     @Test
