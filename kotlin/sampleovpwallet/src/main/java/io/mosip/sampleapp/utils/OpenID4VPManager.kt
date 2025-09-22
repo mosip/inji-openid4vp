@@ -127,7 +127,7 @@ object OpenID4VPManager {
         }
     }
 
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions) {
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): Map<String, Any> {
         return instance.sendErrorToVerifier(ovpException)
     }
 }
