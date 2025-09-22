@@ -13,6 +13,7 @@ import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions.NetworkRequestFailed
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
@@ -46,7 +47,7 @@ class AuthorizationRequestTest {
                 "https://mock-verifier.com/verifier/get-presentation-definition",
                 HttpMethod.GET
             )
-        } returns mapOf("body" to presentationDefinitionString)
+        } returns NetworkResponse(200, presentationDefinitionString, mapOf())
     }
 
     @AfterTest
@@ -385,7 +386,8 @@ class AuthorizationRequestTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
+        } returns NetworkResponse(200, createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
+                mapOf(
             "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
             "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
         )
@@ -426,10 +428,11 @@ class AuthorizationRequestTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
-            "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
-        )
+        } returns  NetworkResponse(
+                    200,
+                    createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields).toString(),
+                    mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
+                )
 
 
         val encodedAuthorizationRequest =
@@ -591,10 +594,7 @@ class AuthorizationRequestTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
-            "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
 
         val encodedAuthorizationRequest =
@@ -641,4 +641,3 @@ class AuthorizationRequestTest {
         assertEquals(clientIdOfReDirectUriDraft21[CLIENT_ID.value], actualValue.responseUri)
     }
 }
-

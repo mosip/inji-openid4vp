@@ -112,22 +112,16 @@ class OpenID4VP @JvmOverloads constructor(
                     }
                 }
 
-                val response = sendHTTPRequest(
+                val errorDispatchResult = sendHTTPRequest(
                     url = responseUri!!,
                     method = HttpMethod.POST,
                     bodyParams = errorPayload,
                     headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
                 )
-                val headers = response["header"] as okhttp3.Headers?
-                return if (headers != null) {
-                    NetworkResponse(
-                        200,
-                        response["body"].toString(),
-                        headers.toMultimap()
-                    )
-                } else {
-                    NetworkResponse(200, response["body"].toString(), emptyMap())
-                }
+//                TODO: Add unit tests to verify this
+                (exception as? OpenID4VPExceptions)?.networkResponse = errorDispatchResult
+
+                return errorDispatchResult
             } catch (err: Exception) {
                 throw OpenID4VPExceptions.ErrorDispatchFailure(
                     message = "Failed to send error to verifier: ${err.message}",
@@ -195,6 +189,14 @@ class OpenID4VP @JvmOverloads constructor(
     }
 
     private fun safeSendError(exception: Exception) {
+        try {
+            sendErrorToVerifier(exception)
+        } catch (error: Exception) {
+            OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
+        }
+    }
+
+    private fun safeSendError(exception: OpenID4VPExceptions) {
         try {
             sendErrorToVerifier(exception)
         } catch (error: Exception) {

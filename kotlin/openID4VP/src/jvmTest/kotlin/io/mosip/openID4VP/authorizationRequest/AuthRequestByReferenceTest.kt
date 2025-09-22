@@ -21,6 +21,7 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.authRequestWithRedirectUriByValue
 import io.mosip.openID4VP.testData.clientIdOfDid
@@ -37,7 +38,6 @@ import io.mosip.openID4VP.testData.walletMetadata
 import io.mosip.openID4VP.testData.walletNonce
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import okhttp3.Headers
 import org.junit.Assert.assertTrue
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -62,7 +62,7 @@ class AuthRequestByReferenceTest {
                 "https://mock-verifier.com/verifier/get-presentation-definition",
                 GET
             )
-        } returns mapOf("body" to presentationDefinitionString)
+        } returns NetworkResponse(200, presentationDefinitionString, emptyMap())
 
         mockkStatic("io.mosip.openID4VP.common.UtilsKt")
         every { resolveJwksFromUri(any(), any()) } returns Jwks(jwkList)
@@ -81,11 +81,7 @@ class AuthRequestByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encodedAuthorizationRequest =
             createUrlEncodedData(authorizationRequestParamsMap, true, ClientIdScheme.REDIRECT_URI)
@@ -118,11 +114,7 @@ class AuthRequestByReferenceTest {
                 any(),
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -154,16 +146,10 @@ class AuthRequestByReferenceTest {
     fun `should throw exception when the client_id validation fails while obtaining Authorization request object by reference in did client id scheme`() {
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
-                DID, requestParams + mapOf(
-                    CLIENT_ID.value to "wrong-client-id",
-                    CLIENT_ID_SCHEME.value to DID.value
-                )
-            )
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(DID, requestParams + mapOf(
+                CLIENT_ID.value to "wrong-client-id",
+                CLIENT_ID_SCHEME.value to DID.value
+            )).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val authorizationRequestParamsMap = requestParams + clientIdOfDid
         val encodedAuthorizationRequest =
@@ -193,11 +179,8 @@ class AuthRequestByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
+
         val encodedAuthorizationRequest = createUrlEncodedData(
             authorizationRequestParamsMap,
             true,
@@ -229,10 +212,10 @@ class AuthRequestByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest =
@@ -261,14 +244,14 @@ class AuthRequestByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(
                 DID,
                 authorizationRequestParamsMap,
                 draftVersion = 21
-            )
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest =
@@ -303,12 +286,11 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to validJwt
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(
+            200,
+            validJwt.toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -341,12 +323,11 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/json")
-                .build(),
-            "body" to validJwt
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(
+            200,
+            validJwt.toString(),
+            mapOf("content-type" to listOf("application/json"))
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -379,12 +360,11 @@ class AuthRequestByReferenceTest {
         val unsignedJwt = "not.a.valid.jwt"
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to unsignedJwt
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(
+            200,
+            unsignedJwt,
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -420,12 +400,11 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to invalidSignedJwt
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(
+            200,
+            invalidSignedJwt.toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
 
@@ -460,8 +439,8 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns emptyMap()
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(200, "", emptyMap())
 
         val encodedAuthorizationRequest = createUrlEncodedData(
             authorizationRequestParamsMap,
@@ -469,7 +448,7 @@ class AuthRequestByReferenceTest {
             DID
         )
 
-        val exception = assertFailsWith<OpenID4VPExceptions.MissingInput> {
+        val exception = assertFailsWith<InvalidData> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -478,7 +457,7 @@ class AuthRequestByReferenceTest {
         }
         print(exception.message)
         assertEquals(
-            "Missing Input: request_uri param is required",
+            "Missing body in request_uri response",
             exception.message
         )
     }
@@ -500,12 +479,11 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to jwtWithUnsupportedAlg
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(
+            200,
+            jwtWithUnsupportedAlg.toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -539,10 +517,9 @@ class AuthRequestByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 draftVersion = 21,
@@ -551,8 +528,8 @@ class AuthRequestByReferenceTest {
                     put("alg", "EdDSA")
                 },
                 isPresentationDefinitionUriPresent = true
-
-            )
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -583,12 +560,8 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build()
-        )
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(200, "", mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encodedAuthorizationRequest =
             createUrlEncodedData(authorizationRequestParamsMap, true, DID)
@@ -623,12 +596,7 @@ class AuthRequestByReferenceTest {
 
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to jwt
-        )
+        } returns NetworkResponse(200, jwt.toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encodedAuthorizationRequest = createUrlEncodedData(
             authorizationRequestParamsMap,
@@ -661,13 +629,8 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
-        } returns mapOf(
-            "header" to Headers.Builder()
-                .add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to jwsWithoutAlg
-        )
+            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+        } returns NetworkResponse(200, jwsWithoutAlg.toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encoded = createUrlEncodedData(requestParamsMap, true, DID)
 
@@ -698,16 +661,12 @@ class AuthRequestByReferenceTest {
                 any(),
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
-                PRE_REGISTERED,
-                authorizationRequestParamsMap,
-                jwtHeader = jwtHeader,
-                isPresentationDefinitionUriPresent = true
-            )
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(
+            PRE_REGISTERED,
+            authorizationRequestParamsMap,
+            jwtHeader = jwtHeader,
+            isPresentationDefinitionUriPresent = true
+        ).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encodedAuthorizationRequest =
             createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
@@ -734,17 +693,13 @@ class AuthRequestByReferenceTest {
         }
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
-                PRE_REGISTERED, requestParams + mapOf(
-                    CLIENT_ID.value to "wrong-client-id",
-                    CLIENT_ID_SCHEME.value to PRE_REGISTERED.value,
-                ),
-
-                jwtHeader = jwtHeader
-            )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(
+            PRE_REGISTERED, requestParams + mapOf(
+                CLIENT_ID.value to "wrong-client-id",
+                CLIENT_ID_SCHEME.value to PRE_REGISTERED.value,
+            ),
+            jwtHeader = jwtHeader).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered
@@ -779,15 +734,11 @@ class AuthRequestByReferenceTest {
         }
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
-                PRE_REGISTERED, authorizationRequestParamsMap,
-                jwtHeader = jwtHeader,
-                isPresentationDefinitionUriPresent = true
-            )
-        )
+        } returns NetworkResponse(200, createAuthorizationRequestObject(
+            PRE_REGISTERED, authorizationRequestParamsMap,
+            jwtHeader = jwtHeader,
+            isPresentationDefinitionUriPresent = true
+        ).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
 
@@ -804,16 +755,15 @@ class AuthRequestByReferenceTest {
         }
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(
                 PRE_REGISTERED, requestParams + clientIdOfPreRegistered + mapOf(
                     "request_uri_method" to "post"
                 ),
-
                 jwtHeader = jwtHeader
-            )
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encoded = createUrlEncodedData(
@@ -846,15 +796,13 @@ class AuthRequestByReferenceTest {
 
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
+        } returns NetworkResponse(200,createAuthorizationRequestObject(
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 jwtHeader = jwtHeader,
 
-                )
+                ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
@@ -881,16 +829,14 @@ class AuthRequestByReferenceTest {
 
         every {
             NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.POST, any(), any())
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt")
-                .build(),
-            "body" to createAuthorizationRequestObject(
+        } returns NetworkResponse(200, createAuthorizationRequestObject(
                 PRE_REGISTERED,
                 authorizationRequestParamsMap,
                 jwtHeader = jwtHeader,
 
                 removeClientId = true
-            )
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt"))
         )
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)

@@ -45,7 +45,7 @@ class DirectPostResponseModeHandlerTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to expectedResponse)
+        } returns io.mosip.openID4VP.networkManager.NetworkResponse(200, expectedResponse, emptyMap())
 
         val actualResponse = handler.sendAuthorizationResponse(
             authorizationRequestForResponseModeJWT,
@@ -105,7 +105,7 @@ class DirectPostResponseModeHandlerTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to "")
+        } returns io.mosip.openID4VP.networkManager.NetworkResponse(200, "", emptyMap())
 
         val actualResponse = handler.sendAuthorizationResponse(
             authorizationRequestForResponseModeJWT,

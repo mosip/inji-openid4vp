@@ -5,17 +5,11 @@ import io.mockk.every
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.verify
-import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
-import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSerializer
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.ClientIdScheme.*
-import io.mosip.openID4VP.constants.ContentEncryptionAlgorithm
-import io.mosip.openID4VP.constants.KeyManagementAlgorithm
-import io.mosip.openID4VP.constants.RequestSigningAlgorithm
-import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.jwt.jwe.JWEHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
@@ -149,7 +143,7 @@ class DirectPostJwtResponseModeHandlerTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to vpShareSuccessResponse)
+        } returns io.mosip.openID4VP.networkManager.NetworkResponse(200, vpShareSuccessResponse, emptyMap())
 
         every { anyConstructed<JWEHandler>().generateEncryptedResponse(any()) } returns "eytyiewr.....jewjr"
 

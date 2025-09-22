@@ -108,7 +108,7 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
             bodyParams = encryptedBodyParams,
             headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
         )
-        return response["body"].toString()
+        return response.body
     }
 
 

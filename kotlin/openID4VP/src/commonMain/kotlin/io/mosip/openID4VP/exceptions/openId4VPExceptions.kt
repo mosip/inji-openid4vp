@@ -3,13 +3,16 @@ package io.mosip.openID4VP.exceptions
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR_DESCRIPTION
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import java.util.logging.Level
 import java.util.logging.Logger
 
 sealed class OpenID4VPExceptions(
     val errorCode: String,
     override val message: String,
-    val className: String
+    val className: String,
+    // holds the network response from the Verifier if the error is sent to the Verifier
+    var networkResponse: NetworkResponse? = null
 ) : Exception("$errorCode : $message") {
 
     init {
@@ -51,13 +54,25 @@ sealed class OpenID4VPExceptions(
 
 
     class JsonEncodingFailed(fieldPath: Any, errorMessage: String, className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Json encoding failed for $fieldPath due to this error: $errorMessage", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Json encoding failed for $fieldPath due to this error: $errorMessage",
+            className
+        )
 
     class DeserializationFailure(fieldPath: Any, errorMessage: String, className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Deserializing for $fieldPath failed due to this error: $errorMessage", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Deserializing for $fieldPath failed due to this error: $errorMessage",
+            className
+        )
 
     class InvalidLimitDisclosure(className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Invalid Input: constraints->limit_disclosure value should be preferred", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Invalid Input: constraints->limit_disclosure value should be preferred",
+            className
+        )
 
     class InvalidQueryParams(message: String, className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
@@ -108,7 +123,11 @@ sealed class OpenID4VPExceptions(
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
 
     class UnsupportedPublicKeyType(className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Unsupported Public Key type. Supported: publicKeyMultibase", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Unsupported Public Key type. Supported: publicKeyMultibase",
+            className
+        )
 
     class KidExtractionFailed(message: String, className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
@@ -125,7 +144,11 @@ sealed class OpenID4VPExceptions(
     // JWE Exceptions
 
     class UnsupportedKeyExchangeAlgorithm(className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "Required Key exchange algorithm is not supported", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Required Key exchange algorithm is not supported",
+            className
+        )
 
     class JweEncryptionFailure(className: String) :
         OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, "JWE Encryption failed", className)
@@ -133,7 +156,11 @@ sealed class OpenID4VPExceptions(
 
     // Exception while sending error to Verifier
     class ErrorDispatchFailure(message: String, className: String) :
-        OpenID4VPExceptions(OpenID4VPErrorCodes.ERROR_DISPATCH_FAILURE, "Failed to send error to verifier: $message", className)
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.ERROR_DISPATCH_FAILURE,
+            "Failed to send error to verifier: $message",
+            className
+        )
 
     //fallback
     class GenericFailure(
