@@ -91,8 +91,10 @@ class OpenID4VP @JvmOverloads constructor(
         }
     }
 
-    /** Sends Authorization error to the verifier */
-    fun sendErrorToVerifier(exception: Exception): NetworkResponse {
+    /**
+     * Sends Authorization error to the verifier and returns the response from the Verifier as network response
+     */
+    fun sendErrorResponseToVerifier(exception: Exception) : NetworkResponse {
         if (responseUri == null) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Response URI is not set. Cannot send error to verifier.",
@@ -188,17 +190,51 @@ class OpenID4VP @JvmOverloads constructor(
         this.responseUri = uri
     }
 
-    private fun safeSendError(exception: Exception) {
-        try {
-            sendErrorToVerifier(exception)
-        } catch (error: Exception) {
-            OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
+    /** Sends Authorization error to the verifier */
+    @Deprecated(message = "This does not support listening the response from the verifier",
+        replaceWith = ReplaceWith("sendErrorResponseToVerifier(exception)"),
+        level = DeprecationLevel.WARNING)
+    fun sendErrorToVerifier(exception: Exception) {
+        if (responseUri == null) {
+            throw OpenID4VPExceptions.ErrorDispatchFailure(
+                message = "Response URI is not set. Cannot send error to verifier.",
+                className = className
+            )
+        } else {
+            try {
+                val errorPayload = when (exception) {
+                    is OpenID4VPExceptions -> exception.toErrorResponse()
+                    else -> OpenID4VPExceptions.GenericFailure(
+                        message = exception.message ?: "Unknown internal error",
+                        className = OpenID4VP::class.simpleName.orEmpty()
+                    ).toErrorResponse()
+                }.apply {
+                    authorizationRequest!!.state?.takeIf { it.isNotBlank() }?.let {
+                        this[OpenID4VPErrorFields.STATE] = it
+                    }
+                }
+
+                val errorDispatchResult = sendHTTPRequest(
+                    url = responseUri!!,
+                    method = HttpMethod.POST,
+                    bodyParams = errorPayload,
+                    headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
+                )
+                (exception as? OpenID4VPExceptions)?.networkResponse = errorDispatchResult
+            } catch (err: Exception) {
+                throw OpenID4VPExceptions.ErrorDispatchFailure(
+                    message = "Failed to send error to verifier: ${err.message}",
+                    className = className
+                )
+            }
         }
     }
 
-    private fun safeSendError(exception: OpenID4VPExceptions) {
+    private fun safeSendError(exception: Exception) {
         try {
-            sendErrorToVerifier(exception)
+            val verifierResponse = sendErrorResponseToVerifier(exception)
+            // Attach the response from verifier to the exception for further usages by the Wallet
+            (exception as? OpenID4VPExceptions)?.networkResponse = verifierResponse
         } catch (error: Exception) {
             OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
         }

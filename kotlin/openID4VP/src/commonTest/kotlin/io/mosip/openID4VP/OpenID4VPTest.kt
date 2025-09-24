@@ -13,7 +13,18 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import foundation.identity.jsonld.JsonLDObject
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.NONCE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_TYPE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.STATE
 import io.mosip.openID4VP.authorizationRequest.Verifier
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
+import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import io.mosip.openID4VP.networkManager.NetworkResponse
@@ -142,9 +153,69 @@ class OpenID4VPTest {
             )
         } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
-        assertFailsWith<InvalidInput> {
+        val invalidInputException = assertFailsWith<InvalidInput> {
             openID4VP.authenticateVerifier("openid-vc://?request=invalid", trustedVerifiers)
         }
+
+        assertOpenId4VPException(
+            exception = invalidInputException,
+            expectedMessage = "Invalid Input:  value cannot be empty or null",
+            expectedErrorCode = "invalid_request",
+        )
+    }
+
+    @Test
+    //TODO: Fix me
+    fun `should throw exception with verifier response during verifier authentication failure`() {
+        mockkObject(AuthorizationRequest)
+        mockkObject(NetworkManagerClient)
+
+        val openID4VP = OpenID4VP("test-OpenID4VP")
+        setField(openID4VP, "responseUri", "https://mock-verifier.com/response-uri")
+
+        val testException = InvalidData(
+            "Either presentation_definition or presentation_definition_uri request param must be present",
+            "test"
+        )
+
+        every {
+            AuthorizationRequest.validateAndCreateAuthorizationRequest(
+                any(), any(), any(), any(), any(), any()
+            )
+        } throws testException
+
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any()
+            )
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
+        val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered
+        val applicableFields = listOf(
+            CLIENT_ID.value,
+            CLIENT_ID_SCHEME.value,
+            RESPONSE_MODE.value,
+            RESPONSE_URI.value,
+            PRESENTATION_DEFINITION.value,
+            PRESENTATION_DEFINITION_URI.value,
+            RESPONSE_TYPE.value,
+            NONCE.value,
+            STATE.value
+        )
+        val encodedAuthorizationRequest =
+            createUrlEncodedData(
+                authorizationRequestParamsMap, false, PRE_REGISTERED, applicableFields
+            )
+
+        val invalidData = assertFailsWith<InvalidData> {
+            openID4VP.authenticateVerifier(encodedAuthorizationRequest, trustedVerifiers)
+        }
+
+        assertOpenId4VPException(
+            exception = invalidData,
+            expectedMessage = "Either presentation_definition or presentation_definition_uri request param must be present",
+            expectedErrorCode = "invalid_request",
+            expectedVerifierResponse = NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
+        )
     }
 
     @Test
@@ -215,7 +286,7 @@ class OpenID4VPTest {
         setField(openID4VP, "responseUri", "https://mock-verifier.com/response-uri")
 
         val dispatchResult =
-            openID4VP.sendErrorToVerifier(InvalidData("Unsupported response_mode", ""))
+            openID4VP.sendErrorResponseToVerifier(InvalidData("Unsupported response_mode", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -247,7 +318,7 @@ class OpenID4VPTest {
         }
 
         val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
-            openID4VP.sendErrorToVerifier(Exception("Network error"))
+            openID4VP.sendErrorResponseToVerifier(Exception("Network error"))
         }
 
         assertTrue(
@@ -255,7 +326,7 @@ class OpenID4VPTest {
         )
 
         unmockkStatic(Logger::class)
-        assertEquals("Failed to send error to verifier: Failed to send error to verifier: Network error", errorDispatchFailure.message)
+        assertOpenId4VPException(errorDispatchFailure, "Failed to send error to verifier: Failed to send error to verifier: Network error", "error_dispatch_failure")
     }
 
     @Test
@@ -263,10 +334,14 @@ class OpenID4VPTest {
         setField(openID4VP, "responseUri", null)
 
         val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
-            openID4VP.sendErrorToVerifier(AccessDenied("Access denied by user", "OpenID4VPTest"))
+            openID4VP.sendErrorResponseToVerifier(AccessDenied("Access denied by user", "OpenID4VPTest"))
         }
 
-        assertEquals("Failed to send error to verifier: Response URI is not set. Cannot send error to verifier.", errorDispatchFailure.message)
+        assertOpenId4VPException(
+            exception = errorDispatchFailure,
+            expectedMessage = "Failed to send error to verifier: Response URI is not set. Cannot send error to verifier.",
+            expectedErrorCode = "error_dispatch_failure"
+        )
     }
 
     @Test
@@ -352,7 +427,7 @@ class OpenID4VPTest {
         val customAuthorizationRequest = authorizationRequest.copy(state = "test-state")
         setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("With state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("With state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -382,7 +457,7 @@ class OpenID4VPTest {
         val customAuthorizationRequest = authorizationRequest.copy(state = "")
         setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("empty state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("empty state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -412,7 +487,7 @@ class OpenID4VPTest {
         val noStateAuthorizationRequest = authorizationRequest.copy(state = null)
         setField(openID4VP, "authorizationRequest", noStateAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("No state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("No state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
