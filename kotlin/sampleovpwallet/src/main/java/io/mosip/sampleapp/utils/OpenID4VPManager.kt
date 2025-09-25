@@ -129,8 +129,8 @@ object OpenID4VPManager {
         }
     }
 
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
-        return instance.sendErrorToVerifier(ovpException)
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): String {
+        return instance.sendErrorResponseToVerifier(ovpException)
     }
 }
 

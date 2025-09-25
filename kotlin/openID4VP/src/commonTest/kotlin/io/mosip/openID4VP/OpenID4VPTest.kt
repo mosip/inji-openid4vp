@@ -28,6 +28,7 @@ import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import io.mosip.openID4VP.networkManager.NetworkResponse
+import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -52,6 +53,7 @@ class OpenID4VPTest {
     @BeforeTest
     fun setUp() {
         mockkObject(NetworkManagerClient)
+        mockkObject(AuthorizationRequest)
         openID4VP = OpenID4VP("test-OpenID4VP")
         openID4VP.authorizationRequest = authorizationRequest
         setField(openID4VP, "responseUri", responseUrl)
@@ -165,57 +167,31 @@ class OpenID4VPTest {
     }
 
     @Test
-    //TODO: Fix me
-    fun `should throw exception with verifier response during verifier authentication failure`() {
-        mockkObject(AuthorizationRequest)
-        mockkObject(NetworkManagerClient)
+    fun `exception thrown should have verifier response if sent to verifier`() {
+        val openID4VPInstance = OpenID4VP("OVPTest")
+        mockkConstructor(AuthorizationResponseHandler::class)
+        setField(openID4VPInstance, "responseUri", "https://mock-verifier.com/response-uri")
+        every {
+            anyConstructed<AuthorizationResponseHandler>().sendAuthorizationError(any(), any(), any())
+        } returns """{"message":"Error received successfully"}"""
 
-        val openID4VP = OpenID4VP("test-OpenID4VP")
-        setField(openID4VP, "responseUri", "https://mock-verifier.com/response-uri")
-
-        val testException = InvalidData(
-            "Either presentation_definition or presentation_definition_uri request param must be present",
-            "test"
-        )
-
+        val testException = InvalidInput("", "Invalid authorization request","")
         every {
             AuthorizationRequest.validateAndCreateAuthorizationRequest(
                 any(), any(), any(), any(), any(), any()
             )
         } throws testException
 
-        every {
-            NetworkManagerClient.sendHTTPRequest(
-                any(), any(), any()
+        assertThrows<InvalidInput> {
+            openID4VPInstance.authenticateVerifier("encodedAuthorizationRequest", trustedVerifiers)
+        }.also { exception ->
+            assertOpenId4VPException(
+                exception = exception,
+                expectedMessage = "Invalid Input:  value cannot be empty or null",
+                expectedErrorCode = "invalid_request",
+                expectedVerifierResponse = """{"message":"Error received successfully"}"""
             )
-        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
-        val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered
-        val applicableFields = listOf(
-            CLIENT_ID.value,
-            CLIENT_ID_SCHEME.value,
-            RESPONSE_MODE.value,
-            RESPONSE_URI.value,
-            PRESENTATION_DEFINITION.value,
-            PRESENTATION_DEFINITION_URI.value,
-            RESPONSE_TYPE.value,
-            NONCE.value,
-            STATE.value
-        )
-        val encodedAuthorizationRequest =
-            createUrlEncodedData(
-                authorizationRequestParamsMap, false, PRE_REGISTERED, applicableFields
-            )
-
-        val invalidData = assertFailsWith<InvalidData> {
-            openID4VP.authenticateVerifier(encodedAuthorizationRequest, trustedVerifiers)
         }
-
-        assertOpenId4VPException(
-            exception = invalidData,
-            expectedMessage = "Either presentation_definition or presentation_definition_uri request param must be present",
-            expectedErrorCode = "invalid_request",
-            expectedVerifierResponse = NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
-        )
     }
 
     @Test
@@ -299,7 +275,7 @@ class OpenID4VPTest {
                 any()
             )
         }
-        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"VP share success\"}, headers={Content-Type=[application/json]})",dispatchResult.toString())
+        assertEquals("{\"message\":\"VP share success\"}", dispatchResult)
     }
 
     @Test

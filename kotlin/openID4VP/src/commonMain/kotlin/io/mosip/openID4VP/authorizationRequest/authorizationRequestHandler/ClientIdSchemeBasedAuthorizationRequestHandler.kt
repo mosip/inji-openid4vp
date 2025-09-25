@@ -145,7 +145,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
         requestUriResponse: NetworkResponse,
         httpMethod: HttpMethod
     ) {
-        //TODO: check negative scenario for no response body at all
         if (requestUriResponse.body.isEmpty()) {
             throw OpenID4VPExceptions.InvalidData(
                 "Missing body in request_uri response",

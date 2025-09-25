@@ -3,7 +3,6 @@ package io.mosip.openID4VP.exceptions
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR_DESCRIPTION
-import io.mosip.openID4VP.networkManager.NetworkResponse
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -12,8 +11,12 @@ sealed class OpenID4VPExceptions(
     override val message: String,
     val className: String,
     // holds the network response from the Verifier if the error is sent to the Verifier
-    var networkResponse: NetworkResponse? = null
+    var networkResponse: String? = null
 ) : Exception("$errorCode : $message") {
+
+    internal fun setNetworkResponse(response: String) {
+        this.networkResponse = response
+    }
 
     init {
         Logger.getLogger(className).log(Level.SEVERE,"ERROR [$errorCode] - $message | Class: $className")

@@ -1,5 +1,6 @@
 package io.mosip.openID4VP.authorizationResponse
 
+import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
@@ -20,7 +21,11 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.Unsig
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
+import io.mosip.openID4VP.common.OpenID4VPErrorFields
 import io.mosip.openID4VP.common.encodeToJsonString
+import io.mosip.openID4VP.constants.ContentType
+import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
@@ -98,6 +103,42 @@ internal class AuthorizationResponseHandler {
             )
 
         return unsignedVPTokenResults.mapValues { it.value.second }
+    }
+
+    internal fun sendAuthorizationError(responseUri: String?, authorizationRequest: AuthorizationRequest?, exception: Exception): String {
+        if (responseUri == null) {
+            throw OpenID4VPExceptions.ErrorDispatchFailure(
+                message = "Response URI is not set. Cannot send error to verifier.",
+                className = className
+            )
+        }
+        try {
+            val errorPayload = when (exception) {
+                is OpenID4VPExceptions -> exception.toErrorResponse()
+                else -> OpenID4VPExceptions.GenericFailure(
+                    message = exception.message ?: "Unknown internal error",
+                    className = OpenID4VP::class.simpleName.orEmpty()
+                ).toErrorResponse()
+            }.apply {
+                authorizationRequest?.state?.takeIf { it.isNotBlank() }?.let {
+                    this[OpenID4VPErrorFields.STATE] = it
+                }
+            }
+
+            val (_, body) = sendHTTPRequest(
+                url = responseUri,
+                method = HttpMethod.POST,
+                bodyParams = errorPayload,
+                headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
+            )
+            (exception as? OpenID4VPExceptions)?.setNetworkResponse(body)
+            return body
+        } catch (err: Exception) {
+            throw OpenID4VPExceptions.ErrorDispatchFailure(
+                message = "Failed to send error to verifier: ${err.message}",
+                className = className
+            )
+        }
     }
 
     fun shareVP(

@@ -104,7 +104,7 @@ private fun createAuthorizationRequest(
     return authorizationRequestParam
 }
 
-fun assertOpenId4VPException(exception: OpenID4VPExceptions, expectedMessage: String, expectedErrorCode: String, expectedVerifierResponse: NetworkResponse? = null) {
+fun assertOpenId4VPException(exception: OpenID4VPExceptions, expectedMessage: String, expectedErrorCode: String, expectedVerifierResponse: String? = null) {
     assertEquals(expectedMessage, exception.message)
     assertEquals(expectedErrorCode, exception.errorCode)
     if(expectedVerifierResponse != null){
