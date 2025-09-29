@@ -6,6 +6,9 @@ import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
+import io.mosip.openID4VP.common.resolveJwksFromUri
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.HttpMethod.GET
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
@@ -257,21 +260,23 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             responseUris = listOf("https://example.com/callback"),
             jwksUri = "https://example.com/.well-known/jwks.json"
         )
-        every {
-            NetworkManagerClient.sendHTTPRequest(
-                any(),
-                GET,
-                null,
-                null
-            )
-        } answers  {
-            println("sendHTTPRequest called with")
-            mapOf("body" to jwkSet)
-        }
-
         trustedVerifiers.add(verifier)
 
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"
+
+        mockkStatic("io.mosip.openID4VP.common.UtilsKt")
+
+        val jwkList = listOf(
+            Jwk(
+                kty = "OKP",
+                crv = "Ed25519",
+                use = "sig",
+                x = "-Fy3lMapzR3wpaYNCFq29GDEn_NoR3pBsc511q1Cxqw",
+                alg = "EdDSA",
+                kid = testKid
+            )
+        )
+        every { resolveJwksFromUri(any(), any()) } returns Jwks(jwkList)
 
         val handler = PreRegisteredSchemeAuthorizationRequestHandler(
             trustedVerifiers = trustedVerifiers,
@@ -285,7 +290,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         val publicKey = handler.extractPublicKey(RequestSigningAlgorithm.EdDSA, testKid)
 
         assertNotNull(publicKey)
-        assertEquals(publicKey.algorithm, "Ed25519")
+        assertEquals("Ed25519", publicKey.algorithm)
         assertTrue(publicKey.encoded.isNotEmpty())
     }
 
