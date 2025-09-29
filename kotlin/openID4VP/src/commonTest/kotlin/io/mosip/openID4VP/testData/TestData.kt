@@ -170,12 +170,7 @@ val walletMetadata = WalletMetadata(
     authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
 )
 
-val clientMetadataString = """{
-  "client_name": "Requester name",
-  "logo_uri": "<logo_uri>",
-  "authorization_encrypted_response_alg": "ECDH-ES",
-  "authorization_encrypted_response_enc": "A256GCM",
-  "jwks": {
+const val jwkSet = """{
     "keys": [
       {
         "kty": "OKP",
@@ -194,7 +189,14 @@ val clientMetadataString = """{
         "kid": "sig-key1"
       }
     ]
-  },
+  }"""
+
+val clientMetadataString = """{
+  "client_name": "Requester name",
+  "logo_uri": "<logo_uri>",
+  "authorization_encrypted_response_alg": "ECDH-ES",
+  "authorization_encrypted_response_enc": "A256GCM",
+  "jwks": $jwkSet,
   "vp_formats": {
     "ldp_vc": {
       "proof_type": [
@@ -345,7 +347,7 @@ val trustedVerifiers: List<Verifier> = listOf(
         "mock-client", listOf(
             "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
         ),
-        deserializeAndValidate(clientMetadataString, ClientMetadataSerializer)
+        "https://mock-verifier.com/.well-known/jwks.json"
     ), Verifier(
         "mock-client2", listOf(
             "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"

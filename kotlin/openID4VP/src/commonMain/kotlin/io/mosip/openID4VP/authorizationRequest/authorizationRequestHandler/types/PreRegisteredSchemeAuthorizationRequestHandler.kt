@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_URI
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
@@ -10,6 +9,7 @@ import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwk
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.decodeFromBase64Url
 import io.mosip.openID4VP.common.getStringValue
+import io.mosip.openID4VP.common.resolveJwksFromUri
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -44,6 +44,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
     init {
         Security.addProvider(provider)
     }
+
     override fun validateClientId() {
         if (!shouldValidateClient) return
 
@@ -72,13 +73,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         algorithm: RequestSigningAlgorithm,
         kid: String?,
     ): PublicKey {
-        val clientId = authorizationRequestParameters[CLIENT_ID.value] as String
-        if (authorizationRequestParameters.containsKey(CLIENT_METADATA.value))
-            throw OpenID4VPExceptions.InvalidData(
-                "client_metadata available in Authorization Request, cannot be used to verify the signed Authorization Request",
-                className,
-                OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
-            )
+        val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)
 
         val verifier = trustedVerifiers.firstOrNull { it.clientId == clientId }
             ?: throw OpenID4VPExceptions.PublicKeyResolutionFailed(
@@ -86,23 +81,16 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
-        val clientMetadata = verifier.clientMetadata
+        val jwksUri = verifier.jwksUri
             ?: throw OpenID4VPExceptions.InvalidData(
-                "Public key extraction failed - Either client_metadata not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
+                "Public key extraction failed - Public key information not available in pre-registered data to verify the signed Authorization Request",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
 
-        val jwks = clientMetadata.jwks
-            ?: throw OpenID4VPExceptions.InvalidData(
-                "Public key extraction failed - Either client_metadata not available or jwks not available in pre-registered client_metadata to verify the signed Authorization Request",
-                className,
-                OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
-            )
+        val jwkSet = resolveJwksFromUri(jwksUri, className)
 
-        val keys = jwks.keys
-
-        return filterAndExtractKey(keys, kid, algorithm)
+        return filterAndExtractKey(jwkSet.keys, kid, algorithm)
     }
 
     private fun filterAndExtractKey(
@@ -120,11 +108,11 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
             return byKid.toJavaPublicKey()
         }
 
-        val matchingKeys =
+        val matchingKeys: List<Jwk> =
             keys.filter { it.supports(RequestSigningAlgorithm.EdDSA) && it.use.equals("sig") }
 
         val selectedKey = when {
-            matchingKeys.size == 0 -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+            matchingKeys.isEmpty() -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
                 "No public key found for algorithm: ${algorithm.name} with signature usage",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
@@ -151,14 +139,19 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
 
 
     private fun Jwk.toJavaPublicKey(): PublicKey {
-
         return when (kty.uppercase()) {
             "OKP" -> when (crv) {
                 "Ed25519" -> buildEd25519PublicKey(x)
-                else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Public key extraction failed - Curve - ${crv} is not supported. Supported: Ed25519",className)
+                else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+                    "Public key extraction failed - Curve - $crv is not supported. Supported: Ed25519",
+                    className
+                )
             }
 
-            else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed("Public key extraction failed - KeyType - $kty is not supported. Supported: OKP",className)
+            else -> throw OpenID4VPExceptions.PublicKeyResolutionFailed(
+                "Public key extraction failed - KeyType - $kty is not supported. Supported: OKP",
+                className
+            )
         }
     }
 
@@ -188,24 +181,14 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
 
             val preRegisteredVerifier = trustedVerifiers.find { it.clientId == clientId }
 
-            if (preRegisteredVerifier != null) {
-                if (!preRegisteredVerifier.responseUris.contains(responseUri)) {
-                    throw InvalidVerifier(
-                        "Verifier is not trusted by the wallet",
-                        className
-                    )
-                }
-
-                if (preRegisteredVerifier.clientMetadata != null) {
-                    if (authorizationRequestParameters.containsKey(CLIENT_METADATA.value)) {
-                        throw InvalidVerifier(
-                            "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
-                            className
-                        )
-                    }
-                    authorizationRequestParameters[CLIENT_METADATA.value] =
-                        preRegisteredVerifier.clientMetadata
-                }
+            if (preRegisteredVerifier != null && !preRegisteredVerifier.responseUris.contains(
+                    responseUri
+                )
+            ) {
+                throw InvalidVerifier(
+                    "Verifier is not trusted by the wallet",
+                    className
+                )
             }
         }
 

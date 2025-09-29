@@ -10,11 +10,11 @@ import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
-import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadataSerializer
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.constants.HttpMethod.GET
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
 import io.mosip.openID4VP.jwt.jws.JWSHandler
@@ -24,9 +24,9 @@ import io.mosip.openID4VP.testData.authRequestWithRedirectUriByValue
 import io.mosip.openID4VP.testData.clientIdOfDid
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft23
-import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createUrlEncodedData
+import io.mosip.openID4VP.testData.jwkSet
 import io.mosip.openID4VP.testData.presentationDefinitionString
 import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
@@ -58,9 +58,16 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 "https://mock-verifier.com/verifier/get-presentation-definition",
-                HttpMethod.GET
+                GET
             )
         } returns mapOf("body" to presentationDefinitionString)
+
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/.well-known/jwks.json",
+                GET
+            )
+        } returns mapOf("body" to jwkSet)
 
 
     }
@@ -97,7 +104,7 @@ class AuthRequestByReferenceTest {
         verify {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                HttpMethod.GET
+                GET
             )
         }
     }
@@ -210,7 +217,7 @@ class AuthRequestByReferenceTest {
         verify {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                HttpMethod.GET
+                GET
             )
         }
 
@@ -300,7 +307,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -338,7 +345,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/json")
@@ -376,7 +383,7 @@ class AuthRequestByReferenceTest {
         val unsignedJwt = "not.a.valid.jwt"
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -417,7 +424,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -457,7 +464,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns emptyMap()
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -497,7 +504,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -528,25 +535,11 @@ class AuthRequestByReferenceTest {
 
     @Test
     fun `should return Authorization Request with populated clientIdScheme(pre-registered) field if the verifier is draft 21 compliant`() {
-        val trustedVerifiers: List<Verifier> = listOf(
-            Verifier(
-                "mock-client", listOf(
-                    "https://mock-verifier.com/response-uri",
-                    "https://verifier.env2.com/responseUri"
-                ),
-                clientMetadata = deserializeAndValidate(
-                    clientMetadataString,
-                    ClientMetadataSerializer
-                )
-            ), Verifier(
-                "mock-client2", listOf(
-                    "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"
-                )
-            )
-        )
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered + mapOf(
             CLIENT_ID_SCHEME.value to PRE_REGISTERED.value
         )
+
+        every { NetworkManagerClient.sendHTTPRequest("https://mock-verifier.com/.well-known/jwks.json", any()) } returns mapOf("body" to jwkSet)
 
         every {
             NetworkManagerClient.sendHTTPRequest(
@@ -597,7 +590,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -675,7 +668,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET)
         } returns mapOf(
             "header" to Headers.Builder()
                 .add("content-type", "application/oauth-authz-req+jwt")
@@ -709,7 +702,7 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                HttpMethod.GET,
+                GET,
                 any(),
                 any()
             )

@@ -6,12 +6,12 @@ import io.mosip.openID4VP.authorizationRequest.VPFormatSupported
 import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
-import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
 import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.ContentType
+import io.mosip.openID4VP.constants.HttpMethod.GET
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import io.mosip.openID4VP.testData.JWSUtil.Companion.buildTestJwk
 import org.junit.jupiter.api.Test
@@ -31,8 +31,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         Verifier(
             "mock-client", listOf(
                 "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
-            ),
-            clientMetadata = clientMetadata
+            )
         )
     )
 
@@ -54,6 +53,14 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             vpFormatsSupported = mapOf(VPFormatType.LDP_VC to VPFormatSupported(listOf("ES256"))),
             clientIdSchemesSupported = listOf(ClientIdScheme.PRE_REGISTERED)
         )
+
+        mockkObject(NetworkManagerClient.Companion)
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                "https://mock-verifier.com/.well-known/jwks.json",
+                GET
+            )
+        } returns mapOf("body" to jwkSet)
     }
 
     @Test
@@ -151,28 +158,6 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     }
 
     @Test
-    fun `validateAndParseRequestFields should throw exception when client metadata of the pre-registered verifier is known but its also available in authorization request`() {
-        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
-            trustedVerifiers,
-            (authorizationRequestParameters + mapOf(
-                CLIENT_METADATA.value to clientMetadataString
-            )) as MutableMap<String, Any>,
-            walletMetadata,
-            true,
-            setResponseUri,
-            walletNonce
-        )
-
-        val exception = assertFailsWith<Exception> {
-            handler.validateAndParseRequestFields()
-        }
-        assertEquals(
-            "client_metadata provided despite pre-registered metadata already existing for the Client Identifier.",
-            exception.message
-        )
-    }
-
-    @Test
     fun `validateAndParseRequestFields should not throw exception when client metadata of the pre-registered verifier is not known and its available in authorization request`() {
         val trustedVerifiersWithoutClientMetadata: List<Verifier> = listOf(
             Verifier(
@@ -266,19 +251,23 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
     fun `should extract key successfully when kid is present`() {
 
         val testKid = "test-key"
-        val testJwk = buildTestJwk(kid = testKid)
 
         val verifier = Verifier(
             clientId = "test-client",
             responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(testJwk)),
-                vpFormats = mapOf(
-                    "ldp_vc" to mapOf("signing_alg" to listOf("EdDSA"))
-                )
-            )
+            jwksUri = "https://example.com/.well-known/jwks.json"
         )
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(),
+                GET,
+                null,
+                null
+            )
+        } answers  {
+            println("sendHTTPRequest called with")
+            mapOf("body" to jwkSet)
+        }
 
         trustedVerifiers.add(verifier)
 
@@ -308,12 +297,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
         val verifier = Verifier(
             clientId = "test-client",
-            responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(testJwk)),
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
-            )
+            responseUris = listOf("https://example.com/callback")
         )
         trustedVerifiers.add(verifier)
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"
@@ -340,12 +324,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
         val verifier = Verifier(
             clientId = "test-client",
-            responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(testJwk)),
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
-            )
+            responseUris = listOf("https://example.com/callback")
         )
         trustedVerifiers.add(verifier)
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"
@@ -370,12 +349,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
         val verifier = Verifier(
             clientId = "test-client",
-            responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(key1, key2)),
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
-            )
+            responseUris = listOf("https://example.com/callback")
         )
         trustedVerifiers.add(verifier)
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"
@@ -403,11 +377,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         val verifier = Verifier(
             clientId = "test-client",
             responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(key)),
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
-            )
+            jwksUri = "https://example.com/.well-known/jwks.json"
         )
         trustedVerifiers.add(verifier)
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"
@@ -430,16 +400,20 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
 
     @Test
     fun `should throw if curve is unsupported in matching key`() {
-        val key = buildTestJwk(crv = "XYZ")
-
+        mockkObject(NetworkManagerClient)
         val verifier = Verifier(
             clientId = "test-client",
             responseUris = listOf("https://example.com/callback"),
-            clientMetadata = ClientMetadata(
-                clientName = "Test Client",
-                jwks = Jwks(keys = listOf(key)),
-                vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("EdDSA")))
-            )
+            jwksUri = "https://example.com/.well-known/jwks.json"
+        )
+        every { NetworkManagerClient.sendHTTPRequest("https://example.com/.well-known/jwks.json", GET) } returns mapOf(
+            "body" to """{"keys": [{
+                "kty": "OKP",
+                "use": "sig",
+                "alg": "EdDSA",
+                "crv": "XYZ",
+                "x": "11qYAYdk9J6r9xWhG7f8z1FMvx6bAQJz2-LU8C5QWAc",
+                }]}""".trimMargin()
         )
         trustedVerifiers.add(verifier)
         authorizationRequestParameters[CLIENT_ID.value] = "test-client"

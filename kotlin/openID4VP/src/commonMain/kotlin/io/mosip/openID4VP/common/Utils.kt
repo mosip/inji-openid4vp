@@ -4,12 +4,17 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PathNested
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
+import io.mosip.vercred.vcverifier.networkManager.HttpMethod.GET
+import io.mosip.vercred.vcverifier.networkManager.NetworkManagerClient
 import java.security.MessageDigest
 import java.security.SecureRandom
+import kotlin.reflect.full.primaryConstructor
 
 private const val URL_PATTERN = "^https://(?:[\\w-]+\\.)+[\\w-]+(?:/[\\w\\-.~!$&'()*+,;=:@%]+)*/?(?:\\?[^#\\s]*)?(?:#.*)?$"
 
@@ -98,3 +103,27 @@ fun createNestedPath(inputDescriptorId: String, nestedPath: String?, format: For
 }
 
 fun createDescriptorMapPath(vpIndex: Int) = "$[$vpIndex]"
+
+private fun <T : Any> Map<String, Any>.toDataClass(clazz: Class<T>): T {
+    val ctor = clazz.kotlin.primaryConstructor!!
+    val args = ctor.parameters.associateWith { this[it.name] }
+    return ctor.callBy(args)
+}
+
+internal fun resolveJwksFromUri(jwksUri: String, className: String): Jwks {
+    return try {
+        val response: Map<String, Any> =
+            NetworkManagerClient.sendHTTPRequest(jwksUri, GET) ?: throw InvalidData(
+                "Empty response from $jwksUri",
+                className
+            )
+
+        response.toDataClass(Jwks::class.java)
+    } catch (e: Exception) {
+        throw InvalidData(
+            "Public key extraction failed - Unable to fetch/parse jwks from $jwksUri due to ${e.message}",
+            className,
+            OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
+        )
+    }
+}
