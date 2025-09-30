@@ -171,27 +171,6 @@ val walletMetadata = WalletMetadata(
     authorizationEncryptionEncValuesSupported = listOf(ContentEncryptionAlgorithm.A256GCM)
 )
 
-internal val jwkSetMap: Map<String, Any> = mapOf(
-    "keys" to listOf(
-        mapOf(
-            "kty" to "OKP",
-            "crv" to "X25519",
-            "use" to "enc",
-            "x" to "BVNVdqorpxCCnTOkkw8S2NAYXvfEvkC-8RDObhrAUA4",
-            "alg" to "ECDH-ES",
-            "kid" to "enc-key1"
-        ),
-        mapOf(
-            "kty" to "OKP",
-            "crv" to "Ed25519",
-            "use" to "sig",
-            "x" to "-Fy3lMapzR3wpaYNCFq29GDEn_NoR3pBsc511q1Cxqw",
-            "alg" to "EdDSA",
-            "kid" to "sig-key1"
-        )
-    )
-)
-
 internal val jwkList = listOf(
     Jwk(
         kty = "OKP",
