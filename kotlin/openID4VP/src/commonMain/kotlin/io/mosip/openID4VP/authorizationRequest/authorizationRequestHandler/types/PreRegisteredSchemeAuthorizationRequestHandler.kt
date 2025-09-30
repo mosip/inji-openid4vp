@@ -82,7 +82,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
             )
         val jwksUri = verifier.jwksUri
-            ?: throw OpenID4VPExceptions.InvalidData(
+            ?: throw OpenID4VPExceptions.PublicKeyResolutionFailed(
                 "Public key extraction failed - Public key information not available in pre-registered data to verify the signed Authorization Request",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT

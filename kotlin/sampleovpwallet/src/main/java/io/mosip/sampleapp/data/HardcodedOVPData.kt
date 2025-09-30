@@ -35,10 +35,11 @@ object HardcodedOVPData {
         val hardcodedVerifierJson = """
         [
             {
-              "client_id": "https://localhost:3000",
+              "client_id": "mock-client",
               "response_uris": [
-                "https://localhost:3000/v1/verify/vp-submission/direct-post"
-              ]
+                "https://0da187a73b20.ngrok-free.app/verifier/vp-response"
+              ],
+              "jwks_uri": "https://0da187a73b20.ngrok-free.app/.well-known/jwks.json"
             }
         ]
     """.trimIndent()

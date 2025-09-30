@@ -10,6 +10,8 @@ import io.mockk.verify
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.Jwks
+import io.mosip.openID4VP.common.resolveJwksFromUri
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
@@ -26,7 +28,7 @@ import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft23
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createUrlEncodedData
-import io.mosip.openID4VP.testData.jwkSet
+import io.mosip.openID4VP.testData.jwkList
 import io.mosip.openID4VP.testData.presentationDefinitionString
 import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
@@ -62,14 +64,8 @@ class AuthRequestByReferenceTest {
             )
         } returns mapOf("body" to presentationDefinitionString)
 
-        every {
-            NetworkManagerClient.sendHTTPRequest(
-                "https://mock-verifier.com/.well-known/jwks.json",
-                GET
-            )
-        } returns mapOf("body" to jwkSet)
-
-
+        mockkStatic("io.mosip.openID4VP.common.UtilsKt")
+        every { resolveJwksFromUri(any(), any()) } returns Jwks(jwkList)
     }
 
     @AfterTest
@@ -538,9 +534,6 @@ class AuthRequestByReferenceTest {
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered + mapOf(
             CLIENT_ID_SCHEME.value to PRE_REGISTERED.value
         )
-
-        every { NetworkManagerClient.sendHTTPRequest("https://mock-verifier.com/.well-known/jwks.json", any()) } returns mapOf("body" to jwkSet)
-
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
@@ -693,7 +686,6 @@ class AuthRequestByReferenceTest {
     //Client Id scheme - Pre-registered
     @Test
     fun `should return back authorization request successfully when authorization request is obtained by reference in pre-registered client id scheme`() {
-
         val authorizationRequestParamsMap = requestParams + clientIdOfPreRegistered
         val jwtHeader = buildJsonObject {
             put("typ", "oauth-authz-req+jwt")
