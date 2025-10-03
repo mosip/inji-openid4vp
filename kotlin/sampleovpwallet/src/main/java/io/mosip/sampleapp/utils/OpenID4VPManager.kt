@@ -40,6 +40,7 @@ object OpenID4VPManager {
             instance.authenticateVerifier(
                 urlEncodedAuthorizationRequest = urlEncodedAuthRequest,
                 trustedVerifiers = getListOfVerifiers(),
+//  Validation of whether the pre-registered client is known to wallet in advance is skipped here
                 shouldValidateClient = false
             )
         } catch (exception: Exception) {
