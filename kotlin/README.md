@@ -127,23 +127,24 @@ The following credential formats are supported for sharing:
 
 ## Installation
 
-## For Android Based Projects
+#### For Android Based Projects
 
 ```
 implementation "io.mosip:inji-openid4vp-aar:0.5.0-SNAPSHOT"
 ```
 
-## For Java Based Projects
+#### For Java Based Projects
 
 ```
 implementation "io.mosip:inji-openid4vp-jar:0.5.0-SNAPSHOT"
 ```
 
-## Create instance of OpenID4VP library to invoke it's methods
+## Create instance of OpenID4VP library to invoke its methods
 
 ```kotlin
 val openID4VP = OpenID4VP(traceabilityId = "trace-id", walletMetadata = walletMetadata)
 ```
+
 ###### Parameters
 | Name           | Type           | Description                                                                                                                                                                                                     |
 |----------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -258,12 +259,12 @@ io.mosip.openID4VP/
 
 ###### Request Parameters
 
-| Name                            | Type             | Description                                                                                               |
-|---------------------------------|------------------|-----------------------------------------------------------------------------------------------------------|
-| urlEncodedAuthorizationRequest  | String           | URL encoded query parameter string containing the Verifier's authorization request                        |
-| trustedVerifiers                | List\<Verifier\> | A list of trusted Verifier objects each containing a clientId and a responseUri list                      |
-| walletMetadata                  | WalletMetadata?  | Nullable WalletMetadata to be shared with Verifier                                                        |
-| shouldValidateClient            | Boolean?         | Nullable Boolean with default value false to toggle client validation for pre-registered client id scheme |
+| Name                            | Type             | Description                                                                                                                                                             |
+|---------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| urlEncodedAuthorizationRequest  | String           | URL encoded query parameter string containing the Verifier's authorization request                                                                                      |
+| trustedVerifiers                | List\<Verifier\> | A list of trusted Verifier objects each containing a clientId, responseUri, jwksUri and allowUnsignedRequest list (refer [here](#verifier-parameters) for more details) |
+| walletMetadata                  | WalletMetadata?  | Nullable WalletMetadata to be shared with Verifier                                                                                                                      |
+| shouldValidateClient            | Boolean?         | Nullable Boolean with default value false to toggle client validation for pre-registered client id scheme                                                               |
 
 ###### Response 
 ```kotlin
@@ -355,12 +356,14 @@ val authorizationRequest: AuthorizationRequest = openID4VP.authenticateVerifier(
 
 #### Verifier Parameters
 
-| Parameter                                   | Type                             | Required                     | Description                                                                                       |
-|---------------------------------------------|----------------------------------|------------------------------|---------------------------------------------------------------------------------------------------|
-| clientId                                    | String                           | Yes                          | The unique identifier for the Verifier.                                                           |
-| responseUri                                 | List\<String\>                   | Yes                          | A list of URIs where the Verifier can receive responses from the wallet.                          |
+Each Verifier object in the trustedVerifiers list should contain the following properties:
 
-
+| Parameter            | Type           | Required | Default Value | Description                                                                                                                                                                                       |
+|----------------------|----------------|----------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| clientId             | String         | Yes      | N/A           | The unique identifier for the Verifier.                                                                                                                                                           |
+| responseUri          | List\<String\> | Yes      | N/A           | A list of URIs where the Verifier can receive responses from the wallet.                                                                                                                          |
+| jwksUri              | String         | No       | null          | URI value of the Verifier's hosted public key. This will be used to verify the signed Authorization Request. If this is not available Verifier's signed Authorization request cannot be verified. |
+| allowUnsignedRequest | Boolean        | No       | false         | Accepts unsigned requests from the Verifier. If `shouldValidateClient` is false, unsigned requests are still not allowed.                                                                         |
 
 ###### Exceptions
 
