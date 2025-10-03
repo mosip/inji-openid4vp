@@ -14,7 +14,6 @@ import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.testData.*
 import foundation.identity.jsonld.JsonLDObject
 import io.mosip.openID4VP.authorizationRequest.Verifier
-import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import java.util.logging.Level
@@ -93,10 +92,6 @@ class OpenID4VPTest {
             Verifier(
                 "mock-client", listOf(
                     "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
-                ),
-                clientMetadata = ClientMetadata(
-                    clientName = "mock-client",
-                    vpFormats = mapOf("ldp_vc" to mapOf("signing_alg" to listOf("ES256"))),
                 )
             ), Verifier(
                 "mock-client2", listOf(
