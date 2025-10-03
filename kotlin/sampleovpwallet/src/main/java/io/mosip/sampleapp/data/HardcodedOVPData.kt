@@ -32,14 +32,15 @@ object HardcodedOVPData {
     }
 
     fun getListOfVerifiers(): List<Verifier> {
+        // WARNING: Update these URLs to point to your verifier instance.
         val hardcodedVerifierJson = """
         [
             {
               "client_id": "mock-client",
               "response_uris": [
-                "https://0da187a73b20.ngrok-free.app/verifier/vp-response"
+                "https://localhost:3000/verifier/vp-response"
               ],
-              "jwks_uri": "https://0da187a73b20.ngrok-free.app/.well-known/jwks.json"
+              "jwks_uri": "https://localhost:3000/.well-known/jwks.json"
             }
         ]
     """.trimIndent()

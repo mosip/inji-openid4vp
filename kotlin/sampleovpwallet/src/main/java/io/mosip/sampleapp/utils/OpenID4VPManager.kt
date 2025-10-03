@@ -40,7 +40,8 @@ object OpenID4VPManager {
             instance.authenticateVerifier(
                 urlEncodedAuthorizationRequest = urlEncodedAuthRequest,
                 trustedVerifiers = getListOfVerifiers(),
-                shouldValidateClient = true
+//  Validation of whether the pre-registered client is known to wallet in advance is skipped here
+                shouldValidateClient = false
             )
         } catch (exception: Exception) {
             Log.e("OpenID4VP-sample wallet", "Error authenticating verifier ${exception.message}")
