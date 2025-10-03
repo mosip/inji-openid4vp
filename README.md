@@ -11,7 +11,7 @@ Description: Implementation of OpenID for Verifiable Presentations - in Kotlin
 
 | Feature                                                    | Supported values                                                       |
 |------------------------------------------------------------|------------------------------------------------------------------------|
-| Device flow                                                | cross device flow                                                      |
+| Device flow                                                | Cross device flow, Same device flow                                    |
 | Client id scheme                                           | `pre-registered`, `redirect_uri`, `did`                                |
 | Signed authorization request verification algorithms       | Ed25519                                                                |
 | Obtaining authorization request                            | By value, By reference ( via `request_uri` method)                     |
