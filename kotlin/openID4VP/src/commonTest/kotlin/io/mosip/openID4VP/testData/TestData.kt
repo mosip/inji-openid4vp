@@ -357,7 +357,8 @@ val trustedVerifiers: List<Verifier> = listOf(
         "mock-client", listOf(
             "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
         ),
-        "https://mock-verifier.com/.well-known/jwks.json"
+        "https://mock-verifier.com/.well-known/jwks.json",
+        true
     ), Verifier(
         "mock-client2", listOf(
             "https://verifier.env3.com/responseUri", "https://verifier.env2.com/responseUri"

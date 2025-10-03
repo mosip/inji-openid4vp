@@ -61,8 +61,20 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         return true
     }
 
+    /**
+     * For pre-registered verifiers, if the verifier allows unsigned requests, then the Authorization request by value support is decided based on
+     * - The pre-registered verifier allows unsigned requests
+     * - If client validation is disabled, then the request by value is not supported
+     */
     override fun isRequestObjectSupported(): Boolean {
-        return true
+        if (shouldValidateClient) {
+            val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
+            val preRegisteredVerifier = verifier(clientId)
+
+            return preRegisteredVerifier.allowUnsignedRequest
+        }
+
+        return false
     }
 
     override fun clientIdScheme(): String {
@@ -179,12 +191,9 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
             val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
             val responseUri = getStringValue(authorizationRequestParameters, RESPONSE_URI.value)!!
 
-            val preRegisteredVerifier = trustedVerifiers.find { it.clientId == clientId }
+            val preRegisteredVerifier = verifier(clientId)
 
-            if (preRegisteredVerifier != null && !preRegisteredVerifier.responseUris.contains(
-                    responseUri
-                )
-            ) {
+            if (!preRegisteredVerifier.responseUris.contains(responseUri)) {
                 throw InvalidVerifier(
                     "Verifier is not trusted by the wallet",
                     className
@@ -195,4 +204,8 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         super.validateAndParseRequestFields()
     }
 
+    private fun verifier(clientId: String): Verifier {
+        return trustedVerifiers.find { it.clientId == clientId }
+            ?: throw InvalidVerifier("Verifier is not trusted by the wallet", className)
+    }
 }

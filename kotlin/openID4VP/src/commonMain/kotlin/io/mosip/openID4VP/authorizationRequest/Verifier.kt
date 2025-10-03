@@ -4,5 +4,6 @@ package io.mosip.openID4VP.authorizationRequest
 data class Verifier(
     val clientId: String,
     val responseUris: List<String>,
-    val jwksUri: String? = null
+    val jwksUri: String? = null,
+    val allowUnsignedRequest: Boolean = false
 )

@@ -32,7 +32,8 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         Verifier(
             clientId = "test-client",
             responseUris = listOf("https://example.com/callback"),
-            jwksUri = "https://example.com/.well-known/jwks.json"
+            jwksUri = "https://example.com/.well-known/jwks.json",
+            allowUnsignedRequest = false
         )
     )
     private val jwksUri = "https://example.com/.well-known/jwks.json"
@@ -372,5 +373,85 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
         assertTrue(ex.message.contains("Public key extraction failed - Curve - XYZ is not supported. Supported: Ed25519"))
     }
 
-}
+    @Test
+    fun `isRequestObjectSupported should return boolean value for trusted client with valid response URI`() {
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
+        )
 
+        assertFalse(handler.isRequestObjectSupported())
+    }
+
+    @Test
+    fun `isRequestObjectSupported should return false when shouldValidateClient is false`() {
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers,
+            authorizationRequestParameters,
+            walletMetadata,
+            false,
+            setResponseUri,
+            walletNonce
+        )
+        assertFalse(handler.isRequestObjectSupported())
+    }
+
+    @Test
+    fun `isRequestObjectSupported should throw when client id not in trusted verifiers`() {
+        authorizationRequestParameters[CLIENT_ID.value] = "unknown-client"
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = trustedVerifiers,
+            authorizationRequestParameters = authorizationRequestParameters,
+            walletMetadata = null,
+            shouldValidateClient = true,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+        val ex = assertFailsWith<OpenID4VPExceptions.InvalidVerifier> {
+            handler.isRequestObjectSupported()
+        }
+        assertTrue(ex.message!!.contains("Verifier is not trusted by the wallet"))
+    }
+
+    @Test
+    fun `isRequestObjectSupported should return false when verifier does not allow unsigned request`() {
+        val verifier = Verifier(
+            clientId = "test-client",
+            jwksUri = jwksUri,
+            allowUnsignedRequest = false,
+            responseUris = listOf("https://example.com/response")
+        )
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = listOf(verifier),
+            authorizationRequestParameters = authorizationRequestParameters.apply { put(CLIENT_ID.value, "test-client") },
+            walletMetadata = null,
+            shouldValidateClient = true,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+        assertFalse(handler.isRequestObjectSupported())
+    }
+
+    @Test
+    fun `isRequestObjectSupported should return true when verifier allows unsigned request`() {
+        val verifier = Verifier(
+            clientId = "test-client",
+            jwksUri = jwksUri,
+            allowUnsignedRequest = true,
+            responseUris = listOf("https://example.com/response")
+        )
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            trustedVerifiers = listOf(verifier),
+            authorizationRequestParameters = authorizationRequestParameters.apply { put(CLIENT_ID.value, "test-client") },
+            walletMetadata = null,
+            shouldValidateClient = true,
+            setResponseUri = setResponseUri,
+            walletNonce = walletNonce
+        )
+        assertTrue(handler.isRequestObjectSupported())
+    }
+}
