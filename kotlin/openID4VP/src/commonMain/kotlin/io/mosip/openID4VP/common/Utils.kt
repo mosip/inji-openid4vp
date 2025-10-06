@@ -111,7 +111,9 @@ internal fun resolveJwksFromUri(jwksUri: String, className: String): Jwks {
                 className
             )
 
-        getObjectMapper().convertValue(response, Jwks::class.java)
+        val objectMapper = getObjectMapper()
+        val json = objectMapper.writeValueAsString(response)
+        objectMapper.readValue(json, Jwks::class.java)
     } catch (e: Exception) {
         throw InvalidData(
             "Public key extraction failed - Unable to fetch/parse jwks from $jwksUri due to ${e.message}",
