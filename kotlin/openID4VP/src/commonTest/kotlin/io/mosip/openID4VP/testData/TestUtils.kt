@@ -5,7 +5,6 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.JWSUtil.Companion.createJWS
 import kotlinx.serialization.json.JsonObject
 import java.lang.reflect.Field
@@ -108,6 +107,6 @@ fun assertOpenId4VPException(exception: OpenID4VPExceptions, expectedMessage: St
     assertEquals(expectedMessage, exception.message)
     assertEquals(expectedErrorCode, exception.errorCode)
     if(expectedVerifierResponse != null){
-        assertEquals(expectedVerifierResponse.toString(), exception.networkResponse.toString())
+        assertEquals(expectedVerifierResponse.toString(), exception.response.toString())
     }
 }

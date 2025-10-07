@@ -163,11 +163,7 @@ class OpenID4VP @JvmOverloads constructor(
         level = DeprecationLevel.WARNING
     )
     fun sendErrorToVerifier(exception: Exception) {
-        this.authorizationResponseHandler.sendAuthorizationError(
-            this.responseUri,
-            this.authorizationRequest,
-            exception
-        )
+        this.safeSendError(exception)
     }
 
     // Ensures that any error occurring in the flow is sent to the Verifier
@@ -175,8 +171,7 @@ class OpenID4VP @JvmOverloads constructor(
     private fun safeSendError(exception: Exception) {
         try {
             val verifierResponse = sendErrorResponseToVerifier(exception)
-            // Attach the response from verifier to the exception for further usages by the Wallet
-            (exception as? OpenID4VPExceptions)?.networkResponse = verifierResponse
+            (exception as? OpenID4VPExceptions)?.setResponse(verifierResponse)
         } catch (error: Exception) {
             OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
         }

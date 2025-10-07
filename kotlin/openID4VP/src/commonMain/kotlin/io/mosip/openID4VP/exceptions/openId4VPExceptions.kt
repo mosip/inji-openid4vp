@@ -10,12 +10,12 @@ sealed class OpenID4VPExceptions(
     val errorCode: String,
     override val message: String,
     val className: String,
-    // holds the network response from the Verifier if the error is sent to the Verifier
-    var networkResponse: String? = null
+    // holds the response body received from the Verifier if the error is sent to the Verifier
+    var response: String? = null
 ) : Exception("$errorCode : $message") {
 
-    internal fun setNetworkResponse(response: String) {
-        this.networkResponse = response
+    internal fun setResponse(response: String) {
+        this.response = response
     }
 
     init {

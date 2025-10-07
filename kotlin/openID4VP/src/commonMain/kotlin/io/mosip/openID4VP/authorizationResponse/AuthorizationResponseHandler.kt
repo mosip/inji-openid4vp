@@ -125,14 +125,14 @@ internal class AuthorizationResponseHandler {
                 }
             }
 
-            val (_, body) = sendHTTPRequest(
+            val networkResponse = sendHTTPRequest(
                 url = responseUri,
                 method = HttpMethod.POST,
                 bodyParams = errorPayload,
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
-            (exception as? OpenID4VPExceptions)?.setNetworkResponse(body)
-            return body
+            (exception as? OpenID4VPExceptions)?.setResponse(networkResponse.body)
+            return networkResponse.body
         } catch (err: Exception) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Failed to send error to verifier: ${err.message}",
