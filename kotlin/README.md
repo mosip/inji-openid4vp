@@ -1,4 +1,4 @@
-# INJI-OpenID4VP  
+# INJI-OpenID4VP
 
 
 ## 🚨 Breaking Changes
@@ -28,17 +28,17 @@ val openID4VP = OpenID4VP(traceabilityId = "trace-id", walletMetadata = walletMe
 
 ```kotlin
 val walletMetadata = WalletMetadata(
-            presentationDefinitionURISupported = true,
-            vpFormatsSupported = mapOf(
-                FormatType.LDP_VC to VPFormatSupported(
-                    algValuesSupported = listOf("EdDSA")
-                )
-            ),
-            clientIdSchemesSupported = listOf(ClientIdScheme.REDIRECT_URI, ClientIdScheme.PRE_REGISTERED),
-            requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
-            authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
-            authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+    presentationDefinitionURISupported = true,
+    vpFormatsSupported = mapOf(
+        FormatType.LDP_VC to VPFormatSupported(
+            algValuesSupported = listOf("EdDSA")
         )
+    ),
+    clientIdSchemesSupported = listOf(ClientIdScheme.REDIRECT_URI, ClientIdScheme.PRE_REGISTERED),
+    requestObjectSigningAlgValuesSupported = listOf(RequestSigningAlgorithm.EdDSA),
+    authorizationEncryptionAlgValuesSupported = listOf(KeyManagementAlgorithm.ECDH_ES),
+    authorizationEncryptionEncValuesSupported = listOf(ContentEncrytionAlgorithm.A256GCM)
+)
 ```
 
 3. The shouldValidateClient parameter in authenticateVerifier now defaults to true.
@@ -77,16 +77,40 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.V
 
 ## **Introduction**
 
-inji-openid4vp is an implementation of OpenID for Verifiable Presentations written in kotlin. It supports sharing of verifiable credentials with verifiers using the OpenID4VP protocol. 
-Formats supported:  
-- LDP_VC : Implemented using [Specification-21](https://openid.net/specs/openid-4-verifiable-presentations-1_0-21.html) and [Specification-23](https://openid.net/specs/openid-4-verifiable-presentations-1_0-23.html)
-- MSO_MDOC_VC: Implemented Using [ISO/IEC 18013-5:2021](https://www.iso.org/standard/69084.html) and [ISO/IEC TS 18013-7](https://www.iso.org/standard/82772.html)
-  
+inji-openid4vp is an implementation of OpenID for Verifiable Presentations written in kotlin. It supports sharing of verifiable credentials with verifiers using the OpenID4VP protocol.
+
 Inji-OpenID4VP library is Kotlin Multiplatform Library which generates both AAR and JAR files for Android and Java based projects respectively.
 
 The library validates the client_id and client_id_scheme parameters in the authorization request according to the relevant specification.
 - If the client_id_scheme parameter is included in the authorization request, the request is treated as conforming to Draft 21, and validation is performed accordingly.
 - If the client_id_scheme parameter is not included, the request is interpreted as following Draft 23, and validation is applied based on that specification.
+
+## **Supported Credential Formats**
+The following credential formats are supported for sharing:
+- Ldp Vc (**ldp_vc**) : Implemented using [Specification-21](https://openid.net/specs/openid-4-verifiable-presentations-1_0-21.html) and [Specification-23](https://openid.net/specs/openid-4-verifiable-presentations-1_0-23.html)
+- Mso-Mdoc Vc (**mso_mdoc**): Implemented using [ISO/IEC 18013-5:2021](https://www.iso.org/standard/69084.html) and [ISO/IEC TS 18013-7](https://www.iso.org/standard/82772.html)
+- Sd-jwt Vc (**dc+sd-jwt**,**vc+sd-jwt**): Implemented using [draft-ietf-oauth-sd-jwt(vc)](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-10.html),[draft-ietf-oauth-sd-jwt](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/22/) and [Specification-23](https://openid.net/specs/openid-4-verifiable-presentations-1_0-23.html)
+----
+#### SD-JWT Specific Notes
+
+
+
+- Only SD-JWT VCs that include a `cnf` (confirmation) claim with a `kid`  are supported for signing and sharing.
+- Supported algorithms for `cnf.kid` as `did:jwk` (used in holder binding):
+    - `ES256`
+    - `EdDSA`
+- If an SD-JWT VC does **not** include a `cnf`, no Key Binding JWT (KB-JWT) is created for that credential.
+    - These credentials are **not sent to the wallet** for signing and will be skipped from `uuidToUnsignedKBT`.
+
+🔐 **_sd_alg Support:**
+- Supported `_sd_alg` values for SD-JWT disclosures:
+    - `sha-256`
+    - `sha-384`
+    - `sha-512`
+- If the SD-JWT VC contains disclosures hashed with **unsupported or mismatched `_sd_alg`**, an exception will be thrown.
+  The `_sd_alg` is required for generating `sd_hash` inside the KB-JWT and must match the hashing algorithm used in the disclosures.
+
+---
 
 
 ## **Table of Contents**
@@ -95,31 +119,32 @@ The library validates the client_id and client_id_scheme parameters in the autho
 - [Integration](#integration)
 - [Package Structure](#package-structure)
 - [APIs](#apis)
-  - [authenticateVerifier](#authenticateverifier)
-  - [constructUnsignedVPToken](#constructUnsignedVPToken)
-  - [shareVerifiablePresentation](#shareverifiablepresentation)
-  - [sendErrorToVerifier](#senderrortoverifier)
+    - [authenticateVerifier](#authenticateverifier)
+    - [constructUnsignedVPToken](#constructUnsignedVPToken)
+    - [shareVerifiablePresentation](#shareverifiablepresentation)
+    - [sendErrorResponseToVerifier](#senderrorresponsetoverifier)
 
 
 ## Installation
 
-## For Android Based Projects
+#### For Android Based Projects
 
 ```
-implementation "io.mosip:inji-openid4vp-aar:0.4.0-SNAPSHOT"
+implementation "io.mosip:inji-openid4vp-aar:0.5.0-SNAPSHOT"
 ```
 
-## For Java Based Projects
+#### For Java Based Projects
 
 ```
-implementation "io.mosip:inji-openid4vp-jar:0.4.0-SNAPSHOT"
+implementation "io.mosip:inji-openid4vp-jar:0.5.0-SNAPSHOT"
 ```
 
-## Create instance of OpenID4VP library to invoke it's methods
+## Create instance of OpenID4VP library to invoke its methods
 
 ```kotlin
 val openID4VP = OpenID4VP(traceabilityId = "trace-id", walletMetadata = walletMetadata)
 ```
+
 ###### Parameters
 | Name           | Type           | Description                                                                                                                                                                                                     |
 |----------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -132,67 +157,71 @@ val openID4VP = OpenID4VP(traceabilityId = "trace-id", walletMetadata = walletMe
 - For more details refer to [README](https://github.com/mosip/inji-openid4vp/blob/release-0.3.x/kotlin/sampleovpwallet/README.md) of the sample application.
 
 ## Package Structure
+This library has KMP (Kotlin Multiplatform) structure.The encoding and decoding logic is mainly segregated into androidMain and jvmMain source sets respectively. The commonMain source set contains the core logic of the library which is platform agnostic.
+Below is the high-level package structure of the `commonMain` source set:
 ```
 io.mosip.openID4VP/
-├── OpenID4VP.kt                  # Main library class with public APIs
+├── OpenID4VP.kt                    # Main entry point: exposes public APIs
 │
-├── authorizationRequest/         # Authorization request handling
-│   ├── AuthorizationRequest.kt   # Model for parsed authorization requests
-│   ├── Verifier.kt               # Trusted verifier model
-│   ├── clientMetadata/
-│   │   ├── ClientMetadata.kt     # Client metadata model
-│   │   ├── Jwk.kt                # JSON Web Key model
-│   │   └── Jwks.kt               # JSON Web Key Set model
-│   └── presentationDefinition/   # Presentation definition models
-│       ├── PresentationDefinition.kt
-│       ├── InputDescriptor.kt
-│       ├── Constraints.kt
-│       │   └── Fields.kt   
-│       │       └── Filter.kt       
+├── authorizationRequest/           # Authorization request parsing + validation
+│   ├── AuthorizationRequest.kt     # Parses + holds request parameters
+│   ├── WalletMetadata.kt           # wallet-specific metadata
+│   ├── authorizationRequestHandler/
+│   │   ├── ClientIdSchemeBasedAuthorizationRequestHandler.kt  # Strategy base class
+│   │   └── types/                  # Handler strategies for DID, URI, etc.
+│   │       ├── DidSchemeAuthorizationRequestHandler.kt
+│   │       ├── PreRegisteredSchemeAuthorizationRequestHandler.kt
+│   │       └── RedirectUriSchemeAuthorizationRequestHandler.kt
+│   ├── clientMetadata/             #  Client metadata & JWKS-related
+│   │   ├── ClientMetadata.kt
+│   │   ├── Jwk.kt
+│   │   └── Jwks.kt
+│   └── presentationDefinition/    # Presentation definition parsing + validation
 │
-├── authorizationResponse/        # Response handling
-│   ├── AuthorizationResponse.kt  # Model for authorization responses
-│   ├── presentationSubmission/  # Presentation submission models
-│   │   ├── PresentationSubmission.kt 
-│   │   └── DescriptorMapping.kt
-│   │
-│   ├── unsignedVPToken/            # Unsigned VP token models
-│   │   ├── UnsignedVPToken.kt    # Base class for unsigned tokens
-│   │   ├── types/
-│   │   │   ├── ldp/              # JSON-LD format support
-│   │   │   │   └── UnsignedLdpVPToken.kt
-│   │   │   └── mdoc/             # mDOC format support
-│   │   │       └── UnsignedMdocVPToken.kt
-│   │
-│   ├── vpToken/                  # VP token models
-│   │   ├── VPToken.kt             # Base class for VP tokens
-│   │   ├── types/
-│   │   │   ├── ldp/              # JSON-LD format support
-│   │   │   │   └── LdpVPToken.kt
-│   │   │   └── mdoc/             # mDOC format support
-│   │   │       └── MdocVPToken.kt
-│   │
-│   └── vpTokenSigningResult/     # Signing results models
-│       ├── VPTokenSigningResult.kt # Base interface
-│       ├── types/
-│       │   ├── ldp/              # JSON-LD format support
-│       │   │   └── LdpVPTokenSigningResult.kt
-│       │   └── mdoc/             # mDOC format support
-│       │       └── MdocVPTokenSigningResult.kt
+├── authorizationResponse/          # Authorization response construction
+│   ├── AuthorizationResponse.kt
+│   ├── AuthorizationResponseHandler.kt
+│   ├── presentationSubmission/
+│   │   └── PresentationSubmission.kt + DescriptorMap.kt
+│   ├── unsignedVPToken/            # Pre-signature VP tokens: sent to wallet
+│   │   └── types/
+│   │       ├── ldp/    ➝ UnsignedLdpVPToken.kt
+│   │       ├── mdoc/   ➝ UnsignedMdocVPToken.kt
+│   │       └── sdJwt/  ➝ UnsignedSdJwtVPToken.kt
+│   ├── vpToken/                    # Final signed tokens
+│   │   └── types/
+│   │       ├── ldp/    ➝ LdpVPToken.kt
+│   │       ├── mdoc/   ➝ MdocVPToken.kt
+│   │       └── sdJwt/  ➝ SdJwtVPToken.kt
+│   └── vpTokenSigningResult/       # Signature result for all formats: coming from wallet
+│       └── types/
+│           ├── ldp/    ➝ LdpVPTokenSigningResult.kt
+│           ├── mdoc/   ➝ MdocVPTokenSigningResult.kt
+│           └── sdJwt/  ➝ SdJwtVPTokenSigningResult.kt
 │
-├── common/                       # Common utilities and models
-├── constants/                    # Constants used across the library  
+├── jwt/                            # JWS/JWE operations
+│   ├── jwe/
+│   │   └── JWEHandler.kt + EncryptionProvider.kt
+│   └── jws/
+│       └── JWSHandler.kt
 │
-├── jwt/                          # JWT handling
-│   ├── jwe/                      # JWE encryption support
-│   │   ├── JWEHandler.kt         # Handles JWE operations
-│   │   └── encryption/
-│   │       └── EncryptionProvider.kt # Provides encryption services
-│   ├── jws/                      # JWS signature support
-│       └── JWSHandler.kt         # Handles JWS operations
+├── responseModeHandler/            # Direct-post/Direct-postJWT modes
+│   ├── ResponseModeBasedHandler.kt
+│   └── types/
+│       ├── DirectPostResponseModeHandler.kt
+│       └── DirectPostJwtResponseModeHandler.kt
 │
-├── exceptions/                   # Exceptions
-│   └── OpenID4VPExceptions.kt    # Centralized exception definitions
+├── common/                         #  Shared helpers/utilities
+│   └── (Utils.kt, Encoder.kt, Decoder.kt, etc.)
+│
+├── constants/                      # Enum-style constants
+│   └── (FormatType.kt, VPFormatType.kt, SigningAlgorithm.kt, etc.)
+│
+├── networkManager/                 # HTTP request layer abstraction
+│   └── NetworkManagerClient.kt + Exceptions
+│
+├── exceptions/                     # Error definitions
+│   └── OpenID4VPExceptions.kt
 ```
 
 ## APIs
@@ -210,7 +239,7 @@ io.mosip.openID4VP/
 
 **Note 1:** Wallet can send the entire metadata, library will customize it as per authorization request client_id_scheme. Eg - in case pre-registered, library modifies wallet metadata to be sent without request object signing info properties as specified in the specification.
 
-**Note 2:** Currently the library does not support limit disclosure for any format of VC. It will throw an error if the request contains `presentation_definition` or `presentation_definition_uri` with `input_descriptors` and `limit_disclosure` set to required. 
+**Note 2:** Currently the library does not support limit disclosure for any format of VC. It will throw an error if the request contains `presentation_definition` or `presentation_definition_uri` with `input_descriptors` and `limit_disclosure` set to required.
 
 
 ``` kotlin
@@ -230,14 +259,14 @@ io.mosip.openID4VP/
 
 ###### Request Parameters
 
-| Name                            | Type             | Description                                                                                               |
-|---------------------------------|------------------|-----------------------------------------------------------------------------------------------------------|
-| urlEncodedAuthorizationRequest  | String           | URL encoded query parameter string containing the Verifier's authorization request                        |
-| trustedVerifiers                | List\<Verifier\> | A list of trusted Verifier objects each containing a clientId and a responseUri list                      |
-| walletMetadata                  | WalletMetadata?  | Nullable WalletMetadata to be shared with Verifier                                                        |
-| shouldValidateClient            | Boolean?         | Nullable Boolean with default value false to toggle client validation for pre-registered client id scheme |
+| Name                            | Type             | Description                                                                                                                                                             |
+|---------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| urlEncodedAuthorizationRequest  | String           | URL encoded query parameter string containing the Verifier's authorization request                                                                                      |
+| trustedVerifiers                | List\<Verifier\> | A list of trusted Verifier objects each containing a clientId, responseUri, jwksUri and allowUnsignedRequest list (refer [here](#verifier-parameters) for more details) |
+| walletMetadata                  | WalletMetadata?  | Nullable WalletMetadata to be shared with Verifier                                                                                                                      |
+| shouldValidateClient            | Boolean?         | Nullable Boolean with default value false to toggle client validation for pre-registered client id scheme                                                               |
 
-###### Response 
+###### Response
 ```kotlin
 val authorizationRequest = AuthorizationRequest(
     clientId = "https://mock-verifier.com",
@@ -327,31 +356,33 @@ val authorizationRequest: AuthorizationRequest = openID4VP.authenticateVerifier(
 
 #### Verifier Parameters
 
-| Parameter                                   | Type                             | Required                     | Description                                                                                       |
-|---------------------------------------------|----------------------------------|------------------------------|---------------------------------------------------------------------------------------------------|
-| clientId                                    | String                           | Yes                          | The unique identifier for the Verifier.                                                           |
-| responseUri                                 | List\<String\>                   | Yes                          | A list of URIs where the Verifier can receive responses from the wallet.                          |
+Each Verifier object in the trustedVerifiers list should contain the following properties:
 
-
+| Parameter            | Type           | Required | Default Value | Description                                                                                                                                                                                       |
+|----------------------|----------------|----------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| clientId             | String         | Yes      | N/A           | The unique identifier for the Verifier.                                                                                                                                                           |
+| responseUri          | List\<String\> | Yes      | N/A           | A list of URIs where the Verifier can receive responses from the wallet.                                                                                                                          |
+| jwksUri              | String         | No       | null          | URI value of the Verifier's hosted public key. This will be used to verify the signed Authorization Request. If this is not available Verifier's signed Authorization request cannot be verified. |
+| allowUnsignedRequest | Boolean        | No       | false         | Accepts unsigned requests from the Verifier. If `shouldValidateClient` is false, unsigned requests are still not allowed.                                                                         |
 
 ###### Exceptions
 
 1. DecodingException is thrown when there is an issue while decoding the Authorization Request
 2. InvalidQueryParams exception is thrown if
-   * query params are not present in the Request
-   * there is an issue while extracting the params
-   * both presentation_definition and presentation_definition_uri are present in Request
-   * both presentation_definition and presentation_definition_uri are not present in Request
+    * query params are not present in the Request
+    * there is an issue while extracting the params
+    * both presentation_definition and presentation_definition_uri are present in Request
+    * both presentation_definition and presentation_definition_uri are not present in Request
 3. MissingInput exception is thrown if any of required params are not present in Request
 4. InvalidInput exception is thrown if any of required params value is empty or null
 5. InvalidVerifier exception is thrown if the received request client_iD & response_uri are not matching with any of the trusted verifiers
-6. JWTVerification exception is thrown if there is any error in extracting public key, kid or signature verification failure. 
+6. JWTVerification exception is thrown if there is any error in extracting public key, kid or signature verification failure.
 7. InvalidData exception is thrown if
     - `response_mode` is not supported
     - For `direct_post.jwt` response mode
         - client_metadata is not available
         - unable to find the public key JWK from the `jwks` of `client_metadata` as per the provided algorithm in `client_metadata`
-   - `publicKeyMultibase` is null or empty
+    - `publicKeyMultibase` is null or empty
 8. UnsupportedPublicKeyType exception is thrown when the public key type is not `publicKeyMultibase`.
 9. PublicKeyExtractionFailed exception is thrown when there are any errors in extracting the public key from verification method
 
@@ -365,10 +396,10 @@ This method will also notify the Verifier about the error by sending it to the r
 
 
 ### constructUnsignedVPToken
-- This method creates unsigned Verifiable Presentation (VP) tokens from a collection of Verifiable Credentials. It:  
-  - Takes credentials organized by input descriptor IDs and formats along with the holder's identifier, and the signature suite to be used for signing the VP tokens.
-  - Creates format-specific VP tokens (supporting JSON-LD and  mDOC formats)
-  - Returns a map of unsigned VP tokens organized by format type
+- This method creates unsigned Verifiable Presentation (VP) tokens from a collection of Verifiable Credentials. It:
+    - Takes credentials organized by input descriptor IDs and formats along with the holder's identifier, and the signature suite to be used for signing the VP tokens.
+    - Creates format-specific VP tokens (supporting JSON-LD and  mDOC formats)
+    - Returns a map of unsigned VP tokens organized by format type
 - The tokens returned are ready for digital signing **to be signed by wallet** before being shared with verifiers in an OpenID4VP flow.
 
 ```kotlin
@@ -396,6 +427,16 @@ val unsignedLdpVpTokens: Map<FormatType, UnsignedVPToken> = mapOf(
     FormatType.MSO_MDOC to UnsignedMdocVPToken(
         docTypeToDeviceAuthenticationBytes = mapOf(
             "org.iso.18013.5.1.mDL" to "<docTypeToDeviceAuthenticationBytes>" // This should be the actual base64 encoded bytes of the device authentication
+        )
+    ),
+    FormatType.VC_SD_JWT to UnsignedSdJwtVPToken(
+        uuidToUnsignedKBT = mapOf(
+            "uuid" to "<unsignedKBT(<kbtHeader>.<kbtPayload>)>" // This should be the actual unsigned KBT (header + payload)
+        )
+    ),
+    FormatType.DC_SD_JWT to UnsignedSdJwtVPToken(
+        uuidToUnsignedKBT = mapOf(
+            "uuid" to "<unsignedKBT(<kbtHeader>.<kbtPayload>)>" // This should be the actual unsigned KBT (header + payload)
         )
     )
 )
@@ -430,7 +471,17 @@ val unsignedVPToken: String = """
                     FormatType.MSO_MDOC to listOf(
                         "credential2",
                     )
-                )
+                ),
+                "input_descriptor_id" to mapOf(
+                    FormatType.VC_SD_JWT to listOf(
+                        "credential3",
+                    )
+                ),
+                "input_descriptor_id" to mapOf(
+                    FormatType.DC_SD_JWT to listOf(
+                        "credential4",
+                    )
+                ),
             )
         )
 ```
@@ -481,9 +532,16 @@ val mdocVPTokenSigningResult = MdocVPTokenSigningResult(
         )
     )
 )
+val sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
+    uuidToKbJWTSignature = mapOf(
+        "uuid" to "signature" // only signature part of the signed kb-jwt
+    )
+)
 val vpTokenSigningResults : Map<FormatType, VPTokenSigningResult> = mapOf(
     FormatType.LDP_VC to ldpVPTokenSigningResult,
-    FormatType.MSO_MDOC to mdocVPTokenSigningResult
+    FormatType.MSO_MDOC to mdocVPTokenSigningResult,
+    FormatType.VC_SD_JWT to sdJwtVPTokenSigningResult,
+    FormatType.DC_SD_JWT to sdJwtVPTokenSigningResult,
 )
 val response : String = openID4VP.shareVerifiablePresentation(vpTokenSigningResults = vpTokenSigningResults)
 ```
