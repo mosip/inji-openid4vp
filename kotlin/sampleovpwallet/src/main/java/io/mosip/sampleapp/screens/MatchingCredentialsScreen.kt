@@ -1,5 +1,6 @@
 package io.mosip.sampleapp.screens
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
+import org.json.JSONObject
 
 @Composable
 fun MatchingCredentialsScreen(
@@ -75,7 +78,12 @@ fun MatchingCredentialsScreen(
         ) {
             IconButton(onClick = {
                 coroutineScope.launch(Dispatchers.IO) {
-                    OpenID4VPManager.sendErrorToVerifier(OpenID4VPExceptions.AccessDenied(Constants.ERR_DECLINED, "MatchingCredentialsScreen"))
+                    OpenID4VPManager.sendErrorToVerifier(
+                        OpenID4VPExceptions.AccessDenied(
+                            Constants.ERR_DECLINED,
+                            "MatchingCredentialsScreen"
+                        )
+                    )
                     withContext(Dispatchers.Main) {
                         navController.popBackStack(Screen.Share.route, inclusive = false)
                     }
@@ -85,7 +93,10 @@ fun MatchingCredentialsScreen(
             }
         }
 
-        Text(stringResource(R.string.requested_claims, matchResult?.requestedClaims ?: "N/A"), style = MaterialTheme.typography.body1)
+        Text(
+            stringResource(R.string.requested_claims, matchResult?.requestedClaims ?: "N/A"),
+            style = MaterialTheme.typography.body1
+        )
         Spacer(modifier = Modifier.height(4.dp))
         Text("Purpose: ${matchResult?.purpose ?: "N/A"}", style = MaterialTheme.typography.body2)
         Spacer(modifier = Modifier.height(16.dp))
@@ -138,7 +149,10 @@ fun MatchingCredentialsScreen(
                 }
             }
         } else {
-            Text(stringResource(R.string.no_matching_credentials_found), style = MaterialTheme.typography.body2)
+            Text(
+                stringResource(R.string.no_matching_credentials_found),
+                style = MaterialTheme.typography.body2
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -159,7 +173,7 @@ fun MatchingCredentialsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             TextButton(onClick = {
-                handleDecline(coroutineScope) {
+                handleDecline(coroutineScope, navController) {
                     navController.popBackStack(Screen.Share.route, inclusive = false)
                 }
             }) {
@@ -177,9 +191,17 @@ fun MatchingCredentialsScreen(
                 TextButton(onClick = {
                     showConsentDialog = false
                     coroutineScope.launch {
-                        shareVerifiablePresentation(selectedItems)
+                        shareVerifiablePresentation(
+                            selectedItems
+                        ) { result ->
+                            coroutineScope.launch {
+                                handleVerifierResponse(result, navController) {
+                                    selectedItems.clear()
+                                }
+                            }
+                            navController.navigate(Screen.Success.route)
+                        }
                     }
-                    navController.navigate(Screen.Success.route)
                 }) {
                     Text(stringResource(R.string.yes_proceed))
                 }
@@ -202,7 +224,7 @@ fun MatchingCredentialsScreen(
             text = { Text(stringResource(R.string.do_you_want_to_go_back_to_scanning)) },
             confirmButton = {
                 TextButton(onClick = {
-                    handleDecline(coroutineScope) {
+                    handleDecline(coroutineScope, navController) {
                         showDeclineConfirmationDialog = false
                         navController.popBackStack(Screen.Share.route, inclusive = false)
                     }
@@ -222,16 +244,48 @@ fun MatchingCredentialsScreen(
     }
 }
 
-
 fun handleDecline(
     coroutineScope: CoroutineScope,
-    onDeclineConfirmed: () -> Unit
+    navController: NavHostController,
+    onDeclineConfirmed: () -> Unit,
 ) {
     coroutineScope.launch(Dispatchers.IO) {
-        OpenID4VPManager.sendErrorToVerifier(OpenID4VPExceptions.AccessDenied(Constants.ERR_DECLINED, "MatchingCredentialsScreen"))
+        val verifierResponse = OpenID4VPManager.sendErrorToVerifier(
+            OpenID4VPExceptions.AccessDenied(
+                Constants.ERR_DECLINED,
+                "MatchingCredentialsScreen"
+            )
+        )
+        handleVerifierResponse(verifierResponse, navController, onDeclineConfirmed)
         withContext(Dispatchers.Main) {
             onDeclineConfirmed()
         }
+    }
+}
+
+private suspend fun handleVerifierResponse(
+    verifierResponse: String,
+    navController: NavHostController,
+    callback: () -> Unit = {}
+) {
+    println("Verifier Response: $verifierResponse")
+
+    val redirectUri = try {
+        JSONObject(verifierResponse).optString("redirect_uri")
+    } catch (e: Exception) {
+        println("Error parsing JSON: ${e.message}")
+        null
+    }
+    withContext(Dispatchers.Main) {
+        redirectUri?.let {
+            val intent = Intent(
+                Intent.ACTION_VIEW,
+                it.toUri()
+            )
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            navController.context.startActivity(intent)
+        }
+        callback()
     }
 }
 

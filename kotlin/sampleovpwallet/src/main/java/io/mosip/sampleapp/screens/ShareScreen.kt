@@ -207,7 +207,11 @@ fun CameraPreviewAndScanner(
         if (showErrorDialog) {
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
-                    OpenID4VPManager.sendErrorToVerifier(OpenID4VPExceptions.InvalidTransactionData(Constants.ERR_NO_MATCHING_VCs, "ShareScreen"))
+                    try {
+                        OpenID4VPManager.sendErrorToVerifier(OpenID4VPExceptions.InvalidTransactionData(Constants.ERR_NO_MATCHING_VCs, "ShareScreen"))
+                    } catch (e: Exception) {
+                        Log.e("io.mosip.samplewallet", "Failed to send error to verifier", e)
+                    }
                 }
             }
 
