@@ -507,7 +507,7 @@ This method will also notify the Verifier about the error by sending it to the r
 // Example: The user declines to share the requested credentials. In this case, Verifier needs to be informed about the scenario.
 // So call the sendErrorResponseToVerifier method with appropriate exception message to notify the Verifier.
 
-val verifierResponse: String = openID4VP.sendErrorToVerifier(
+val verifierResponse: String = openID4VP.sendErrorResponseToVerifier(
     OpenID4VPExceptions.AccessDenied(
         message = "User did not give consent to share the requested Credentials with the Verifier.",
         className = this.className
@@ -519,7 +519,7 @@ val verifierResponse: String = openID4VP.sendErrorToVerifier(
 1. ErrorDispatchFailure is thrown if any issue occurs while sending the Authorization Error response to the Verifier.
 
 
-### sendErrorToVerifier (deprecated)
+### sendErrorToVerifier  (deprecated, use sendErrorResponseToVerifier instead)
 - Receives an exception and sends it's message to the Verifier via an HTTP POST request.
 
 ```kotlin
