@@ -145,16 +145,15 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
         requestUriResponse: NetworkResponse,
         httpMethod: HttpMethod
     ) {
-        if (requestUriResponse.body.isEmpty()) {
+        val responseBody = requestUriResponse.body
+        val headers = requestUriResponse.headers
+
+        if (responseBody.isEmpty()) {
             throw OpenID4VPExceptions.InvalidData(
                 "Missing body in request_uri response",
                 className
             )
         }
-
-        val headers = requestUriResponse.headers
-
-        val responseBody = requestUriResponse.body
 
         if (!isValidContentType(headers)) {
             throw OpenID4VPExceptions.InvalidData(

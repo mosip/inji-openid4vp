@@ -91,12 +91,11 @@ class OpenID4VP @JvmOverloads constructor(
      * The response body from Verifier response is returned as a String.
      */
     fun sendErrorResponseToVerifier(exception: Exception): String {
-        val sendAuthorizationError = authorizationResponseHandler.sendAuthorizationError(
-            this.responseUri,
-            this.authorizationRequest,
+        return authorizationResponseHandler.sendAuthorizationError(
+            responseUri,
+            authorizationRequest,
             exception
         )
-        return sendAuthorizationError
     }
 
     @Deprecated("supports accepting wallet metadata")
