@@ -106,7 +106,7 @@ internal class AuthorizationResponseHandler {
         return unsignedVPTokenResults.mapValues { it.value.second }
     }
 
-    internal fun sendAuthorizationError(responseUri: String?, authorizationRequest: AuthorizationRequest?, exception: Exception): String {
+    internal fun sendAuthorizationError(responseUri: String?, authorizationRequest: AuthorizationRequest?, exception: Exception): NetworkResponse {
         if (responseUri == null) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Response URI is not set. Cannot send error to verifier.",
@@ -133,7 +133,7 @@ internal class AuthorizationResponseHandler {
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
             (exception as? OpenID4VPExceptions)?.setResponse(networkResponse.body)
-            return networkResponse.body
+            return networkResponse
         } catch (err: Exception) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Failed to send error to verifier: ${err.message}",

@@ -19,8 +19,6 @@ import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.*
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlin.test.*
 
 class OpenID4VPTest {
@@ -166,7 +164,7 @@ class OpenID4VPTest {
                 any(),
                 any()
             )
-        } returns """{"message":"Error received successfully"}"""
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         val testException = InvalidInput("", "Invalid authorization request", "")
         every {
@@ -267,7 +265,7 @@ class OpenID4VPTest {
                 any()
             )
         }
-        assertEquals("{\"message\":\"VP share success\"}", dispatchResult)
+        assertEquals("{\"message\":\"VP share success\"}", dispatchResult.body)
     }
 
     @Test
