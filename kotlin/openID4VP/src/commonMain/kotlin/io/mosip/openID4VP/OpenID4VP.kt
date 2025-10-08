@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.V
 import io.mosip.openID4VP.constants.*
 import io.mosip.openID4VP.common.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,
@@ -70,6 +71,23 @@ class OpenID4VP @JvmOverloads constructor(
         }
     }
 
+    /** Sends the final Authorization response to Verifier with the Verifiable Presentations as per response type */
+    fun sendAuthorizationResponseToVerifier(
+        vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
+    ): NetworkResponse {
+        return try {
+            authorizationResponseHandler.shareVP(
+                authorizationRequest = authorizationRequest!!,
+                vpTokenSigningResults = vpTokenSigningResults,
+                responseUri = responseUri!!
+            )
+        } catch (exception: OpenID4VPExceptions) {
+            this.safeSendError(exception)
+            throw exception
+        }
+    }
+
+    @Deprecated("Use sendAuthorizationResponseToVerifier instead")
     /** Sends the final signed VP token response to the verifier */
     fun shareVerifiablePresentation(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
@@ -79,7 +97,7 @@ class OpenID4VP @JvmOverloads constructor(
                 authorizationRequest = authorizationRequest!!,
                 vpTokenSigningResults = vpTokenSigningResults,
                 responseUri = responseUri!!
-            )
+            ).body
         } catch (exception: OpenID4VPExceptions) {
             this.safeSendError(exception)
             throw exception

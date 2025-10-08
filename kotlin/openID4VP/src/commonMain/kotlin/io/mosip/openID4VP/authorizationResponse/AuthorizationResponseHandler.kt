@@ -26,6 +26,7 @@ import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
@@ -145,7 +146,7 @@ internal class AuthorizationResponseHandler {
         authorizationRequest: AuthorizationRequest,
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>,
         responseUri: String,
-    ): String {
+    ): NetworkResponse {
         val authorizationResponse: AuthorizationResponse = createAuthorizationResponse(
             authorizationRequest = authorizationRequest,
             vpTokenSigningResults = vpTokenSigningResults
@@ -191,7 +192,7 @@ internal class AuthorizationResponseHandler {
         authorizationResponse: AuthorizationResponse,
         responseUri: String,
         authorizationRequest: AuthorizationRequest,
-    ): String {
+    ): NetworkResponse {
         return ResponseModeBasedHandlerFactory.get(authorizationRequest.responseMode!!)
             .sendAuthorizationResponse(
                 authorizationRequest = authorizationRequest,
@@ -388,7 +389,7 @@ internal class AuthorizationResponseHandler {
                 authorizationResponse = authorizationResponse,
                 responseUri = responseUri,
                 authorizationRequest = authorizationRequest
-            )
+            ).body
         } catch (exception: Exception) {
             throw exception
         }

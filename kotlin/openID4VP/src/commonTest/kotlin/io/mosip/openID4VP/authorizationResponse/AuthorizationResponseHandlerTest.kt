@@ -178,7 +178,7 @@ class AuthorizationResponseHandlerTest {
                 any(),
                 any()
             )
-        } returns "success"
+        } returns NetworkResponse(200, "success", mapOf())
     }
 
     @AfterTest
@@ -335,7 +335,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result)
+        assertEquals("success", result.body)
 
         verify {
             ResponseModeBasedHandlerFactory.get("direct_post")
@@ -771,7 +771,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result)
+        assertEquals("success", result.body)
 
 
         verify(exactly = 1) {
@@ -845,7 +845,7 @@ class AuthorizationResponseHandlerTest {
             responseUrl
         )
 
-        assertEquals("success", result)
+        assertEquals("success", result.body)
     }
 
     @Test
@@ -1006,7 +1006,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result)
+        assertEquals("success", result.body)
         // assert if mockResponseHandler is called with correct authorization response
         verify(exactly = 1) {
             mockResponseHandler.sendAuthorizationResponse(

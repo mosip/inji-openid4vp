@@ -12,6 +12,7 @@ import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.KeyManagementAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 
 private val className = DirectPostJwtResponseModeHandler::class.simpleName!!
@@ -85,7 +86,7 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
         url: String,
         authorizationResponse: AuthorizationResponse,
         walletNonce: String
-    ): String {
+    ): NetworkResponse {
         val bodyParams = authorizationResponse.toJsonEncodedMap()
         val clientMetadata = authorizationRequest.clientMetadata!!
 
@@ -102,14 +103,11 @@ class DirectPostJwtResponseModeHandler : ResponseModeBasedHandler() {
         val encryptedBody = jweHandler.generateEncryptedResponse(bodyParams)
         val encryptedBodyParams = mapOf("response" to encryptedBody)
 
-        val response = sendHTTPRequest(
+        return sendHTTPRequest(
             url = url,
             method = HttpMethod.POST,
             bodyParams = encryptedBodyParams,
             headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
         )
-        return response.body
     }
-
-
 }

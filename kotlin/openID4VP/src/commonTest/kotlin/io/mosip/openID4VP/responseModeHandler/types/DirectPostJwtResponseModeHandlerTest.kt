@@ -162,6 +162,6 @@ class DirectPostJwtResponseModeHandlerTest {
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
         }
-        assertEquals(vpShareSuccessResponse, actualResponse)
+        assertEquals(vpShareSuccessResponse, actualResponse.body)
     }
 }
