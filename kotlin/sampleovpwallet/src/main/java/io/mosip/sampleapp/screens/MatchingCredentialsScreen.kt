@@ -283,7 +283,11 @@ private suspend fun handleVerifierResponse(
                 it.toUri()
             )
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            navController.context.startActivity(intent)
+            if (intent.resolveActivity(navController.context.packageManager) != null) {
+                navController.context.startActivity(intent)
+            } else {
+                println("No app found to handle URI: $it")
+            }
         }
         callback()
     }
