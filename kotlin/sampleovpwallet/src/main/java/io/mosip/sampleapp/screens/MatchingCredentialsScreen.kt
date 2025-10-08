@@ -197,9 +197,9 @@ fun MatchingCredentialsScreen(
                             coroutineScope.launch {
                                 handleVerifierResponse(result, navController) {
                                     selectedItems.clear()
+                                    navController.navigate(Screen.Success.route)
                                 }
                             }
-                            navController.navigate(Screen.Success.route)
                         }
                     }
                 }) {
@@ -283,7 +283,9 @@ private suspend fun handleVerifierResponse(
                 it.toUri()
             )
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (intent.resolveActivity(navController.context.packageManager) != null) {
+            if (redirectUri.startsWith("https://")) {
+                navController.context.startActivity(intent)
+            } else if (intent.resolveActivity(navController.context.packageManager) != null) {
                 navController.context.startActivity(intent)
             } else {
                 println("No app found to handle URI: $it")
