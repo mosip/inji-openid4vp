@@ -572,7 +572,7 @@ val verifierResponse: String = openID4VP.sendErrorResponseToVerifier(
     )
 )
 ```
-###### Exceptions
+#### Exceptions
 
 1. ErrorDispatchFailure is thrown if any issue occurs while sending the Authorization Error response to the Verifier.
 
@@ -605,4 +605,4 @@ The following methods are deprecated and will be removed in future releases. Ple
 
 | Method Name         | Description                               | Deprecated Since | Suggested Alternative                                       |
 |---------------------|-------------------------------------------|------------------|-------------------------------------------------------------|
-| sendErrorToVerifier | Sends Authorization error to the verifier | 0.6.0            | [sendErrorResponseToVerifier](#sendErrorResponseToVerifier) |
+| sendErrorToVerifier | Sends Authorization error to the verifier | 0.6.0            | [sendErrorResponseToVerifier](#senderrorresponsetoverifier) |
