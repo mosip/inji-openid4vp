@@ -1051,7 +1051,7 @@ class AuthorizationResponseHandlerTest {
             exception = ex
         )
 
-        assertEquals("mock-error-response", result)
+        assertEquals("mock-error-response", result.body)
         assertTrue(bodySlot.isCaptured)
         assertEquals(authorizationRequest.state, bodySlot.captured["state"])
         assertTrue(headersSlot.captured["Content-Type"]!!.contains("application/x-www-form-urlencoded"))
@@ -1076,7 +1076,7 @@ class AuthorizationResponseHandlerTest {
             exception = ex
         )
 
-        assertEquals("generic-error-response", result)
+        assertEquals("generic-error-response", result.body)
         assertTrue(bodySlot.captured.containsKey("error"))
         assertTrue(bodySlot.captured.values.any { it.contains("Boom") })
     }

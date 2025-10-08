@@ -108,7 +108,7 @@ class OpenID4VP @JvmOverloads constructor(
      * Sends Authorization error to the Verifier and returns the response from the Verifier.
      * The response body from Verifier response is returned as a String.
      */
-    fun sendErrorResponseToVerifier(exception: Exception): String {
+    fun sendErrorResponseToVerifier(exception: Exception): NetworkResponse {
         return authorizationResponseHandler.sendAuthorizationError(
             responseUri,
             authorizationRequest,
@@ -188,7 +188,8 @@ class OpenID4VP @JvmOverloads constructor(
     private fun safeSendError(exception: Exception) {
         try {
             val verifierResponse = sendErrorResponseToVerifier(exception)
-            (exception as? OpenID4VPExceptions)?.setResponse(verifierResponse)
+            //TODO: should this response also be network response aligned with return type of share auth response?
+            (exception as? OpenID4VPExceptions)?.setResponse(verifierResponse.body)
         } catch (error: Exception) {
             OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
         }
