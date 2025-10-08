@@ -119,10 +119,10 @@ The following credential formats are supported for sharing:
 - [Integration](#integration)
 - [Package Structure](#package-structure)
 - [APIs](#apis)
-    - [authenticateVerifier](#authenticateverifier)
-    - [constructUnsignedVPToken](#constructUnsignedVPToken)
-    - [shareVerifiablePresentation](#shareverifiablepresentation)
-    - [sendErrorResponseToVerifier](#senderrorresponsetoverifier)
+  - [authenticateVerifier](#authenticateverifier)
+  - [constructUnsignedVPToken](#constructUnsignedVPToken)
+  - [shareVerifiablePresentation](#shareverifiablepresentation)
+  - [sendErrorResponseToVerifier](#senderrorresponsetoverifier)
 
 
 ## Installation
