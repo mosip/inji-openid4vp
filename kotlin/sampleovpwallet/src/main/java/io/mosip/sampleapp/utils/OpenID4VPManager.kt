@@ -58,10 +58,15 @@ object OpenID4VPManager {
         }
     }
 
-    fun shareVerifiablePresentation(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>) {
+    fun shareVerifiablePresentation(
+        selectedItems: SnapshotStateList<Pair<String, VCMetadata>>,
+        onResult: (String) -> Unit
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                sendVP(selectedItems)
+                val result = sendVP(selectedItems)
+                println("VP sharing result: $result")
+                onResult(result)
             } catch (exception: Exception) {
                 Log.e("OpenID4VP-sample wallet", "Error sharing Verifiable Presentation: ${exception.message}")
                 throw exception
@@ -70,67 +75,86 @@ object OpenID4VPManager {
     }
 
 
-    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>) = withContext(
-        Dispatchers.IO) {
-        val parsedSelectedItems = MatchingVcsHelper().buildSelectedVCsMapPlain(selectedItems)
+    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): String =
+        withContext(
+            Dispatchers.IO
+        ) {
+            val parsedSelectedItems = MatchingVcsHelper().buildSelectedVCsMapPlain(selectedItems)
 
 
-        // LDP_VC signing
-        val ldpKeyType = KeyType.Ed25519
-        val ldpKeyPair = SampleKeyGenerator.generateKeyPair(ldpKeyType)
-        val holderId = DetachedJwtKeyManager.generateHolderId(ldpKeyPair as OctetKeyPair)
+            // LDP_VC signing
+            val ldpKeyType = KeyType.Ed25519
+            val ldpKeyPair = SampleKeyGenerator.generateKeyPair(ldpKeyType)
+            val holderId = DetachedJwtKeyManager.generateHolderId(ldpKeyPair as OctetKeyPair)
 
-        val unsignedVpTokenMap = constructUnsignedVpToken(parsedSelectedItems,
-            holderId, SIGNATURE_SUITE)
-
-
-        val ldpSigningResult = unsignedVpTokenMap[FormatType.LDP_VC]?.let { vpPayload ->
-
-
-            val result = VPTokenSigner.signVpToken(ldpKeyType, (vpPayload as UnsignedLdpVPToken).dataToSign, ldpKeyPair)
-
-            LdpVPTokenSigningResult(
-                jws = result.jws,
-                signatureAlgorithm = result.signatureAlgorithm
+            val unsignedVpTokenMap = constructUnsignedVpToken(
+                parsedSelectedItems,
+                holderId, SIGNATURE_SUITE
             )
-        }
 
-        // MSO_MDOC signing
-        val mdocKeyType = KeyType.ES256
-        val mdocKeyPair = SampleKeyGenerator.generateKeyPair(mdocKeyType)
 
-        val mdocSigningResult = unsignedVpTokenMap[FormatType.MSO_MDOC]?.let { payload ->
-            val mdocPayload = payload as UnsignedMdocVPToken
-            val docTypeToDeviceAuthenticationBytes = mdocPayload.docTypeToDeviceAuthenticationBytes
+            val ldpSigningResult = unsignedVpTokenMap[FormatType.LDP_VC]?.let { vpPayload ->
 
-            val docTypeToDeviceAuthentication = docTypeToDeviceAuthenticationBytes.mapValues { (_, deviceAuthBytes) ->
-                val bytes = if (deviceAuthBytes is String) {
-                    deviceAuthBytes.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-                } else deviceAuthBytes as ByteArray
-                val signed = VPTokenSigner.signDeviceAuthentication(mdocKeyPair as KeyPair, mdocKeyType, bytes)
-                val jwsParts = signed.jws.split(".")
-                val signaturePart = if (jwsParts.size == 3) jwsParts[2] else signed.jws
-                DeviceAuthentication(signature = signaturePart, algorithm = signed.signatureAlgorithm)
+
+                val result = VPTokenSigner.signVpToken(
+                    ldpKeyType,
+                    (vpPayload as UnsignedLdpVPToken).dataToSign,
+                    ldpKeyPair
+                )
+
+                LdpVPTokenSigningResult(
+                    jws = result.jws,
+                    signatureAlgorithm = result.signatureAlgorithm
+                )
             }
-            MdocVPTokenSigningResult(docTypeToDeviceAuthentication)
+
+            // MSO_MDOC signing
+            val mdocKeyType = KeyType.ES256
+            val mdocKeyPair = SampleKeyGenerator.generateKeyPair(mdocKeyType)
+
+            val mdocSigningResult = unsignedVpTokenMap[FormatType.MSO_MDOC]?.let { payload ->
+                val mdocPayload = payload as UnsignedMdocVPToken
+                val docTypeToDeviceAuthenticationBytes =
+                    mdocPayload.docTypeToDeviceAuthenticationBytes
+
+                val docTypeToDeviceAuthentication =
+                    docTypeToDeviceAuthenticationBytes.mapValues { (_, deviceAuthBytes) ->
+                        val bytes = if (deviceAuthBytes is String) {
+                            deviceAuthBytes.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+                        } else deviceAuthBytes as ByteArray
+                        val signed = VPTokenSigner.signDeviceAuthentication(
+                            mdocKeyPair as KeyPair,
+                            mdocKeyType,
+                            bytes
+                        )
+                        val jwsParts = signed.jws.split(".")
+                        val signaturePart = if (jwsParts.size == 3) jwsParts[2] else signed.jws
+                        DeviceAuthentication(
+                            signature = signaturePart,
+                            algorithm = signed.signatureAlgorithm
+                        )
+                    }
+                MdocVPTokenSigningResult(docTypeToDeviceAuthentication)
+            }
+
+
+            val vpTokenSigningResultMap = buildMap {
+                ldpSigningResult?.let { put(FormatType.LDP_VC, it) }
+                mdocSigningResult?.let { put(FormatType.MSO_MDOC, it) }
+            }
+
+            try {
+                val finalResponse = instance.shareVerifiablePresentation(vpTokenSigningResultMap)
+                Log.d("VP_SHARE", "######## $finalResponse")
+                finalResponse
+            } catch (e: Exception) {
+                Log.e("VP_SHARE", "Error sharing VP", e)
+                ""
+            }
         }
 
-
-        val vpTokenSigningResultMap = buildMap {
-            ldpSigningResult?.let { put(FormatType.LDP_VC, it) }
-            mdocSigningResult?.let { put(FormatType.MSO_MDOC, it) }
-        }
-
-        try {
-            val finalResponse = instance.shareVerifiablePresentation(vpTokenSigningResultMap)
-            Log.d("VP_SHARE", "######## $finalResponse")
-        } catch (e: Exception) {
-            Log.e("VP_SHARE", "Error sharing VP", e)
-        }
-    }
-
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
-        return instance.sendErrorToVerifier(ovpException)
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): String {
+        return instance.sendErrorResponseToVerifier(ovpException)
     }
 }
 

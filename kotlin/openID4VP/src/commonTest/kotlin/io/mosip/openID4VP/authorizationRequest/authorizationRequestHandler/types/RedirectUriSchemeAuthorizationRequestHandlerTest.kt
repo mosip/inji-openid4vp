@@ -7,7 +7,6 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.parseAndValidateClientMetadata
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.parseAndValidatePresentationDefinition
 import io.mosip.openID4VP.constants.ClientIdScheme
-import io.mosip.openID4VP.constants.ContentType
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.VPFormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions

@@ -10,9 +10,9 @@ import io.mosip.openID4VP.constants.ClientIdScheme.*
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions
 import io.mosip.openID4VP.testData.*
-import okhttp3.Headers
 import org.junit.Test
 import kotlin.test.*
 
@@ -29,13 +29,13 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 "https://mock-verifier.com/verifier/get-presentation-definition",
                 HttpMethod.GET
             )
-        } returns mapOf("body" to presentationDefinitionString)
+        } returns NetworkResponse(200, presentationDefinitionString, mapOf())
         every {
             NetworkManagerClient.sendHTTPRequest(
                 "https://resolver.identity.foundation/1.0/identifiers/did:web:mosip.github.io:inji-mock-services:openid4vp-service:docs",
                 HttpMethod.GET
             )
-        } returns mapOf("body" to didResponse)
+        } returns NetworkResponse(200, didResponse, mapOf())
     }
 
     @AfterTest
@@ -90,10 +90,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
                 requestUrl,
                 any()
             )
-        } returns mapOf(
-            "header" to Headers.Builder().add("content-type", "application/json").build(),
-            "body" to createAuthorizationRequestObject(DID, authorizationRequestParamsMap)
-        )
+        } returns NetworkResponse(200,
+            createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/json")))
 
         val encodedAuthorizationRequest =
             createUrlEncodedData(

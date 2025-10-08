@@ -37,8 +37,8 @@ import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
-import okhttp3.Headers
 import java.security.PublicKey
 
 private val className = ClientIdSchemeBasedAuthorizationRequestHandler::class.simpleName!!
@@ -62,7 +62,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     abstract fun clientIdScheme(): String
 
     fun fetchAuthorizationRequest() {
-        val requestUriResponse: Map<String, Any>
+        val requestUriResponse: NetworkResponse
 
         val requestUri = getStringValue(authorizationRequestParameters, REQUEST_URI.value)
 
@@ -102,7 +102,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 walletMetadata?.let { walletMetadata ->
                     isClientIdSchemeSupported(walletMetadata)
                     val processedWalletMetadata = process(walletMetadata)
-                    body = body.plus(
+                    body = body?.plus(
                         mapOf(
                             "wallet_metadata" to encodeToJsonString(
                                 processedWalletMetadata,
@@ -142,20 +142,18 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
 
     private fun validateRequestUriResponse(
-        requestUriResponse: Map<String, Any>,
+        requestUriResponse: NetworkResponse,
         httpMethod: HttpMethod
     ) {
-        if (requestUriResponse.isEmpty()) {
-            throw OpenID4VPExceptions.MissingInput(listOf(REQUEST_URI.value), "", className)
-        }
+        val responseBody = requestUriResponse.body
+        val headers = requestUriResponse.headers
 
-        val headers = requestUriResponse["header"] as Headers
-
-        val responseBody = requestUriResponse["body"]?.toString()
-            ?: throw OpenID4VPExceptions.InvalidData(
+        if (responseBody.isEmpty()) {
+            throw OpenID4VPExceptions.InvalidData(
                 "Missing body in request_uri response",
                 className
             )
+        }
 
         if (!isValidContentType(headers)) {
             throw OpenID4VPExceptions.InvalidData(
@@ -264,11 +262,14 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
 
     abstract fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey
 
-    private fun isValidContentType(headers: Headers): Boolean =
-        headers["content-type"]?.contains(
-            ContentType.APPLICATION_JWT.value,
-            ignoreCase = true
-        ) == true
+    private fun isValidContentType(headers: Map<String, List<String>>): Boolean {
+        val contentTypeValues: List<String> = headers.entries
+            .firstOrNull { it.key.equals("content-type", ignoreCase = true) }
+            ?.value ?: return false
+        return contentTypeValues.any { value ->
+            value.contains(ContentType.APPLICATION_JWT.value, ignoreCase = true)
+        }
+    }
 
     private fun validateAuthorizationRequestSigningAlgorithm(
         algorithm: String,

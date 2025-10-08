@@ -32,6 +32,6 @@ class DirectPostResponseModeHandler: ResponseModeBasedHandler() {
             bodyParams = bodyParams,
             headers = mapOf("Content-Type" to APPLICATION_FORM_URL_ENCODED.value)
         )
-        return response["body"].toString()
+        return response.body
     }
 }

@@ -21,7 +21,7 @@ class NetworkManagerClient {
             method: HttpMethod,
             bodyParams: Map<String, String>? = null,
             headers: Map<String, String>? = null
-        ): Map<String, Any> {
+        ): NetworkResponse {
             try {
                 val client = OkHttpClient.Builder().build()
                 val request: Request = when (method) {
@@ -46,10 +46,7 @@ class NetworkManagerClient {
                     val body = response.body?.byteStream()?.bufferedReader().use { it?.readText() }
                         ?: ""
 
-                    return mapOf(
-                        "body" to body,
-                        "header" to response.headers
-                    )
+                    return NetworkResponse(response.code, body, response.headers.toMultimap())
                 } else {
                     throw Exception(response.toString())
                 }

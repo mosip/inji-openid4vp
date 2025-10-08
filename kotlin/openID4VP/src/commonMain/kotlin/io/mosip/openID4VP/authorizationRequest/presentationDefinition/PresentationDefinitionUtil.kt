@@ -12,6 +12,7 @@ import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.ResponseMode
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 private val className = PresentationDefinition::class.simpleName!!
 fun parseAndValidatePresentationDefinition(
@@ -59,7 +60,7 @@ fun parseAndValidatePresentationDefinition(
                 )
             }
 
-            val response: Map<String, Any>
+            val response: NetworkResponse
             try {
                 response = sendHTTPRequest(
                     url = presentationDefinitionUri,
@@ -73,8 +74,8 @@ fun parseAndValidatePresentationDefinition(
                 )
             }
 
-            val responseBody = response["body"]?.toString()
-            if (responseBody.isNullOrBlank()) {
+            val responseBody = response.body
+            if (responseBody.isBlank()) {
                 throw OpenID4VPExceptions.InvalidData(
                     "presentation_definition_uri response body is not valid",
                     className,

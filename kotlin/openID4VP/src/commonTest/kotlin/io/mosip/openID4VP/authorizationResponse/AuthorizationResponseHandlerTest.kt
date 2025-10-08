@@ -25,6 +25,7 @@ import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.FormatType.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 import io.mosip.openID4VP.testData.*
@@ -1026,4 +1027,86 @@ class AuthorizationResponseHandlerTest {
     }
 
 
+    // Tests for sendAuthorizationError
+
+// Tests for sendAuthorizationError
+
+    @Test
+    fun `sendAuthorizationError should send OpenID4VPExceptions payload including state`() {
+        val bodySlot = slot<Map<String, String>>()
+        val headersSlot = slot<Map<String, String>>()
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                url = any(),
+                method = any(),
+                bodyParams = capture(bodySlot),
+                headers = capture(headersSlot)
+            )
+        } returns NetworkResponse(400, "mock-error-response", mapOf())
+
+        val ex = InvalidData("Some invalid data", "TestClass")
+        val result = authorizationResponseHandler.sendAuthorizationError(
+            responseUri = "https://verifier.example.com/cb",
+            authorizationRequest = authorizationRequest,
+            exception = ex
+        )
+
+        assertEquals("mock-error-response", result)
+        assertTrue(bodySlot.isCaptured)
+        assertEquals(authorizationRequest.state, bodySlot.captured["state"])
+        assertTrue(headersSlot.captured["Content-Type"]!!.contains("application/x-www-form-urlencoded"))
+    }
+
+    @Test
+    fun `sendAuthorizationError should wrap generic exception`() {
+        val bodySlot = slot<Map<String, String>>()
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                url = any(),
+                method = any(),
+                bodyParams = capture(bodySlot),
+                headers = any()
+            )
+        } returns NetworkResponse(500, "generic-error-response", mapOf())
+
+        val ex = RuntimeException("Boom")
+        val result = authorizationResponseHandler.sendAuthorizationError(
+            responseUri = "https://verifier.example.com/cb",
+            authorizationRequest = authorizationRequest,
+            exception = ex
+        )
+
+        assertEquals("generic-error-response", result)
+        assertTrue(bodySlot.captured.containsKey("error"))
+        assertTrue(bodySlot.captured.values.any { it.contains("Boom") })
+    }
+
+    @Test
+    fun `sendAuthorizationError should throw when responseUri is null`() {
+        val ex = InvalidData("msg", "Test")
+        assertFailsWith<ErrorDispatchFailure> {
+            authorizationResponseHandler.sendAuthorizationError(
+                responseUri = null,
+                authorizationRequest = authorizationRequest,
+                exception = ex
+            )
+        }
+    }
+
+    @Test
+    fun `sendAuthorizationError should throw ErrorDispatchFailure when network fails`() {
+        every {
+            NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
+        } throws RuntimeException("network down")
+
+        val ex = InvalidData("msg", "Test")
+        val failure = assertFailsWith<ErrorDispatchFailure> {
+            authorizationResponseHandler.sendAuthorizationError(
+                responseUri = "https://verifier.example.com/cb",
+                authorizationRequest = authorizationRequest,
+                exception = ex
+            )
+        }
+        assertTrue(failure.message.contains("network down"))
+    }
 }

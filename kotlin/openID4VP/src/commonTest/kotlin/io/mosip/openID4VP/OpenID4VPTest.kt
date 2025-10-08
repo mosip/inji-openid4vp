@@ -1,21 +1,23 @@
 package io.mosip.openID4VP
 
+import foundation.identity.jsonld.JsonLDObject
 import io.mockk.*
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
+import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponseHandler
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.URDNA2015Canonicalization
 import io.mosip.openID4VP.common.UUIDGenerator
+import io.mosip.openID4VP.constants.FormatType.LDP_VC
+import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.*
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.*
-import foundation.identity.jsonld.JsonLDObject
-import io.mosip.openID4VP.authorizationRequest.Verifier
-import io.mosip.openID4VP.constants.FormatType.LDP_VC
-import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
+import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -40,6 +42,7 @@ class OpenID4VPTest {
     @BeforeTest
     fun setUp() {
         mockkObject(NetworkManagerClient)
+        mockkObject(AuthorizationRequest)
         openID4VP = OpenID4VP("test-OpenID4VP")
         openID4VP.authorizationRequest = authorizationRequest
         setField(openID4VP, "responseUri", responseUrl)
@@ -139,11 +142,48 @@ class OpenID4VPTest {
             NetworkManagerClient.sendHTTPRequest(
                 any(), any(), any()
             )
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
-        assertFailsWith<InvalidInput> {
+        val invalidInputException = assertFailsWith<InvalidInput> {
             openID4VP.authenticateVerifier("openid-vc://?request=invalid", trustedVerifiers)
         }
+
+        assertOpenId4VPException(
+            exception = invalidInputException,
+            expectedMessage = "Invalid Input:  value cannot be empty or null",
+            expectedErrorCode = "invalid_request",
+        )
+    }
+
+    @Test
+    fun `exception thrown should have verifier response if sent to verifier`() {
+        val openID4VPInstance = OpenID4VP("OVPTest")
+        mockkConstructor(AuthorizationResponseHandler::class)
+        setField(openID4VPInstance, "responseUri", "https://mock-verifier.com/response-uri")
+        every {
+            anyConstructed<AuthorizationResponseHandler>().sendAuthorizationError(
+                any(),
+                any(),
+                any()
+            )
+        } returns """{"message":"Error received successfully"}"""
+
+        val testException = InvalidInput("", "Invalid authorization request", "")
+        every {
+            AuthorizationRequest.validateAndCreateAuthorizationRequest(
+                any(), any(), any(), any(), any(), any()
+            )
+        } throws testException
+
+        val exception = assertFailsWith<InvalidInput> {
+            openID4VPInstance.authenticateVerifier("encodedAuthorizationRequest", trustedVerifiers)
+        }
+        assertOpenId4VPException(
+            exception = exception,
+            expectedMessage = "Invalid Input:  value cannot be empty or null",
+            expectedErrorCode = "invalid_request",
+            expectedVerifierResponse = """{"message":"Error received successfully"}"""
+        )
     }
 
     @Test
@@ -193,7 +233,7 @@ class OpenID4VPTest {
 
         every {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         val thrown = assertFailsWith<InvalidData> {
             openID4VP.constructUnsignedVPToken(selectedLdpCredentialsList, holderId, signatureSuite)
@@ -210,15 +250,11 @@ class OpenID4VPTest {
                 any(),
                 any()
             )
-        } returns mapOf(
-                    "status" to 200,
-                    "headers" to mapOf("Content-Type" to "application/json"),
-                    "body" to """{"message":"VP share success"}"""
-                )
+        } returns NetworkResponse(200, """{"message":"VP share success"}""", mapOf("Content-Type" to listOf("application/json")))
         setField(openID4VP, "responseUri", "https://mock-verifier.com/response-uri")
 
         val dispatchResult =
-            openID4VP.sendErrorToVerifier(InvalidData("Unsupported response_mode", ""))
+            openID4VP.sendErrorResponseToVerifier(InvalidData("Unsupported response_mode", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -231,34 +267,25 @@ class OpenID4VPTest {
                 any()
             )
         }
-        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"VP share success\"}, headers={})",dispatchResult.toString())
+        assertEquals("{\"message\":\"VP share success\"}", dispatchResult)
     }
 
     @Test
     fun `should throw exception during sending error to verifier if any error occurs during the process`() {
-        mockkStatic(Logger::class)
-        val mockLogger = mockk<Logger>()
-        every { Logger.getLogger(any()) } returns mockLogger
-
         every {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
         } throws Exception("Network error")
 
-        var capturedLog: String? = null
-        every { mockLogger.log(eq(Level.SEVERE), any<String>()) } answers {
-            capturedLog = secondArg()
+
+        val errorDispatchFailure = assertFailsWith<ErrorDispatchFailure> {
+            openID4VP.sendErrorResponseToVerifier(Exception("Network error"))
         }
 
-        val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
-            openID4VP.sendErrorToVerifier(Exception("Network error"))
-        }
-
-        assertTrue(
-            capturedLog?.contains("Failed to send error to verifier: Network error") == true
+        assertOpenId4VPException(
+            errorDispatchFailure,
+            "Failed to send error to verifier: Failed to send error to verifier: Network error",
+            "error_dispatch_failure"
         )
-
-        unmockkStatic(Logger::class)
-        assertEquals("Failed to send error to verifier: Failed to send error to verifier: Network error", errorDispatchFailure.message)
     }
 
     @Test
@@ -266,10 +293,14 @@ class OpenID4VPTest {
         setField(openID4VP, "responseUri", null)
 
         val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
-            openID4VP.sendErrorToVerifier(AccessDenied("Access denied by user", "OpenID4VPTest"))
+            openID4VP.sendErrorResponseToVerifier(AccessDenied("Access denied by user", "OpenID4VPTest"))
         }
 
-        assertEquals("Failed to send error to verifier: Response URI is not set. Cannot send error to verifier.", errorDispatchFailure.message)
+        assertOpenId4VPException(
+            exception = errorDispatchFailure,
+            expectedMessage = "Failed to send error to verifier: Response URI is not set. Cannot send error to verifier.",
+            expectedErrorCode = "error_dispatch_failure"
+        )
     }
 
     @Test
@@ -314,7 +345,7 @@ class OpenID4VPTest {
 
         every {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         setField(openID4VP, "authorizationResponseHandler", mockHandler)
 
@@ -350,12 +381,12 @@ class OpenID4VPTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         val customAuthorizationRequest = authorizationRequest.copy(state = "test-state")
         setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("With state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("With state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -380,12 +411,12 @@ class OpenID4VPTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         val customAuthorizationRequest = authorizationRequest.copy(state = "")
         setField(openID4VP, "authorizationRequest", customAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("empty state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("empty state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(
@@ -410,12 +441,12 @@ class OpenID4VPTest {
                 any(),
                 any()
             )
-        } returns mapOf("body" to "Error sent")
+        } returns NetworkResponse(200, """{"message":"Error received successfully"}""", mapOf("Content-Type" to listOf("application/json")))
 
         val noStateAuthorizationRequest = authorizationRequest.copy(state = null)
         setField(openID4VP, "authorizationRequest", noStateAuthorizationRequest)
 
-        openID4VP.sendErrorToVerifier(InvalidData("No state test", ""))
+        openID4VP.sendErrorResponseToVerifier(InvalidData("No state test", ""))
 
         verify {
             NetworkManagerClient.sendHTTPRequest(

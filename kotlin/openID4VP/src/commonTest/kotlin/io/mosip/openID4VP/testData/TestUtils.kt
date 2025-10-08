@@ -4,11 +4,13 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
 import io.mosip.openID4VP.constants.ClientIdScheme
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.testData.JWSUtil.Companion.createJWS
 import kotlinx.serialization.json.JsonObject
 import java.lang.reflect.Field
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertEquals
 
 fun setField(instance: Any, fieldName: String, value: Any?) {
     val field: Field = instance::class.java.getDeclaredField(fieldName)
@@ -99,4 +101,12 @@ private fun createAuthorizationRequest(
         .associateWith { requestParams[it] }
         .toMutableMap()
     return authorizationRequestParam
+}
+
+fun assertOpenId4VPException(exception: OpenID4VPExceptions, expectedMessage: String, expectedErrorCode: String, expectedVerifierResponse: String? = null) {
+    assertEquals(expectedMessage, exception.message)
+    assertEquals(expectedErrorCode, exception.errorCode)
+    if(expectedVerifierResponse != null){
+        assertEquals(expectedVerifierResponse.toString(), exception.response.toString())
+    }
 }
