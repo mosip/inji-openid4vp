@@ -263,11 +263,9 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     abstract fun extractPublicKey(algorithm: RequestSigningAlgorithm, kid: String?): PublicKey
 
     private fun isValidContentType(headers: Map<String, List<String>>): Boolean {
-        println("Headers: $headers")
         val contentTypeValues: List<String> = headers.entries
             .firstOrNull { it.key.equals("content-type", ignoreCase = true) }
             ?.value ?: return false
-        println("Content-Type values: $contentTypeValues, size: ${contentTypeValues.size}")
         return contentTypeValues.any { value ->
             value.contains(ContentType.APPLICATION_JWT.value, ignoreCase = true)
         }

@@ -161,26 +161,29 @@ class OpenID4VPTest {
         mockkConstructor(AuthorizationResponseHandler::class)
         setField(openID4VPInstance, "responseUri", "https://mock-verifier.com/response-uri")
         every {
-            anyConstructed<AuthorizationResponseHandler>().sendAuthorizationError(any(), any(), any())
+            anyConstructed<AuthorizationResponseHandler>().sendAuthorizationError(
+                any(),
+                any(),
+                any()
+            )
         } returns """{"message":"Error received successfully"}"""
 
-        val testException = InvalidInput("", "Invalid authorization request","")
+        val testException = InvalidInput("", "Invalid authorization request", "")
         every {
             AuthorizationRequest.validateAndCreateAuthorizationRequest(
                 any(), any(), any(), any(), any(), any()
             )
         } throws testException
 
-        assertThrows<InvalidInput> {
+        val exception = assertFailsWith<InvalidInput> {
             openID4VPInstance.authenticateVerifier("encodedAuthorizationRequest", trustedVerifiers)
-        }.also { exception ->
-            assertOpenId4VPException(
-                exception = exception,
-                expectedMessage = "Invalid Input:  value cannot be empty or null",
-                expectedErrorCode = "invalid_request",
-                expectedVerifierResponse = """{"message":"Error received successfully"}"""
-            )
         }
+        assertOpenId4VPException(
+            exception = exception,
+            expectedMessage = "Invalid Input:  value cannot be empty or null",
+            expectedErrorCode = "invalid_request",
+            expectedVerifierResponse = """{"message":"Error received successfully"}"""
+        )
     }
 
     @Test
@@ -282,7 +285,7 @@ class OpenID4VPTest {
             capturedLog = secondArg()
         }
 
-        val errorDispatchFailure: ErrorDispatchFailure = assertThrows<ErrorDispatchFailure> {
+        val errorDispatchFailure = assertFailsWith<ErrorDispatchFailure> {
             openID4VP.sendErrorResponseToVerifier(Exception("Network error"))
         }
 

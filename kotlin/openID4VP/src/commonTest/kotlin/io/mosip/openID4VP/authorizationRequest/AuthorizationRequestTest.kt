@@ -387,10 +387,6 @@ class AuthorizationRequestTest {
                 any()
             )
         } returns NetworkResponse(200, createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
-                mapOf(
-            "header" to Headers.Builder().add("content-type", "application/oauth-authz-req+jwt").build(),
-            "body" to createAuthorizationRequestObject(PRE_REGISTERED, authorizationRequestParamsMap, applicationFields)
-        )
 
 
         val encodedAuthorizationRequest =
