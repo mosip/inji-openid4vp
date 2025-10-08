@@ -9,6 +9,7 @@ import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTP
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandler
 import io.mosip.openID4VP.constants.ContentType.APPLICATION_FORM_URL_ENCODED
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 class DirectPostResponseModeHandler: ResponseModeBasedHandler() {
     override fun validate(
@@ -24,7 +25,7 @@ class DirectPostResponseModeHandler: ResponseModeBasedHandler() {
         url: String,
         authorizationResponse: AuthorizationResponse,
         walletNonce: String
-    ): String {
+    ): NetworkResponse {
         val bodyParams: Map<String, String> = authorizationResponse.toJsonEncodedMap()
         val response = sendHTTPRequest(
             url = url,
@@ -32,6 +33,6 @@ class DirectPostResponseModeHandler: ResponseModeBasedHandler() {
             bodyParams = bodyParams,
             headers = mapOf("Content-Type" to APPLICATION_FORM_URL_ENCODED.value)
         )
-        return response.body
+        return response
     }
 }

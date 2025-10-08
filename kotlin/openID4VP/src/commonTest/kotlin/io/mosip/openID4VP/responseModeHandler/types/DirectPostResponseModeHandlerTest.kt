@@ -62,7 +62,7 @@ class DirectPostResponseModeHandlerTest {
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
         }
-        assertEquals(expectedResponse, actualResponse)
+        assertEquals(expectedResponse, actualResponse.body)
     }
 
     @Test
@@ -114,6 +114,6 @@ class DirectPostResponseModeHandlerTest {
             walletNonce
         )
 
-        assertEquals("", actualResponse)
+        assertEquals("", actualResponse.body)
     }
 }

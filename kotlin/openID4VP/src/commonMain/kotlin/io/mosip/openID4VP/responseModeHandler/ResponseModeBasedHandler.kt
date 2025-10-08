@@ -9,6 +9,7 @@ import io.mosip.openID4VP.common.getStringValue
 import io.mosip.openID4VP.common.isValidUrl
 import io.mosip.openID4VP.common.validate
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.networkManager.NetworkResponse
 
 private val className = ResponseModeBasedHandler::class.simpleName!!
 
@@ -27,7 +28,7 @@ abstract class ResponseModeBasedHandler {
         url: String,
         authorizationResponse: AuthorizationResponse,
         walletNonce: String,
-    ): String
+    ): NetworkResponse
 
     fun setResponseUrl(
         authorizationRequestParameters: Map<String, Any>,
