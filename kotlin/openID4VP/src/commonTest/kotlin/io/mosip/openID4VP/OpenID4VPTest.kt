@@ -272,29 +272,20 @@ class OpenID4VPTest {
 
     @Test
     fun `should throw exception during sending error to verifier if any error occurs during the process`() {
-        mockkStatic(Logger::class)
-        val mockLogger = mockk<Logger>()
-        every { Logger.getLogger(any()) } returns mockLogger
-
         every {
             NetworkManagerClient.sendHTTPRequest(any(), any(), any(), any())
         } throws Exception("Network error")
 
-        var capturedLog: String? = null
-        every { mockLogger.log(eq(Level.SEVERE), any<String>()) } answers {
-            capturedLog = secondArg()
-        }
 
         val errorDispatchFailure = assertFailsWith<ErrorDispatchFailure> {
             openID4VP.sendErrorResponseToVerifier(Exception("Network error"))
         }
 
-        assertTrue(
-            capturedLog?.contains("Failed to send error to verifier: Network error") == true
+        assertOpenId4VPException(
+            errorDispatchFailure,
+            "Failed to send error to verifier: Failed to send error to verifier: Network error",
+            "error_dispatch_failure"
         )
-
-        unmockkStatic(Logger::class)
-        assertOpenId4VPException(errorDispatchFailure, "Failed to send error to verifier: Failed to send error to verifier: Network error", "error_dispatch_failure")
     }
 
     @Test
