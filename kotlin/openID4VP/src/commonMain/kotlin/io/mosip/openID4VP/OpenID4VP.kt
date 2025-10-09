@@ -71,7 +71,9 @@ class OpenID4VP @JvmOverloads constructor(
         }
     }
 
-    /** Sends the final Authorization response to Verifier with the Verifiable Presentations as per response type */
+    /** Sends the final Authorization response to Verifier with the Verifiable Presentations as per response type
+     * Returns the Verifier response as Network response
+     * */
     fun sendAuthorizationResponseToVerifier(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
     ): NetworkResponse {
@@ -81,23 +83,6 @@ class OpenID4VP @JvmOverloads constructor(
                 vpTokenSigningResults = vpTokenSigningResults,
                 responseUri = responseUri!!
             )
-        } catch (exception: OpenID4VPExceptions) {
-            this.safeSendError(exception)
-            throw exception
-        }
-    }
-
-    @Deprecated("Use sendAuthorizationResponseToVerifier instead")
-    /** Sends the final signed VP token response to the verifier */
-    fun shareVerifiablePresentation(
-        vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
-    ): String {
-        return try {
-            authorizationResponseHandler.shareVP(
-                authorizationRequest = authorizationRequest!!,
-                vpTokenSigningResults = vpTokenSigningResults,
-                responseUri = responseUri!!
-            ).body
         } catch (exception: OpenID4VPExceptions) {
             this.safeSendError(exception)
             throw exception
@@ -181,6 +166,18 @@ class OpenID4VP @JvmOverloads constructor(
     )
     fun sendErrorToVerifier(exception: Exception) {
         this.safeSendError(exception)
+    }
+
+    @Deprecated(
+        message = "This method does not support listening to the status code sent from the verifier",
+        replaceWith = ReplaceWith("sendAuthorizationResponseToVerifier(vpTokenSigningResults)"),
+        level = DeprecationLevel.WARNING
+    )
+            /** Sends the final signed VP token response to the verifier */
+    fun shareVerifiablePresentation(
+        vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
+    ): String {
+        return sendAuthorizationResponseToVerifier(vpTokenSigningResults).body
     }
 
     // Ensures that any error occurring in the flow is sent to the Verifier

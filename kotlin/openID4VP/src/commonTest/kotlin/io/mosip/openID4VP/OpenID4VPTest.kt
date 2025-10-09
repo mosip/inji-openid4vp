@@ -335,6 +335,21 @@ class OpenID4VPTest {
     }
 
     @Test
+    fun `should share the verifier response successfully on sending authorization response`() {
+        val mockHandler = mockk<AuthorizationResponseHandler>()
+
+        every {
+            mockHandler.shareVP(any(), any(), any())
+        } returns NetworkResponse(200, """{"message":"success"}""", mapOf("Content-Type" to listOf("application/json")))
+
+        setField(openID4VP, "authorizationResponseHandler", mockHandler)
+
+        val result = openID4VP.sendAuthorizationResponseToVerifier(mdocvpTokenSigningResults)
+
+        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"success\"}, headers={Content-Type=[application/json]})", result.toString())
+    }
+
+    @Test
     fun `should handle deprecated shareVerifiablePresentation method`() {
         val mockHandler = mockk<AuthorizationResponseHandler>()
         val vpResponseMetadata = mockk<VPResponseMetadata>()
