@@ -7,9 +7,11 @@ import io.mosip.openID4VP.authorizationRequest.Verifier
 import io.mosip.openID4VP.authorizationResponse.AuthorizationResponseHandler
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.URDNA2015Canonicalization
 import io.mosip.openID4VP.common.UUIDGenerator
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.FormatType.LDP_VC
 import io.mosip.openID4VP.constants.FormatType.MSO_MDOC
 import io.mosip.openID4VP.constants.HttpMethod
@@ -180,7 +182,7 @@ class OpenID4VPTest {
             exception = exception,
             expectedMessage = "Invalid Input:  value cannot be empty or null",
             expectedErrorCode = "invalid_request",
-            expectedVerifierResponse = """{"message":"Error received successfully"}"""
+            expectedVerifierResponse = """NetworkResponse(statusCode=200, body={"message":"Error received successfully"}, headers={Content-Type=[application/json]})"""
         )
     }
 
@@ -314,6 +316,37 @@ class OpenID4VPTest {
         val result = openID4VP.constructVerifiablePresentationToken(mapOf("id1" to listOf("vc1", "vc2")))
 
         assertEquals("Deprecated VP Token", result)
+    }
+
+    @Test
+    fun `should handle sendAuthorizationResponseToVerifier method`() {
+        val mockHandler = mockk<AuthorizationResponseHandler>()
+        val vpTokenSigningResult = mockk<Map<FormatType, VPTokenSigningResult>>()
+
+        every {
+            mockHandler.shareVP(any(), any(), any())
+        } returns NetworkResponse(200, """{"message":"success"}""", mapOf("Content-Type" to listOf("application/json")))
+
+        setField(openID4VP, "authorizationResponseHandler", mockHandler)
+
+        val result = openID4VP.sendAuthorizationResponseToVerifier(vpTokenSigningResult)
+
+        assertEquals("{\"message\":\"success\"}", result.body)
+    }
+
+    @Test
+    fun `should share the verifier response successfully on sending authorization response`() {
+        val mockHandler = mockk<AuthorizationResponseHandler>()
+
+        every {
+            mockHandler.shareVP(any(), any(), any())
+        } returns NetworkResponse(200, """{"message":"success"}""", mapOf("Content-Type" to listOf("application/json")))
+
+        setField(openID4VP, "authorizationResponseHandler", mockHandler)
+
+        val result = openID4VP.sendAuthorizationResponseToVerifier(mdocvpTokenSigningResults)
+
+        assertEquals("NetworkResponse(statusCode=200, body={\"message\":\"success\"}, headers={Content-Type=[application/json]})", result.toString())
     }
 
     @Test

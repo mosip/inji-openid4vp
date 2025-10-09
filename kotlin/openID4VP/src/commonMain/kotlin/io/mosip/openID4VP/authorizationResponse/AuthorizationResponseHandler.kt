@@ -132,7 +132,7 @@ internal class AuthorizationResponseHandler {
                 bodyParams = errorPayload,
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
-            (exception as? OpenID4VPExceptions)?.setResponse(networkResponse.body)
+            (exception as? OpenID4VPExceptions)?.setNetworkResponse(networkResponse)
             return networkResponse
         } catch (err: Exception) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(

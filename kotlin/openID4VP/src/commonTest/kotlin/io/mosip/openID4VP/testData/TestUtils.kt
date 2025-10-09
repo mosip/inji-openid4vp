@@ -107,6 +107,6 @@ fun assertOpenId4VPException(exception: OpenID4VPExceptions, expectedMessage: St
     assertEquals(expectedMessage, exception.message)
     assertEquals(expectedErrorCode, exception.errorCode)
     if(expectedVerifierResponse != null){
-        assertEquals(expectedVerifierResponse.toString(), exception.response.toString())
+        assertEquals(expectedVerifierResponse.toString(), exception.networkResponse.toString())
     }
 }
