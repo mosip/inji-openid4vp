@@ -182,7 +182,7 @@ class OpenID4VPTest {
             exception = exception,
             expectedMessage = "Invalid Input:  value cannot be empty or null",
             expectedErrorCode = "invalid_request",
-            expectedVerifierResponse = """{"message":"Error received successfully"}"""
+            expectedVerifierResponse = """NetworkResponse(statusCode=200, body={"message":"Error received successfully"}, headers={Content-Type=[application/json]})"""
         )
     }
 
