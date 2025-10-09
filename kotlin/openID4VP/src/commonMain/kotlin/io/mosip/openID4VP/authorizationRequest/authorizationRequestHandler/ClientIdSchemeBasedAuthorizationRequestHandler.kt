@@ -303,6 +303,9 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     }
 
     open fun validateAndParseRequestFields() {
+        if (authorizationRequestParameters.containsKey("transaction_data")) {
+            throw OpenID4VPExceptions.InvalidInputPattern("Invalid Request: transaction_data is not supported in the authorization request", className)
+        }
         val responseType = getStringValue(authorizationRequestParameters, RESPONSE_TYPE.value)
         validate(RESPONSE_TYPE.value, responseType, className)
         validateResponseTypeSupported(responseType!!)
