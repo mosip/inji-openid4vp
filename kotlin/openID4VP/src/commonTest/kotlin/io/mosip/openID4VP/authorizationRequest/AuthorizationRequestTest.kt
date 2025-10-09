@@ -25,7 +25,6 @@ import io.mosip.openID4VP.testData.presentationDefinitionString
 import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
-import okhttp3.Headers
 import kotlin.test.*
 
 

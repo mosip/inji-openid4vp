@@ -53,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.net.toUri
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import org.json.JSONObject
 
 @Composable
@@ -264,14 +265,14 @@ fun handleDecline(
 }
 
 private suspend fun handleVerifierResponse(
-    verifierResponse: String,
+    verifierResponse: NetworkResponse,
     navController: NavHostController,
     callback: () -> Unit = {}
 ) {
     println("Verifier Response: $verifierResponse")
 
     val redirectUri = try {
-        JSONObject(verifierResponse).optString("redirect_uri")
+        JSONObject(verifierResponse.body).optString("redirect_uri")
     } catch (e: Exception) {
         println("Error parsing JSON: ${e.message}")
         null

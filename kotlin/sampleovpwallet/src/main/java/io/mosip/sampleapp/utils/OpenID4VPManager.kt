@@ -13,6 +13,7 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.mdoc.MdocVPTokenSigningResult
 import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.sampleapp.data.HardcodedOVPData.getListOfVerifiers
 import io.mosip.sampleapp.data.HardcodedOVPData.getWalletMetadata
 import io.mosip.sampleapp.data.VCMetadata
@@ -59,7 +60,7 @@ object OpenID4VPManager {
 
     fun shareVerifiablePresentation(
         selectedItems: SnapshotStateList<Pair<String, VCMetadata>>,
-        onResult: (String) -> Unit
+        onResult: (NetworkResponse) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -74,7 +75,7 @@ object OpenID4VPManager {
     }
 
 
-    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): String =
+    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): NetworkResponse =
         withContext(
             Dispatchers.IO
         ) {
@@ -143,17 +144,17 @@ object OpenID4VPManager {
             }
 
             try {
-                val finalResponse = instance.shareVerifiablePresentation(vpTokenSigningResultMap)
+                val finalResponse = instance.sendAuthorizationResponseToVerifier(vpTokenSigningResultMap)
                 Log.d("VP_SHARE", "######## $finalResponse")
                 finalResponse
             } catch (e: Exception) {
                 Log.e("VP_SHARE", "Error sharing VP", e)
-                ""
+                throw e
             }
         }
 
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): String {
-        return instance.sendErrorResponseToVerifier(ovpException).body
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
+        return instance.sendErrorResponseToVerifier(ovpException)
     }
 }
 
