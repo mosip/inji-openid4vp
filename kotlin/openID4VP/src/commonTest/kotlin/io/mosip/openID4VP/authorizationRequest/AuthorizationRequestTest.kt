@@ -3,10 +3,13 @@ package io.mosip.openID4VP.authorizationRequest
 
 import io.mockk.clearAllMocks
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
+import io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler.types.PreRegisteredSchemeAuthorizationRequestHandler
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
+import io.mosip.openID4VP.common.OpenID4VPErrorCodes.INVALID_TRANSACTION_DATA
 import io.mosip.openID4VP.constants.ClientIdScheme
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
@@ -16,15 +19,19 @@ import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions.NetworkRequestFailed
 import io.mosip.openID4VP.testData.assertDoesNotThrow
+import io.mosip.openID4VP.testData.assertOpenId4VPException
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft21
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft23
+import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createUrlEncodedData
 import io.mosip.openID4VP.testData.presentationDefinitionString
 import io.mosip.openID4VP.testData.requestParams
 import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
+import io.mosip.openID4VP.testData.walletMetadata
+import io.mosip.openID4VP.testData.walletNonce
 import okhttp3.Headers
 import kotlin.test.*
 
@@ -635,5 +642,37 @@ class AuthorizationRequestTest {
         val actualValue =
             openID4VP.authenticateVerifier(encodedAuthorizationRequest, trustedVerifiers,shouldValidateClient)
         assertEquals(clientIdOfReDirectUriDraft21[CLIENT_ID.value], actualValue.responseUri)
+    }
+
+    @Test
+    fun `should throw invalid request exception if transaction_data is present in Authorization Request`() {
+        val setResponseUri: (String) -> Unit = mockk(relaxed = true)
+
+        val handler = PreRegisteredSchemeAuthorizationRequestHandler(
+            listOf(
+                Verifier(
+                    "mock-client", listOf(
+                        "https://mock-verifier.com/response-uri", "https://verifier.env2.com/responseUri"
+                    ),
+                    "https://mock-verifier.com/.well-known/jwks.json",
+                    true
+                )),
+            (requestParams + clientIdOfPreRegistered + mapOf(
+                "transaction_data" to "some_value",
+            )) as MutableMap<String, Any>,
+            walletMetadata,
+            true,
+            setResponseUri,
+            walletNonce
+        )
+
+        val exception = assertFailsWith<OpenID4VPExceptions.InvalidTransactionData> {
+            handler.validateAndParseRequestFields()
+        }
+
+        assertOpenId4VPException(
+            exception, "Invalid Request: transaction_data is not supported in the authorization request",
+            expectedErrorCode = INVALID_TRANSACTION_DATA,
+        )
     }
 }
