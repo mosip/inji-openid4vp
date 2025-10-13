@@ -13,6 +13,7 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_TYPE
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_URI
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.STATE
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.TRANSACTION_DATA
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.WALLET_NONCE
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata
@@ -303,8 +304,8 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     }
 
     open fun validateAndParseRequestFields() {
-        if (authorizationRequestParameters.containsKey("transaction_data")) {
-            throw OpenID4VPExceptions.InvalidInputPattern("Invalid Request: transaction_data is not supported in the authorization request", className)
+        if (authorizationRequestParameters.containsKey(TRANSACTION_DATA.value)) {
+            throw OpenID4VPExceptions.InvalidTransactionData("Invalid Request: transaction_data is not supported in the authorization request", className)
         }
         val responseType = getStringValue(authorizationRequestParameters, RESPONSE_TYPE.value)
         validate(RESPONSE_TYPE.value, responseType, className)
