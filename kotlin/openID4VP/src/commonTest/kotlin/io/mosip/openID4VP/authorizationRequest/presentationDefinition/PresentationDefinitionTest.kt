@@ -1,12 +1,16 @@
 package io.mosip.openID4VP.authorizationRequest.presentationDefinition
 
 import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockkObject
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION_URI
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
 import io.mosip.openID4VP.authorizationRequest.deserializeAndValidate
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.constants.ResponseMode.DIRECT_POST_JWT
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import kotlin.test.*
@@ -16,7 +20,10 @@ class PresentationDefinitionTest {
     private lateinit var presentationDefinition: String
     private lateinit var expectedExceptionMessage: String
 
-   
+   @BeforeTest
+   fun setUp() {
+       mockkObject(NetworkManagerClient)
+   }
 
     @AfterTest
     fun tearDown() {
@@ -109,6 +116,23 @@ class PresentationDefinitionTest {
             parseAndValidatePresentationDefinition(authorizationRequestParam, false)
         }
         assertEquals(OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_REFERENCE, exception.errorCode)
+        assertEquals(expectedExceptionMessage, exception.message)
+    }
+
+    @Test
+    fun `should throw error when presentation definition uri returned with non 2xx response`() {
+        val authorizationRequestParam: MutableMap<String, Any> = mutableMapOf(
+            PRESENTATION_DEFINITION_URI.value to "https://mock-verifier.com/verifier/get-presentation-definition",
+            RESPONSE_MODE.value to DIRECT_POST_JWT.value
+        )
+        every { NetworkManagerClient.sendHTTPRequest(any(),any(), any(), any()) } returns NetworkResponse(400, """{"message":"error"}""", mapOf("Content-Type" to listOf("application/json")))
+
+        val expectedExceptionMessage = "presentation_definition_uri could not be reached: https://mock-verifier.com/verifier/get-presentation-definition"
+
+        val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
+            parseAndValidatePresentationDefinition(authorizationRequestParam, true)
+        }
+        assertEquals(OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI, exception.errorCode)
         assertEquals(expectedExceptionMessage, exception.message)
     }
 

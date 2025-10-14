@@ -185,7 +185,6 @@ class OpenID4VP @JvmOverloads constructor(
     private fun safeSendError(exception: Exception) {
         try {
             val verifierResponse = sendErrorResponseToVerifier(exception)
-            //TODO: should this response also be network response aligned with return type of share auth response?
             (exception as? OpenID4VPExceptions)?.setNetworkResponse(verifierResponse)
         } catch (error: Exception) {
             OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
