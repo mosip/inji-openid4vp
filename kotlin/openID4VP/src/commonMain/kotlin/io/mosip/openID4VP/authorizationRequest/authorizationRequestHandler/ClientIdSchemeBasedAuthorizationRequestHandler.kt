@@ -296,6 +296,14 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     abstract fun process(walletMetadata: WalletMetadata): WalletMetadata
 
 
+    /**
+     * Sets the response URI for this authorization request based on the `response_mode` parameter.
+     *
+     * Reads `response_mode` from the authorization request parameters and invokes the appropriate
+     * response-mode handler which will call the configured `setResponseUri` callback to set the URI.
+     *
+     * @throws OpenID4VPExceptions.MissingInput if the `response_mode` parameter is not present.
+     */
     fun setResponseUrl() {
         val responseMode = getStringValue(authorizationRequestParameters, RESPONSE_MODE.value)
             ?: throw OpenID4VPExceptions.MissingInput(listOf(RESPONSE_MODE.value), "", className)
@@ -303,6 +311,16 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             .setResponseUrl(authorizationRequestParameters, setResponseUri)
     }
 
+    /**
+     * Validates and parses authorization request fields from the handler's parameter map.
+     *
+     * Performs an early rejection if `transaction_data` is present, validates required fields
+     * (`response_type`, `nonce`) and optional `state`, parses and validates client metadata
+     * according to whether wallet metadata validation is enabled, and parses the presentation
+     * definition (taking wallet support for presentationDefinition URI into account).
+     *
+     * @throws OpenID4VPExceptions.InvalidTransactionData if the `transaction_data` field is present.
+     */
     open fun validateAndParseRequestFields() {
         if (authorizationRequestParameters.containsKey(TRANSACTION_DATA.value)) {
             throw OpenID4VPExceptions.InvalidTransactionData("Invalid Request: transaction_data is not supported in the authorization request", className)
