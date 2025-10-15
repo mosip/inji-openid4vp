@@ -44,7 +44,7 @@ class NetworkManagerClient {
 
                 return response.use {
                     val headersMap = it.headers.toMultimap()
-                    val body = it.body?.byteStream()?.bufferedReader().use { it?.readText() } ?: ""
+                    val body = it.body?.string().orEmpty()
                     NetworkResponse(it.code, body, headersMap)
                 }
             } catch (exception: InterruptedIOException) {
