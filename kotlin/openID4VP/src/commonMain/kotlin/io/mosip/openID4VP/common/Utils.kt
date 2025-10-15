@@ -105,16 +105,17 @@ fun createDescriptorMapPath(vpIndex: Int) = "$[$vpIndex]"
 
 internal fun resolveJwksFromUri(jwksUri: String, className: String): Jwks {
     return try {
-        val response: NetworkResponse = NetworkManagerClient.sendHTTPRequest(jwksUri, HttpMethod.GET)
+        val response: NetworkResponse =
+            NetworkManagerClient.sendHTTPRequest(jwksUri, HttpMethod.GET)
 
-        if(!response.isOk()){
+        if (!response.isOk()) {
             throw InvalidData(
                 "Error while fetching jwks information, status code: ${response.statusCode} with body: ${response.body}",
                 className
             )
         }
 
-        getObjectMapper().convertValue(response.body, Jwks::class.java)
+        getObjectMapper().readValue(response.body, Jwks::class.java)
     } catch (e: Exception) {
         throw InvalidData(
             "Public key extraction failed - Unable to fetch/parse jwks from $jwksUri due to ${e.message}",

@@ -1,7 +1,11 @@
 package io.mosip.openID4VP.common
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.mockk.every
+import io.mockk.mockkObject
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import kotlin.test.*
 
 class UtilsTest {
@@ -151,5 +155,36 @@ class UtilsTest {
     fun toHex_byteArrayWithMixedValues_convertsCorrectly() {
         val bytes = byteArrayOf(0, 15, 16, 127, -128, -1)
         assertEquals("000f107f80ff", bytes.toHex())
+    }
+
+    @Test
+    fun testResolveFromJwksUri() {
+        val jwksUri = "https://mock-verifier.com/.well-known/jwks.json"
+        val keyId = "f4a0c7f3f1b1e3a1b1e3a1b1e3a1b1e3a1b1e3a1b"
+        mockkObject(NetworkManagerClient)
+        val mockJwksResponse = """
+            {
+                "keys": [
+                    {
+                        "kty": "OKP",
+                        "crv": "Ed25519",
+                        "x": "-Fy3lMapzR3wpaYNCFq29GDEn_NoR3pBsc511q1Cxqw",
+                        "alg": "EdDSA",
+                        "kid": "f4a0c7f3f1b1e3a1b1e3a1b1e3a1b1e3a1b1e3a1b",
+                        "use": "sig"
+                    }
+                ]
+            }
+        """.trimIndent()
+        every {
+            NetworkManagerClient.sendHTTPRequest(jwksUri, HttpMethod.GET)
+        } returns NetworkResponse(
+            200, mockJwksResponse,
+            headers = mapOf()
+        )
+
+        val publicKey = resolveJwksFromUri(jwksUri, keyId)
+
+        assertNotNull(publicKey)
     }
 }
