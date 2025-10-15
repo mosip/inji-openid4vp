@@ -127,7 +127,7 @@ class PresentationDefinitionTest {
         )
         every { NetworkManagerClient.sendHTTPRequest(any(),any(), any(), any()) } returns NetworkResponse(400, """{"message":"error"}""", mapOf("Content-Type" to listOf("application/json")))
 
-        val expectedExceptionMessage = "presentation_definition_uri could not be reached: https://mock-verifier.com/verifier/get-presentation-definition"
+        val expectedExceptionMessage = "presentation_definition_uri could not be reached: https://mock-verifier.com/verifier/get-presentation-definition. Error: Error while fetching presentation_definition from presentation_definition_uri: https://mock-verifier.com/verifier/get-presentation-definition, status code: 400 with body: {\"message\":\"error\"}"
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
             parseAndValidatePresentationDefinition(authorizationRequestParam, true)

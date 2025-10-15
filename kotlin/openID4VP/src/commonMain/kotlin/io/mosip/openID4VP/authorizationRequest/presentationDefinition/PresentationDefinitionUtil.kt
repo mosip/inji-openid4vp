@@ -75,7 +75,7 @@ fun parseAndValidatePresentationDefinition(
                 }
             } catch (e: Exception) {
                 throw OpenID4VPExceptions.InvalidData(
-                    "presentation_definition_uri could not be reached: $presentationDefinitionUri",
+                    "presentation_definition_uri could not be reached: $presentationDefinitionUri. Error: ${e.message}",
                     className,
                     OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI
                 )
