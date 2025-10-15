@@ -42,10 +42,12 @@ class NetworkManagerClient {
 
                 val response: Response = client.newCall(request).execute()
 
-                val body =
-                    response.body?.byteStream()?.bufferedReader().use { it?.readText() } ?: ""
-
-                return NetworkResponse(response.code, body, response.headers.toMultimap())
+                return response.use { resp ->
+                    val headersMap = resp.headers.toMultimap()
+                    val body =
+                        response.body?.byteStream()?.bufferedReader().use { it?.readText() } ?: ""
+                    NetworkResponse(resp.code, body, headersMap)
+                }
             } catch (exception: InterruptedIOException) {
                 val specificException = NetworkManagerClientExceptions.NetworkRequestTimeout()
                 Logger.getLogger(logTag()).log(Level.SEVERE,"ERROR | Timeout occurred: ${specificException.message}")
