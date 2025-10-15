@@ -14,5 +14,6 @@ enum class AuthorizationRequestFieldConstants(val value: String) {
     NONCE ("nonce"),
     WALLET_NONCE ("wallet_nonce"),
     STATE ("state"),
-    CLIENT_METADATA ("client_metadata")
+    CLIENT_METADATA ("client_metadata"),
+    TRANSACTION_DATA ("transaction_data"),
 }
