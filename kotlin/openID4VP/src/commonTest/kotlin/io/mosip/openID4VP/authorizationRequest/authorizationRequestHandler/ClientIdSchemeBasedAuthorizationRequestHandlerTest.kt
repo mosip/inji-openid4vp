@@ -36,7 +36,7 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
         // Mock sendHTTPRequest to return non-200 response
         every {
             NetworkManagerClient.sendHTTPRequest(
-                any(), any(), any()
+                any(), any(), any(), any()
             )
         } returns NetworkResponse(400, """{"message":"error"}""", mapOf("Content-Type" to listOf("application/json")))
 

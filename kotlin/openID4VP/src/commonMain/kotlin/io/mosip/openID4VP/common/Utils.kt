@@ -114,7 +114,7 @@ internal fun resolveJwksFromUri(jwksUri: String, className: String): Jwks {
             )
         }
 
-        getObjectMapper().convertValue(response, Jwks::class.java)
+        getObjectMapper().convertValue(response.body, Jwks::class.java)
     } catch (e: Exception) {
         throw InvalidData(
             "Public key extraction failed - Unable to fetch/parse jwks from $jwksUri due to ${e.message}",
