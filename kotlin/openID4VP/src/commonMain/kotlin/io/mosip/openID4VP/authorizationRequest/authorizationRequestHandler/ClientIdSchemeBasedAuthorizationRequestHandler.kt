@@ -120,6 +120,12 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             }
             try {
                 requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
+                if(!requestUriResponse.isOk()){
+                    throw OpenID4VPExceptions.InvalidData(
+                        "Error while fetching request_uri: HTTP status code${requestUriResponse.statusCode} & body: ${requestUriResponse.body}",
+                        className,
+                    )
+                }
             } catch (e: OpenID4VPExceptions) {
                 throw e
             } catch (e: Exception) {

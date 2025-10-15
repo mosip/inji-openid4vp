@@ -555,7 +555,7 @@ class AuthorizationRequestTest {
         val encodedAuthorizationRequest =
             createUrlEncodedData(authorizationRequestParamsMap, false, PRE_REGISTERED, applicationFields)
 
-        val expectedMessage = "presentation_definition_uri could not be reached: $uri"
+        val expectedMessage = "presentation_definition_uri could not be reached: $uri. Error: Network request failed with error response - Network request failed with error response - mock-verifier.com"
 
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
             openID4VP.authenticateVerifier(

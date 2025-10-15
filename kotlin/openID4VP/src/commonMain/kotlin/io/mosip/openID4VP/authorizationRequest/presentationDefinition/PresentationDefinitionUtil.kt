@@ -66,9 +66,16 @@ fun parseAndValidatePresentationDefinition(
                     url = presentationDefinitionUri,
                     method = HttpMethod.GET
                 )
+                if(!response.isOk()){
+                    throw OpenID4VPExceptions.InvalidData(
+                        "Error while fetching presentation_definition from presentation_definition_uri: ${presentationDefinitionUri}, status code: ${response.statusCode} with body: ${response.body}",
+                        className,
+                        OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI
+                    )
+                }
             } catch (e: Exception) {
                 throw OpenID4VPExceptions.InvalidData(
-                    "presentation_definition_uri could not be reached: $presentationDefinitionUri",
+                    "presentation_definition_uri could not be reached: $presentationDefinitionUri. Error: ${e.message}",
                     className,
                     OpenID4VPErrorCodes.INVALID_PRESENTATION_DEFINITION_URI
                 )

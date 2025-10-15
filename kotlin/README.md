@@ -120,8 +120,8 @@ The following credential formats are supported for sharing:
 - [Package Structure](#package-structure)
 - [APIs](#apis)
   - [authenticateVerifier](#authenticateverifier)
-  - [constructUnsignedVPToken](#constructUnsignedVPToken)
-  - [shareVerifiablePresentation](#shareverifiablepresentation)
+  - [constructUnsignedVPToken](#constructunsignedvptoken)
+  - [sendAuthorizationResponseToVerifier](#sendauthorizationresponsetoverifier)
   - [sendErrorResponseToVerifier](#senderrorresponsetoverifier)
 
 
@@ -146,11 +146,10 @@ val openID4VP = OpenID4VP(traceabilityId = "trace-id", walletMetadata = walletMe
 ```
 
 ###### Parameters
-| Name           | Type           | Description                                                                                                                                                                                                     |
-|----------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| traceabilityId | String         | Unique identifier for tracking requests and responses.                                                                                                                                                          |
-| walletMetadata | WalletMetadata | Metadata which wallet supports, such that client-id-scheme support, vp format support, proof type support, etc. 
-
+| Name           | Type           | Description                                                                                                     |
+|----------------|----------------|-----------------------------------------------------------------------------------------------------------------|
+| traceabilityId | String         | Unique identifier for tracking requests and responses.                                                          |
+| walletMetadata | WalletMetadata | Metadata which wallet supports, such that client-id-scheme support, vp format support, proof type support, etc. |
 
 ## Integration
 - To integrate the inji-openid4vp library into your Android application, there is a sample application created in `kotlin/sampleovpwallet` directory. This sample app demonstrates how to use the library to authenticate Verifiers, construct unsigned Verifiable Presentation (VP) tokens, and share them with Verifiers.
@@ -257,7 +256,7 @@ io.mosip.openID4VP/
                                     shouldValidateClient: Boolean = false)
 ```
 
-###### Request Parameters
+#### Request Parameters
 
 | Name                            | Type             | Description                                                                                                                                                             |
 |---------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -266,7 +265,7 @@ io.mosip.openID4VP/
 | walletMetadata                  | WalletMetadata?  | Nullable WalletMetadata to be shared with Verifier                                                                                                                      |
 | shouldValidateClient            | Boolean?         | Nullable Boolean with default value false to toggle client validation for pre-registered client id scheme                                                               |
 
-###### Response
+#### Response
 ```kotlin
 val authorizationRequest = AuthorizationRequest(
     clientId = "https://mock-verifier.com",
@@ -319,7 +318,7 @@ val authorizationRequest = AuthorizationRequest(
     )
 )
 ```
-###### Example usage
+#### Example usage
 
 ```kotlin
 val encodedAuthorizationRequest = ".../authorize?response_type=vp_token&client_id=redirect_uri%3Ahttps%3..."
@@ -365,7 +364,7 @@ Each Verifier object in the trustedVerifiers list should contain the following p
 | jwksUri              | String         | No       | null          | URI value of the Verifier's hosted public key. This will be used to verify the signed Authorization Request. If this is not available Verifier's signed Authorization request cannot be verified. |
 | allowUnsignedRequest | Boolean        | No       | false         | Accepts unsigned requests from the Verifier. If `shouldValidateClient` is false, unsigned requests are still not allowed.                                                                         |
 
-###### Exceptions
+#### Exceptions
 
 1. DecodingException is thrown when there is an issue while decoding the Authorization Request
 2. InvalidQueryParams exception is thrown if
@@ -389,12 +388,6 @@ Each Verifier object in the trustedVerifiers list should contain the following p
 This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
 
 
-##### Exception Handling Enhancement
-
-- The library has been enhanced to handle exceptions more gracefully. Library is throwing `OpenID4VPExceptions` now which gives both Error Code, Message and optional state to the consumer app. The `state` value is extracted from the authorization request and is included in the error response only if it is present and non-empty. This allows the consumer app to handle exceptions more effectively and provide better user experience.
-- For the backward compatibility, the library will still throw the exceptions with `message` which can be referred in sample application `io.mosip.sampleapp.utils.OpenID4VPManager`. However, it is recommended to use the new `OpenID4VPExceptions` for better error handling.
-
-
 ### constructUnsignedVPToken
 - This method creates unsigned Verifiable Presentation (VP) tokens from a collection of Verifiable Credentials. It:
     - Takes credentials organized by input descriptor IDs and formats along with the holder's identifier, and the signature suite to be used for signing the VP tokens.
@@ -410,14 +403,14 @@ This method will also notify the Verifier about the error by sending it to the r
     val unsignedVPTokens : String = openID4VP.constructUnsignedVPToken(Map<String, List<String>>)
 ```
 
-###### Request Parameters
+#### Request Parameters
 
 | Name                  | Type                                    | Description                                                                                                                                    |
 |-----------------------|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | verifiableCredentials | Map<String, Map<FormatType, List<Any>>> | A Map which contains input descriptor id as key and value is the map of credential format and the list of user selected verifiable credentials |
 
 
-###### Response Parameters
+#### Response Parameters
 ```kotlin
 //NOTE: New API contract Response
 val unsignedLdpVpTokens: Map<FormatType, UnsignedVPToken> = mapOf(
@@ -457,7 +450,7 @@ val unsignedVPToken: String = """
 ```
 
 
-###### Example usage
+#### Example usage
 
 ```kotlin
  val unsignedVPTokens : Map<FormatType, UnsignedVPToken> = openID4VP.constructUnsignedVPToken(
@@ -486,14 +479,73 @@ val unsignedVPToken: String = """
         )
 ```
 
-###### Exceptions
+#### Exceptions
 
 1. JsonEncodingFailed exception is thrown if there is any issue while serializing the vp_token without proof.
 2. InvalidData exception is thrown if provided verifiable credentials list is empty
 
 This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
 
-### shareVerifiablePresentation
+### sendAuthorizationResponseToVerifier
+- Constructs a `vp_token` with proof using the provided `VPTokenSigningResult`, then sends it along with the `presentation_submission` to the Verifier via an HTTP POST request.
+- Returns a response to the consumer app (e.g., mobile app) indicating whether the Verifiable Credentials were successfully shared with the Verifier.
+
+**Note 1:** When sharing multiple MSO_MDOC credentials, the verifier is responsible for mapping each credential to its corresponding input descriptor. This mapping is not handled by the library since the ISO standard does not define such a mapping mechanism.
+
+
+```kotlin
+    val response : NetworkResponse = openID4VP.sendAuthorizationResponseToVerifier(vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>)
+```
+
+#### Request Parameters
+
+| Name                  | Type                                  | Description                                                                                                                                                   |
+|-----------------------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vpTokenSigningResults | Map<FormatType, VPTokenSigningResult> | This will be a map with key as credential format and value as VPTokenSigningResult (which is specific to respective credential format's required information) |
+
+
+#### Example usage
+
+```kotlin
+ val ldpVPTokenSigningResult = LdpVPTokenSigningResult(
+    jws = "ey....qweug",
+    signatureAlgorithm = "RsaSignature2018",
+    publicKey = publicKey,
+    domain = "<domain>"
+)
+val mdocVPTokenSigningResult = MdocVPTokenSigningResult(
+    docTypeToDeviceAuthentication = mapOf(
+        "<mdoc-docType>" to DeviceAuthentication(
+            signature = "ey....qweug",
+            algorithm = "ES256",
+        )
+    )
+)
+val sdJwtVPTokenSigningResult = SdJwtVPTokenSigningResult(
+    uuidToKbJWTSignature = mapOf(
+        "uuid" to "signature" // only signature part of the signed kb-jwt
+    )
+)
+val vpTokenSigningResults : Map<FormatType, VPTokenSigningResult> = mapOf(
+    FormatType.LDP_VC to ldpVPTokenSigningResult,
+    FormatType.MSO_MDOC to mdocVPTokenSigningResult,
+    FormatType.VC_SD_JWT to sdJwtVPTokenSigningResult,
+    FormatType.DC_SD_JWT to sdJwtVPTokenSigningResult,
+)
+val response : NetworkResponse = openID4VP.sendAuthorizationResponseToVerifier(vpTokenSigningResults = vpTokenSigningResults)
+```
+
+
+#### Exceptions
+
+1. JsonEncodingFailed exception is thrown if there is any issue while serializing the generating vp_token or presentation_submission class instances.
+2. InterruptedIOException is thrown if the connection is timed out when network call is made.
+3. NetworkRequestFailed exception is thrown when there is any other exception occurred when sending the response over http post request.
+4. InvalidData exception is thrown if the response_type in the authorization request is not supported
+
+This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
+
+### shareVerifiablePresentation (deprecated, use sendAuthorizationResponseToVerifier instead)
 - Constructs a `vp_token` with proof using the provided `VPTokenSigningResult`, then sends it along with the `presentation_submission` to the Verifier via an HTTP POST request.
 - Returns a response to the consumer app (e.g., mobile app) indicating whether the Verifiable Credentials were successfully shared with the Verifier.
 
@@ -508,14 +560,14 @@ This method will also notify the Verifier about the error by sending it to the r
     val response : String = openID4VP.shareVerifiablePresentation(vpResponseMetadata: VPResponseMetadata)
 ```
 
-###### Request Parameters
+#### Request Parameters
 
 | Name                    | Type                                  | Description                                                                                                                                                   |
 |-------------------------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vpTokenSigningResults | Map<FormatType, VPTokenSigningResult> | This will be a map with key as credential format and value as VPTokenSigningResult (which is specific to respective credential format's required information) |
 
 
-##### Example usage
+#### Example usage
 
 ```kotlin
  val ldpVPTokenSigningResult = LdpVPTokenSigningResult(
@@ -547,7 +599,7 @@ val response : String = openID4VP.shareVerifiablePresentation(vpTokenSigningResu
 ```
 
 
-###### Exceptions
+#### Exceptions
 
 1. JsonEncodingFailed exception is thrown if there is any issue while serializing the generating vp_token or presentation_submission class instances.
 2. InterruptedIOException is thrown if the connection is timed out when network call is made.
@@ -565,7 +617,7 @@ This method will also notify the Verifier about the error by sending it to the r
 // Example: The user declines to share the requested credentials. In this case, Verifier needs to be informed about the scenario.
 // So call the sendErrorResponseToVerifier method with appropriate exception message to notify the Verifier.
 
-val verifierResponse: String = openID4VP.sendErrorResponseToVerifier(
+val verifierResponse: NetworkResponse = openID4VP.sendErrorResponseToVerifier(
     OpenID4VPExceptions.AccessDenied(
         message = "User did not give consent to share the requested Credentials with the Verifier.",
         className = this.className
@@ -584,25 +636,43 @@ val verifierResponse: String = openID4VP.sendErrorResponseToVerifier(
  openID4VP.sendErrorToVerifier(exception: Exception)
 ```
 
-###### Parameters
+#### Parameters
 
 | Name      | Type      | Description                        |
 |-----------|-----------|------------------------------------|
 | exception | Exception | This contains the exception object |
 
-###### Example usage
+#### Example usage
 
 ```kotlin
 openID4VP.sendErrorToVerifier(Exception("User did not give consent to share the requested Credentials with the Verifier."))
 ```
-###### Exceptions
+#### Exceptions
 
 1. ErrorDispatchFailure is thrown if any issue occurs while sending the Authorization Error response to the Verifier.
+
+### Exception Handling Enhancement
+
+- The library has been enhanced to handle exceptions more gracefully. Library is throwing `OpenID4VPExceptions` now which gives both Error Code, Message and optional state to the consumer app. The `state` value is extracted from the authorization request and is included in the error response only if it is present and non-empty. This allows the consumer app to handle exceptions more effectively and provide better user experience.
+- For the backward compatibility, the library will still throw the exceptions with `message` which can be referred in sample application `io.mosip.sampleapp.utils.OpenID4VPManager`. However, it is recommended to use the new `OpenID4VPExceptions` for better error handling.
+
+### OpenID4VPExceptions structure
+
+OpenID4VPExceptions is a sealed class that encapsulates various exception types that can occur within the OpenID4VP library. Each exception type extends the base class and provides specific error handling for different scenarios.
+
+This exception has the following properties:
+
+1. errorCode: A unique code representing the type of error.
+2. message: A descriptive message providing details about the error.
+3. networkResponse: An optional property that holds the Verifier response obtained while sending the error to Verifier.
+4. className: The name of the class where the exception occurred.
+
 
 ## 🚨 Deprecation Notice
 
 The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives.
 
-| Method Name         | Description                               | Deprecated Since | Suggested Alternative                                       |
-|---------------------|-------------------------------------------|------------------|-------------------------------------------------------------|
-| sendErrorToVerifier | Sends Authorization error to the verifier | 0.6.0            | [sendErrorResponseToVerifier](#senderrorresponsetoverifier) |
+| Method Name                 | Description                                   | Deprecated Since | Suggested Alternative                                                       |
+|-----------------------------|-----------------------------------------------|------------------|-----------------------------------------------------------------------------|
+| shareVerifiablePresentation | Sends VP (Authorization response) to verifier | 0.6.0            | [sendAuthorizationResponseToVerifier](#sendauthorizationresponsetoverifier) |
+| sendErrorToVerifier         | Sends Authorization error to the verifier     | 0.6.0            | [sendErrorResponseToVerifier](#senderrorresponsetoverifier)                 |

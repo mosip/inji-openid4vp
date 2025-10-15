@@ -10,8 +10,8 @@ import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
-import io.mosip.vercred.vcverifier.networkManager.HttpMethod.GET
-import io.mosip.vercred.vcverifier.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkManagerClient
+import io.mosip.openID4VP.networkManager.NetworkResponse
 import java.security.MessageDigest
 import java.security.SecureRandom
 
@@ -105,13 +105,17 @@ fun createDescriptorMapPath(vpIndex: Int) = "$[$vpIndex]"
 
 internal fun resolveJwksFromUri(jwksUri: String, className: String): Jwks {
     return try {
-        val response: Map<String, Any> =
-            NetworkManagerClient.sendHTTPRequest(jwksUri, GET) ?: throw InvalidData(
-                "Empty response from $jwksUri",
+        val response: NetworkResponse =
+            NetworkManagerClient.sendHTTPRequest(jwksUri, HttpMethod.GET)
+
+        if (!response.isOk()) {
+            throw InvalidData(
+                "Error while fetching jwks information, status code: ${response.statusCode} with body: ${response.body}",
                 className
             )
+        }
 
-        getObjectMapper().convertValue(response, Jwks::class.java)
+        getObjectMapper().readValue(response.body, Jwks::class.java)
     } catch (e: Exception) {
         throw InvalidData(
             "Public key extraction failed - Unable to fetch/parse jwks from $jwksUri due to ${e.message}",
