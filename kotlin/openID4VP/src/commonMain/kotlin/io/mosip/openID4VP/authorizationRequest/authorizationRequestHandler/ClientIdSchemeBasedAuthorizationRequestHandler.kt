@@ -1,6 +1,7 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
@@ -56,103 +57,142 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
         return
     }
 
-    abstract fun isRequestUriSupported(): Boolean
+    abstract fun isSignedRequestSupported(): Boolean
 
-    abstract fun isRequestObjectSupported(): Boolean
+    abstract fun isUnsignedRequestSupported(): Boolean
 
     abstract fun clientIdScheme(): String
 
     fun fetchAuthorizationRequest() {
-        val requestUriResponse: NetworkResponse
 
         val requestUri = getStringValue(authorizationRequestParameters, REQUEST_URI.value)
+        val request = getStringValue(authorizationRequestParameters, AuthorizationRequestFieldConstants.REQUEST.value)
 
-        if (requestUri != null) {
-            if (!isRequestUriSupported()) {
-                throw OpenID4VPExceptions.InvalidData(
-                    "request_uri is not supported for given client_id_scheme - ${this.clientIdScheme()}",
-                    className
-                )
-            }
+        if (request != null && requestUri != null) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Both 'request' and 'request_uri' cannot be present in same authorization request",
+                className
+            )
+        }
 
-            if (!isValidUrl(requestUri)) {
-                throw OpenID4VPExceptions.InvalidData(
-                    "${REQUEST_URI.value} data is not valid",
-                    className
-                )
-            }
+        if(request != null){
+            handleRequestObjectAsValue(request)
+        } else if (requestUri != null) {
+            handleRequestObjectByReference(requestUri)
+        } else {
+            handleUrlEncodedRequest()
+        }
+    }
 
-            val requestUriMethod =
-                getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?: "get"
+    private fun handleRequestObjectByReference(requestUri: String) {
+        val requestUriResponse: NetworkResponse
+        if (!isSignedRequestSupported()) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Signed request (via request_uri) is not supported for given client_id_scheme - ${this.clientIdScheme()}",
+                className
+            )
+        }
 
-            val httpMethod = try {
-                determineHttpMethod(requestUriMethod)
-            } catch (e: IllegalArgumentException) {
-                throw OpenID4VPExceptions.InvalidData(
-                    "Unsupported HTTP method: $requestUriMethod",
-                    className,
-                    OpenID4VPErrorCodes.INVALID_REQUEST_URI_METHOD
-                )
-            }
+        if (!isValidUrl(requestUri)) {
+            throw OpenID4VPExceptions.InvalidData(
+                "${REQUEST_URI.value} data is not valid",
+                className
+            )
+        }
 
-            var body: Map<String, String>? = null
-            var headers: Map<String, String>? = null
+        val requestUriMethod =
+            getStringValue(authorizationRequestParameters, REQUEST_URI_METHOD.value) ?: "get"
 
-            if (httpMethod == HttpMethod.POST) {
-                body = mapOf("wallet_nonce" to walletNonce)
-                walletMetadata?.let { walletMetadata ->
-                    isClientIdSchemeSupported(walletMetadata)
-                    val processedWalletMetadata = process(walletMetadata)
-                    body = body?.plus(
-                        mapOf(
-                            "wallet_metadata" to encodeToJsonString(
-                                processedWalletMetadata,
-                                "wallet_metadata",
-                                className
-                            )
+        val httpMethod = try {
+            determineHttpMethod(requestUriMethod)
+        } catch (e: IllegalArgumentException) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Unsupported HTTP method: $requestUriMethod",
+                className,
+                OpenID4VPErrorCodes.INVALID_REQUEST_URI_METHOD
+            )
+        }
+
+        var body: Map<String, String>? = null
+        var headers: Map<String, String>? = null
+
+        if (httpMethod == HttpMethod.POST) {
+            body = mapOf("wallet_nonce" to walletNonce)
+            walletMetadata?.let { walletMetadata ->
+                isClientIdSchemeSupported(walletMetadata)
+                val processedWalletMetadata = process(walletMetadata)
+                body = body?.plus(
+                    mapOf(
+                        "wallet_metadata" to encodeToJsonString(
+                            processedWalletMetadata,
+                            "wallet_metadata",
+                            className
                         )
                     )
-                    headers = mapOf(
-                        "content-type" to ContentType.APPLICATION_FORM_URL_ENCODED.value,
-                        "accept" to ContentType.APPLICATION_JWT.value
-                    )
-                    shouldValidateWithWalletMetadata = true
-                }
+                )
+                headers = mapOf(
+                    "content-type" to ContentType.APPLICATION_FORM_URL_ENCODED.value,
+                    "accept" to ContentType.APPLICATION_JWT.value
+                )
+                shouldValidateWithWalletMetadata = true
             }
-            try {
-                requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
-                if(!requestUriResponse.isOk()){
-                    throw OpenID4VPExceptions.InvalidData(
-                        "Error while fetching request_uri: HTTP status code${requestUriResponse.statusCode} & body: ${requestUriResponse.body}",
-                        className,
-                    )
-                }
-            } catch (e: OpenID4VPExceptions) {
-                throw e
-            } catch (e: Exception) {
-                throw OpenID4VPExceptions.GenericFailure(
-                    "Network error while fetching request_uri: ${e.message}",
+        }
+        try {
+            requestUriResponse = sendHTTPRequest(requestUri, httpMethod, body, headers)
+            if (!requestUriResponse.isOk()) {
+                throw OpenID4VPExceptions.InvalidData(
+                    "Error while fetching request_uri: HTTP status code${requestUriResponse.statusCode} & body: ${requestUriResponse.body}",
                     className,
                 )
             }
-
-            this.validateRequestUriResponse(requestUriResponse,httpMethod)
-        } else {
-            if (!isRequestObjectSupported()) {
-                throw OpenID4VPExceptions.InvalidData(
-                    "request object is not supported for given client_id_scheme - ${this.clientIdScheme()}",
-                    className
-                )
-            }
+        } catch (e: OpenID4VPExceptions) {
+            throw e
+        } catch (e: Exception) {
+            throw OpenID4VPExceptions.GenericFailure(
+                "Network error while fetching request_uri: ${e.message}",
+                className,
+            )
         }
+
+        this.authorizationRequestParameters = this.validateRequestUriResponse(requestUriResponse, httpMethod)
+    }
+
+    private fun handleUrlEncodedRequest() {
+        if (!isUnsignedRequestSupported()) {
+            throw OpenID4VPExceptions.InvalidData(
+                "unsigned request is not supported for given client_id_scheme - ${this.clientIdScheme()}",
+                className
+            )
+        }
+    }
+
+    private fun handleRequestObjectAsValue(request: String) {
+        if (!isSignedRequestSupported()) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Signed request (via request) is not supported for given client_id_scheme - ${this.clientIdScheme()}",
+                className
+            )
+        }
+
+        validateJWTRequest(request)
+        val authorizationRequestObject = try {
+            JWSHandler.extractDataJsonFromJws(request, JWSHandler.JwsPart.PAYLOAD)
+        } catch (e: Exception) {
+            throw OpenID4VPExceptions.InvalidData(
+                "Failed to parse payload from Authorization Request Object: ${e.message}",
+                className
+            )
+        }
+
+        authorizationRequestParameters = authorizationRequestObject
     }
 
 
     private fun validateRequestUriResponse(
         requestUriResponse: NetworkResponse,
         httpMethod: HttpMethod
-    ) {
-        val responseBody = requestUriResponse.body
+    ): MutableMap<String, Any> {
+        val responseBody: String = requestUriResponse.body
         val headers = requestUriResponse.headers
 
         if (responseBody.isEmpty()) {
@@ -176,16 +216,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        try {
-            validateJWTRequest(responseBody)
-        } catch (e: OpenID4VPExceptions) {
-            throw e
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.VerificationFailure(
-                "Request URI response validation failed ${e.message}",
-                className
-            )
-        }
+        validateJWTRequest(responseBody)
 
         val authorizationRequestObject = try {
             JWSHandler.extractDataJsonFromJws(responseBody, JWSHandler.JwsPart.PAYLOAD)
@@ -219,7 +250,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        authorizationRequestParameters = authorizationRequestObject
+        return authorizationRequestObject
     }
 
 
@@ -262,6 +293,11 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                 "Request URI response validation failed - ${e.message}",
                 className,
                 OpenID4VPErrorCodes.INVALID_REQUEST_OBJECT
+            )
+        } catch (e: Exception) {
+            throw OpenID4VPExceptions.VerificationFailure(
+                "Request URI response validation failed ${e.message}",
+                className
             )
         }
     }

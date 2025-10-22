@@ -170,7 +170,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         }
 
         assertEquals(
-            "request object is not supported for given client_id_scheme - did",
+            "unsigned request is not supported for given client_id_scheme - did",
             invalidDataException.message
         )
     }

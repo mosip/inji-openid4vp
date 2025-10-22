@@ -57,7 +57,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
         }
     }
 
-    override fun isRequestUriSupported(): Boolean {
+    override fun isSignedRequestSupported(): Boolean {
         return true
     }
 
@@ -66,7 +66,7 @@ class PreRegisteredSchemeAuthorizationRequestHandler(
      * - The pre-registered verifier allows unsigned requests
      * - If client validation is disabled, then the request by value is not supported
      */
-    override fun isRequestObjectSupported(): Boolean {
+    override fun isUnsignedRequestSupported(): Boolean {
         if (shouldValidateClient) {
             val clientId = getStringValue(authorizationRequestParameters, CLIENT_ID.value)!!
             val preRegisteredVerifier = verifier(clientId)
