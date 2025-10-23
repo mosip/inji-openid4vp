@@ -8,6 +8,7 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstant
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.NONCE
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.PRESENTATION_DEFINITION
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REDIRECT_URI
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REQUEST
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REQUEST_URI
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.REQUEST_URI_METHOD
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.RESPONSE_MODE
@@ -66,7 +67,10 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     fun fetchAuthorizationRequest() {
 
         val requestUri = getStringValue(authorizationRequestParameters, REQUEST_URI.value)
-        val request = getStringValue(authorizationRequestParameters, AuthorizationRequestFieldConstants.REQUEST.value)
+        val request = getStringValue(
+            authorizationRequestParameters,
+            REQUEST.value
+        )
 
         if (request != null && requestUri != null) {
             throw OpenID4VPExceptions.InvalidData(
@@ -75,7 +79,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        if(request != null){
+        if (request != null) {
             handleRequestObjectAsValue(request)
         } else if (requestUri != null) {
             handleRequestObjectByReference(requestUri)
@@ -145,6 +149,8 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
                     className,
                 )
             }
+            this.authorizationRequestParameters =
+                this.validateRequestUriResponse(requestUriResponse, httpMethod)
         } catch (e: OpenID4VPExceptions) {
             throw e
         } catch (e: Exception) {
@@ -154,7 +160,6 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        this.authorizationRequestParameters = this.validateRequestUriResponse(requestUriResponse, httpMethod)
     }
 
     private fun handleUrlEncodedRequest() {
@@ -167,6 +172,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
     }
 
     private fun handleRequestObjectAsValue(request: String) {
+        validate(REQUEST.value,request, className, "jwt")
         if (!isSignedRequestSupported()) {
             throw OpenID4VPExceptions.InvalidData(
                 "Signed request (via request) is not supported for given client_id_scheme - ${this.clientIdScheme()}",
@@ -365,7 +371,10 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
      */
     open fun validateAndParseRequestFields() {
         if (authorizationRequestParameters.containsKey(TRANSACTION_DATA.value)) {
-            throw OpenID4VPExceptions.InvalidTransactionData("Invalid Request: transaction_data is not supported in the authorization request", className)
+            throw OpenID4VPExceptions.InvalidTransactionData(
+                "Invalid Request: transaction_data is not supported in the authorization request",
+                className
+            )
         }
         val responseType = getStringValue(authorizationRequestParameters, RESPONSE_TYPE.value)
         validate(RESPONSE_TYPE.value, responseType, className)

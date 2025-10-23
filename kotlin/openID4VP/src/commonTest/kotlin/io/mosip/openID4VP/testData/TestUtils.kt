@@ -87,19 +87,25 @@ fun createAuthorizationRequestObject(
     }
 }
 
-private fun createAuthorizationRequest(
+internal fun createAuthorizationRequest(
     paramList: List<String>,
     requestParams: Map<String, String?>,
     draftVersion: Int = 23,
+    isSigned: Boolean = false,
 ): MutableMap<String, String?> {
     var params: List<String> = paramList
     if (draftVersion == 21) {
         params = paramList + listOf(CLIENT_ID_SCHEME.value)
     }
-    val authorizationRequestParam = params
+    var authorizationRequestParam = params
         .filter { requestParams.containsKey(it) }
         .associateWith { requestParams[it] }
         .toMutableMap()
+    if(isSigned) {
+        val signedRequest = createJWS(authorizationRequestParam, true, null)
+        authorizationRequestParam = mutableMapOf("request" to signedRequest, CLIENT_ID.value to requestParams[CLIENT_ID.value])
+    }
+
     return authorizationRequestParam
 }
 

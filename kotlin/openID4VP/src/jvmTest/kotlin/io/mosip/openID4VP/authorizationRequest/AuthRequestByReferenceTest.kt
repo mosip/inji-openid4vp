@@ -889,7 +889,7 @@ class AuthRequestByReferenceTest {
         }
 
         assertEquals(
-            "request_uri is not supported for given client_id_scheme - redirect_uri",
+            "Signed request (via request_uri) is not supported for given client_id_scheme - redirect_uri",
             exception.message
         )
     }

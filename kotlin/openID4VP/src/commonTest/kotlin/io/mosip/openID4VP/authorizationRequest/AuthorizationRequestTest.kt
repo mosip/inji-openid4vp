@@ -366,7 +366,9 @@ class AuthorizationRequestTest {
         val authorizationRequestParamsMap = requestParams + clientIdOfReDirectUriDraft23
         val encodedAuthorizationRequest =
             createUrlEncodedData(
-                authorizationRequestParamsMap,false , ClientIdScheme.REDIRECT_URI
+                requestParams = authorizationRequestParamsMap,
+                verifierSentAuthRequestByReference = false,
+                clientIdScheme = ClientIdScheme.REDIRECT_URI
             )
 
         val actualValue =
