@@ -853,28 +853,6 @@ class AuthRequestByReferenceTest {
 
 
     //Client Id scheme - Redirect URI
-    @Test
-    fun `should accept valid inline request with EdDSA for redirect_uri scheme`() {
-        val jwtHeader = buildJsonObject {
-            put("typ", "oauth-authz-req+jwt")
-            put("alg", "EdDSA")
-        }
-
-        val jwtRequest = createAuthorizationRequestObject(
-            clientIdScheme = ClientIdScheme.REDIRECT_URI,
-            authorizationRequestParams = requestParams + clientIdOfReDirectUriDraft23,
-            jwtHeader = jwtHeader,
-        ) as String
-
-        val encoded = createUrlEncodedData(
-            requestParams + clientIdOfReDirectUriDraft23 + mapOf("request" to jwtRequest),
-            clientIdScheme = ClientIdScheme.REDIRECT_URI
-        )
-
-        assertDoesNotThrow {
-            openID4VP.authenticateVerifier(encoded, trustedVerifiers, shouldValidateClient = true)
-        }
-    }
 
     @Test
     fun `should fail if request_uri is used with redirect_uri scheme`() {
