@@ -3,11 +3,14 @@ package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.verify
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes.INVALID_REQUEST
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
+import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.constants.HttpMethod.POST
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm.EdDSA
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
@@ -17,18 +20,24 @@ import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.assertOpenId4VPException
 import io.mosip.openID4VP.testData.authorisationRequestListToClientIdSchemeMap
+import io.mosip.openID4VP.testData.clientIdOfDid
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.createAuthorizationRequest
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
+import io.mosip.openID4VP.testData.didUrl
 import io.mosip.openID4VP.testData.requestParams
+import io.mosip.openID4VP.testData.requestUrl
+import io.mosip.openID4VP.testData.walletMetadata
+import io.mosip.openID4VP.testData.walletNonce
 import io.mosip.vercred.vcverifier.utils.BuildConfig
+import org.junit.Before
 import org.junit.Test
 import java.security.PublicKey
 import kotlin.test.BeforeTest
 import kotlin.test.assertFailsWith
 
 class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
-    @BeforeTest
+    @Before
     fun setUp() {
         mockkObject(NetworkManagerClient)
         mockkObject(BuildConfig)
@@ -341,6 +350,155 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
 
         assertDoesNotThrow {
             mockHandler.fetchAuthorizationRequest()
+        }
+    }
+
+    @Test
+    fun `should make call to request uri with accept header as jwt when request uri method is get`() {
+        // no request_uri_method param means default is get
+        val authorizationRequestParamsMap: MutableMap<String, Any> = mutableMapOf(
+            CLIENT_ID.value to didUrl,
+            REQUEST_URI.value to requestUrl,
+        )
+        val authorizationRequestObjectMap = createAuthorizationRequest(
+            authorisationRequestListToClientIdSchemeMap[DID]!!,
+            clientIdOfDid + requestParams
+        ) as MutableMap<String, Any>
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns authorizationRequestObjectMap
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            }
+        )
+
+        // Mock sendHTTPRequest to return 200 response
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any(), any()
+            )
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(PRE_REGISTERED,
+                authorizationRequestParamsMap as Map<String, String>
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt")),
+        )
+
+        mockHandler.fetchAuthorizationRequest()
+                verify {
+                    NetworkManagerClient.sendHTTPRequest(
+                        requestUrl,
+                        any(),
+                        any(),
+                        match { it["accept"] == "application/oauth-authz-req+jwt" }
+                    )
+                }
+    }
+
+    @Test
+    fun `should make call to request uri with accept header as jwt and content as url encoded when request uri method is post (wallet metadata not available)`() {
+        val authorizationRequestParamsMap: MutableMap<String, Any> = mutableMapOf(
+            CLIENT_ID.value to didUrl,
+            REQUEST_URI.value to requestUrl,
+            REQUEST_URI_METHOD.value to POST.name
+        )
+        val authorizationRequestObjectMap = (createAuthorizationRequest(
+            authorisationRequestListToClientIdSchemeMap[DID]!!,
+            requestParams = clientIdOfDid + requestParams
+        ) + mapOf(WALLET_NONCE.value to walletNonce)) as MutableMap<String, Any>
+        println("authorizationRequestObjectMap: $authorizationRequestObjectMap")
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns authorizationRequestObjectMap
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            },
+            walletNonce = walletNonce
+        )
+
+        // Mock sendHTTPRequest to return 200 response
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any(), any()
+            )
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(PRE_REGISTERED,
+                authorizationRequestParamsMap as Map<String, String>
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt")),
+        )
+
+        mockHandler.fetchAuthorizationRequest()
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                requestUrl,
+                any(),
+                match { it["wallet_nonce"] == walletNonce },
+                match { it["accept"] == "application/oauth-authz-req+jwt" && it["content-type"] == "application/x-www-form-urlencoded" }
+            )
+        }
+    }
+
+    @Test
+    fun `should make call to request uri with accept header as jwt and content as url encoded when request uri method is post (wallet metadata available)`() {
+        val authorizationRequestParamsMap: MutableMap<String, Any> = mutableMapOf(
+            CLIENT_ID.value to didUrl,
+            REQUEST_URI.value to requestUrl,
+            REQUEST_URI_METHOD.value to POST.name
+        )
+        val authorizationRequestObjectMap = (createAuthorizationRequest(
+            authorisationRequestListToClientIdSchemeMap[DID]!!,
+            requestParams = clientIdOfDid + requestParams
+        ) + mapOf(WALLET_NONCE.value to walletNonce)) as MutableMap<String, Any>
+        println("authorizationRequestObjectMap: $authorizationRequestObjectMap")
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns authorizationRequestObjectMap
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            },
+            walletNonce = walletNonce,
+            walletMetadata = walletMetadata
+        )
+
+        // Mock sendHTTPRequest to return 200 response
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any(), any()
+            )
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(PRE_REGISTERED,
+                authorizationRequestParamsMap as Map<String, String>
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt")),
+        )
+
+        mockHandler.fetchAuthorizationRequest()
+        verify {
+            NetworkManagerClient.sendHTTPRequest(
+                requestUrl,
+                any(),
+                match { it["wallet_nonce"] == walletNonce && it.containsKey("wallet_metadata") },
+                match { it["accept"] == "application/oauth-authz-req+jwt" && it["content-type"] == "application/x-www-form-urlencoded" }
+            )
         }
     }
 

@@ -88,7 +88,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(200,
             createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/json")))
@@ -118,7 +119,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                HttpMethod.GET
+                HttpMethod.GET,
+                headers = any()
             )
         } throws NetworkManagerClientExceptions.NetworkRequestTimeout()
 
