@@ -3,7 +3,6 @@ package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes.INVALID_REQUEST
@@ -18,7 +17,6 @@ import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.assertOpenId4VPException
 import io.mosip.openID4VP.testData.authorisationRequestListToClientIdSchemeMap
-import io.mosip.openID4VP.testData.clientIdOfDid
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.createAuthorizationRequest
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
@@ -138,7 +136,7 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
             isSignedRequestSupported = true,
             isUnsignedRequestSupported = true,
             clientIdScheme = "PRE_REGISTERED",
-            extractPublicKey = { algorithm, kid -> mockk<PublicKey>() }
+            extractPublicKey = { _, _ -> mockk<PublicKey>() }
         )
         val exception = assertFailsWith<OpenID4VPExceptions.InvalidData> {
             mockHandler.fetchAuthorizationRequest()
@@ -204,14 +202,18 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
             isSigned = true
         ) as MutableMap<String, Any>
         every { JWSHandler.verify(any(), any()) } returns Unit
-        every { JWSHandler.extractDataJsonFromJws(any(), any()) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns mutableMapOf(
+            CLIENT_ID.value to "mock-client",
+            // other params are masked here
+        )
 
         val mockHandler = createMockHandler(
             authorizationRequestParameters = authorizationRequestParamsMap,
             isSignedRequestSupported = true,
             isUnsignedRequestSupported = true,
             clientIdScheme = "PRE_REGISTERED",
-            extractPublicKey = { algorithm, kid ->
+            extractPublicKey = { _, _ ->
                 mockk<PublicKey>()
             }
         )
@@ -272,6 +274,41 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
         )
     }
 
+    @Test
+    fun `should throw error when client id mismatches between authorization request parameter and encoded request param`() {
+        val authorizationRequestParamsMap = createAuthorizationRequest(
+            authorisationRequestListToClientIdSchemeMap[PRE_REGISTERED]!!,
+            clientIdOfPreRegistered + requestParams,
+            isSigned = true
+        ) as MutableMap<String, Any>
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns mutableMapOf(
+            CLIENT_ID.value to "some-other-client-id",
+            // other params are masked here
+        )
+
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            }
+        )
+
+        val exception = assertFailsWith<OpenID4VPExceptions.MismatchingClientIDInRequest> {
+            mockHandler.fetchAuthorizationRequest()
+        }
+
+        assertOpenId4VPException(
+            exception,
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
+            INVALID_REQUEST
+        )
+    }
+
     /** Passing a request object by reference **/
 
     @Test
@@ -284,7 +321,7 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
             isSignedRequestSupported = true,
             isUnsignedRequestSupported = true,
             clientIdScheme = "PRE_REGISTERED",
-            extractPublicKey = { algorithm, kid ->
+            extractPublicKey = { _, _ ->
                 mockk<PublicKey>()
             }
         )

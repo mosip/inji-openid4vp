@@ -189,7 +189,9 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             )
         }
 
-        authorizationRequestParameters = authorizationRequestObject
+        validateAuthorizationRequestObjectAndParameters(this.authorizationRequestParameters, authorizationRequestObject, className)
+
+        this.authorizationRequestParameters = authorizationRequestObject
     }
 
 
