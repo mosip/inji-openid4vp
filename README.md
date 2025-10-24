@@ -22,7 +22,7 @@ Description: Implementation of OpenID for Verifiable Presentations - in Kotlin
 | Authorization Response mode                                | `direct_post`, `direct_post.jwt` (with encrypted & unsigned responses)                                                                                                                                                                                                                                                                            |
 | Authorization Response type                                | `vp_token`                                                                                                                                                                                                                                                                                                                                        |
 
-#### Client ID Schemes and Signed / Unsigned request support matrix
+### Client ID Schemes and Signed / Unsigned request support matrix
 
 | Client Id Scheme | Supports Unsigned request             | Supports Signed request | Notes                                                                                                                                                                                                                                                    |
 |------------------|---------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -32,7 +32,7 @@ Description: Implementation of OpenID for Verifiable Presentations - in Kotlin
 
 **Note:** 
 - All `By Reference` requests are fetched using HTTP GET / POST method and expected to be _**signed**_ JWT.
-- All `By Value` requests are either _**signed**_ JWT or URL encoded parameters (_**unsigned**_).
+- All `By Value` requests are either _**signed**_ JWT or URL-encoded parameters (_**unsigned**_).
 
 ## Specifications supported
 - The implementation follows OpenID for Verifiable Presentations - [draft 21](https://openid.net/specs/openid-4-verifiable-presentations-1_0-21.html) and [draft 23](https://openid.net/specs/openid-4-verifiable-presentations-1_0-23.html) specification.
