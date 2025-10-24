@@ -67,13 +67,14 @@ fun extractQueryParameters(query: String): Map<String, Any> {
 fun validateAuthorizationRequestObjectAndParameters(
     params: Map<String, Any>,
     authorizationRequestObject: Map<String, Any>,
+    className: String,
 ) {
     if (params[CLIENT_ID.value] != authorizationRequestObject[CLIENT_ID.value]) {
-        throw  OpenID4VPExceptions.InvalidData("Client Id mismatch in Authorization Request parameter and the Request Object",
-            className)
+        throw OpenID4VPExceptions.MismatchingClientIDInRequest(className)
     }
-    if(params.containsKey(CLIENT_ID_SCHEME.value) && params[CLIENT_ID_SCHEME.value] != authorizationRequestObject[CLIENT_ID_SCHEME.value]) {
-        throw  OpenID4VPExceptions.InvalidData("Client Id Scheme mismatch in Authorization Request parameter and the Request Object", className)
+
+    if (params.containsKey(CLIENT_ID_SCHEME.value) && params[CLIENT_ID_SCHEME.value] != authorizationRequestObject[CLIENT_ID_SCHEME.value]) {
+        throw OpenID4VPExceptions.MismatchingClientIdSchemeInRequest(className)
     }
 }
 

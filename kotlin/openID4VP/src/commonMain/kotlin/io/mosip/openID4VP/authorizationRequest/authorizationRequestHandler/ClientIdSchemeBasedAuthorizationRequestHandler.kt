@@ -1,7 +1,6 @@
 package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler
 
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_ID_SCHEME
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.CLIENT_METADATA
@@ -244,17 +243,11 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             }
         }
 
-        try {
-            validateAuthorizationRequestObjectAndParameters(
-                authorizationRequestParameters,
-                authorizationRequestObject
-            )
-        } catch (e: Exception) {
-            throw OpenID4VPExceptions.InvalidData(
-                "Authorization Request Object validation failed: ${e.message}",
-                className
-            )
-        }
+        validateAuthorizationRequestObjectAndParameters(
+            authorizationRequestParameters,
+            authorizationRequestObject,
+            className
+        )
 
         return authorizationRequestObject
     }

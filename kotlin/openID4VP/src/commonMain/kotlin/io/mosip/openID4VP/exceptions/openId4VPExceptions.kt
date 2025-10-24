@@ -57,6 +57,8 @@ sealed class OpenID4VPExceptions(
         )
 
 
+
+
     class JsonEncodingFailed(fieldPath: Any, errorMessage: String, className: String) :
         OpenID4VPExceptions(
             OpenID4VPErrorCodes.INVALID_REQUEST,
@@ -171,4 +173,18 @@ sealed class OpenID4VPExceptions(
         override val message: String,
         className: String,
     ) : OpenID4VPExceptions(OpenID4VPErrorCodes.INVALID_REQUEST, message, className)
+
+    class MismatchingClientIDInRequest(className: String) :
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
+            className
+        )
+
+    class MismatchingClientIdSchemeInRequest(className: String) :
+        OpenID4VPExceptions(
+            OpenID4VPErrorCodes.INVALID_REQUEST,
+            "Client Id Scheme mismatch in Authorization Request parameter and the Request Object",
+            className
+        )
 }

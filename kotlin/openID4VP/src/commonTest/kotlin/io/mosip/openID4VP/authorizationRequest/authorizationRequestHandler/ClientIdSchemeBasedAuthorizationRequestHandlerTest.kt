@@ -3,6 +3,7 @@ package io.mosip.openID4VP.authorizationRequest.authorizationRequestHandler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequestFieldConstants.*
 import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes.INVALID_REQUEST
@@ -17,6 +18,7 @@ import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.testData.assertDoesNotThrow
 import io.mosip.openID4VP.testData.assertOpenId4VPException
 import io.mosip.openID4VP.testData.authorisationRequestListToClientIdSchemeMap
+import io.mosip.openID4VP.testData.clientIdOfDid
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.createAuthorizationRequest
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
@@ -326,6 +328,91 @@ class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
         )
     }
 
+    @Test
+    fun `should throw error when client id is mismatching in request uri response and authorization request parameters`() {
+        val authorizationRequestParamsMap: MutableMap<String, Any> = mutableMapOf(REQUEST_URI.value to "https://example.com/request")
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns mutableMapOf(
+            CLIENT_ID.value to "mismatching-client-id")
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            }
+        )
+
+        // Mock sendHTTPRequest to return 200 response
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any(), any()
+            )
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(PRE_REGISTERED,
+                authorizationRequestParamsMap as Map<String, String>
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt")),
+        )
+
+        val exception = assertFailsWith<OpenID4VPExceptions.MismatchingClientIDInRequest> {
+            mockHandler.fetchAuthorizationRequest()
+        }
+
+        assertOpenId4VPException(
+            exception,
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
+            INVALID_REQUEST
+        )
+    }
+
+    // draft 21 specific
+
+    @Test
+    fun `should throw error when client id scheme is mismatching in request uri response and authorization request parameters`() {
+        val authorizationRequestParamsMap: MutableMap<String, Any> = mutableMapOf(REQUEST_URI.value to "https://example.com/request", CLIENT_ID.value to "some-client-id", CLIENT_ID_SCHEME.value to PRE_REGISTERED.value)
+        every { JWSHandler.verify(any(), any()) } returns Unit
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.HEADER) } returns mutableMapOf("alg" to "EdDSA")
+        every { JWSHandler.extractDataJsonFromJws(any(), JWSHandler.JwsPart.PAYLOAD) } returns mutableMapOf(
+            CLIENT_ID.value to "some-client-id",
+            CLIENT_ID_SCHEME.value to REDIRECT_URI.value
+        )
+        val mockHandler = createMockHandler(
+            authorizationRequestParameters = authorizationRequestParamsMap,
+            isSignedRequestSupported = true,
+            isUnsignedRequestSupported = true,
+            clientIdScheme = "PRE_REGISTERED",
+            extractPublicKey = { _, _ ->
+                mockk<PublicKey>()
+            }
+        )
+
+        // Mock sendHTTPRequest to return 200 response
+        every {
+            NetworkManagerClient.sendHTTPRequest(
+                any(), any(), any(), any()
+            )
+        } returns NetworkResponse(
+            200,
+            createAuthorizationRequestObject(PRE_REGISTERED,
+                authorizationRequestParamsMap as Map<String, String>
+            ).toString(),
+            mapOf("content-type" to listOf("application/oauth-authz-req+jwt")),
+        )
+
+        val exception = assertFailsWith<OpenID4VPExceptions.MismatchingClientIdSchemeInRequest> {
+            mockHandler.fetchAuthorizationRequest()
+        }
+
+        assertOpenId4VPException(
+            exception,
+            "Client Id Scheme mismatch in Authorization Request parameter and the Request Object",
+            INVALID_REQUEST
+        )
+    }
 
     private fun createMockHandler(
         authorizationRequestParameters: MutableMap<String, Any>,
