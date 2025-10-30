@@ -2,6 +2,7 @@ package io.mosip.openID4VP.networkManager
 
 import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
+import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientExceptions.NetworkRequestFailed
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -53,7 +54,7 @@ class NetworkManagerClientTest {
         mockWebServer.shutdown() // Simulate network error
         val url = mockWebServer.url("/test-error").toString()
         val method = HttpMethod.GET
-        assertFailsWith<Exception> {
+        assertFailsWith<NetworkRequestFailed> {
             sendHTTPRequest(url, method)
         }
     }
