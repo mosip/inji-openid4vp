@@ -384,7 +384,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             walletNonce
         )
 
-        assertFalse(handler.isRequestObjectSupported())
+        assertFalse(handler.isUnsignedRequestSupported())
     }
 
     @Test
@@ -397,7 +397,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             setResponseUri,
             walletNonce
         )
-        assertFalse(handler.isRequestObjectSupported())
+        assertFalse(handler.isUnsignedRequestSupported())
     }
 
     @Test
@@ -412,7 +412,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             walletNonce = walletNonce
         )
         val ex = assertFailsWith<OpenID4VPExceptions.InvalidVerifier> {
-            handler.isRequestObjectSupported()
+            handler.isUnsignedRequestSupported()
         }
         assertTrue(ex.message!!.contains("Verifier is not trusted by the wallet"))
     }
@@ -433,7 +433,7 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             setResponseUri = setResponseUri,
             walletNonce = walletNonce
         )
-        assertFalse(handler.isRequestObjectSupported())
+        assertFalse(handler.isUnsignedRequestSupported())
     }
 
     @Test
@@ -452,6 +452,6 @@ class PreRegisteredSchemeAuthorizationRequestHandlerTest {
             setResponseUri = setResponseUri,
             walletNonce = walletNonce
         )
-        assertTrue(handler.isRequestObjectSupported())
+        assertTrue(handler.isUnsignedRequestSupported())
     }
 }

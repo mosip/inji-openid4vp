@@ -23,11 +23,11 @@ class RedirectUriSchemeAuthorizationRequestHandler(
     setResponseUri: (String) -> Unit,
     walletNonce: String
 ) : ClientIdSchemeBasedAuthorizationRequestHandler(authorizationRequestParameters,walletMetadata, setResponseUri, walletNonce) {
-    override fun isRequestUriSupported(): Boolean {
+    override fun isSignedRequestSupported(): Boolean {
         return false
     }
 
-    override fun isRequestObjectSupported(): Boolean {
+    override fun isUnsignedRequestSupported(): Boolean {
         return true
     }
 

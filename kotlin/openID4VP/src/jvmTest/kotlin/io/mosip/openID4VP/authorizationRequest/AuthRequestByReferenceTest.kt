@@ -19,6 +19,7 @@ import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.HttpMethod.GET
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.InvalidData
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions.MismatchingClientIDInRequest
 import io.mosip.openID4VP.jwt.jws.JWSHandler
 import io.mosip.openID4VP.networkManager.NetworkManagerClient
 import io.mosip.openID4VP.networkManager.NetworkResponse
@@ -79,7 +80,8 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(200, createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
@@ -96,7 +98,9 @@ class AuthRequestByReferenceTest {
         verify {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                GET
+                GET,
+                null,
+                match { it["accept"] == "application/oauth-authz-req+jwt" }
             )
         }
     }
@@ -145,7 +149,7 @@ class AuthRequestByReferenceTest {
     @Test
     fun `should throw exception when the client_id validation fails while obtaining Authorization request object by reference in did client id scheme`() {
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, any())
+            NetworkManagerClient.sendHTTPRequest(requestUrl, any(), headers = any())
         } returns NetworkResponse(200, createAuthorizationRequestObject(DID, requestParams + mapOf(
                 CLIENT_ID.value to "wrong-client-id",
                 CLIENT_ID_SCHEME.value to DID.value
@@ -156,7 +160,7 @@ class AuthRequestByReferenceTest {
             createUrlEncodedData(authorizationRequestParamsMap, true, DID)
 
 
-        val exception = assertFailsWith<InvalidData> {
+        val exception = assertFailsWith<MismatchingClientIDInRequest> {
             openID4VP.authenticateVerifier(
                 encodedAuthorizationRequest,
                 trustedVerifiers,
@@ -165,7 +169,7 @@ class AuthRequestByReferenceTest {
         }
 
         assertEquals(
-            "Authorization Request Object validation failed: Client Id mismatch in Authorization Request parameter and the Request Object",
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
             exception.message
         )
     }
@@ -177,7 +181,8 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(200, createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
@@ -196,7 +201,9 @@ class AuthRequestByReferenceTest {
         verify {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                GET
+                GET,
+                null,
+                match { it["accept"] == "application/oauth-authz-req+jwt" }
             )
         }
 
@@ -210,7 +217,8 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(
             200,
@@ -242,7 +250,8 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(
             200,
@@ -286,7 +295,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(
             200,
             validJwt.toString(),
@@ -323,7 +332,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(
             200,
             validJwt.toString(),
@@ -360,7 +369,7 @@ class AuthRequestByReferenceTest {
         val unsignedJwt = "not.a.valid.jwt"
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(
             200,
             unsignedJwt,
@@ -400,7 +409,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(
             200,
             invalidSignedJwt.toString(),
@@ -439,7 +448,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(200, "", emptyMap())
 
         val encodedAuthorizationRequest = createUrlEncodedData(
@@ -479,7 +488,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(
             200,
             jwtWithUnsupportedAlg.toString(),
@@ -515,7 +524,8 @@ class AuthRequestByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(
             200,
@@ -560,7 +570,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(200, "", mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encodedAuthorizationRequest =
@@ -629,7 +639,7 @@ class AuthRequestByReferenceTest {
         )
 
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, HttpMethod.GET)
+            NetworkManagerClient.sendHTTPRequest(requestUrl, GET, headers = any())
         } returns NetworkResponse(200, jwsWithoutAlg.toString(), mapOf("content-type" to listOf("application/oauth-authz-req+jwt")))
 
         val encoded = createUrlEncodedData(requestParamsMap, true, DID)
@@ -692,7 +702,7 @@ class AuthRequestByReferenceTest {
             put("alg", "EdDSA")
         }
         every {
-            NetworkManagerClient.sendHTTPRequest(requestUrl, any())
+            NetworkManagerClient.sendHTTPRequest(requestUrl, any(), headers = any())
         } returns NetworkResponse(200, createAuthorizationRequestObject(
             PRE_REGISTERED, requestParams + mapOf(
                 CLIENT_ID.value to "wrong-client-id",
@@ -707,7 +717,7 @@ class AuthRequestByReferenceTest {
             createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
 
         val invalidClientIdException =
-            assertFailsWith<InvalidData> {
+            assertFailsWith<MismatchingClientIDInRequest> {
                 openID4VP.authenticateVerifier(
                     encodedAuthorizationRequest,
                     trustedVerifiers,
@@ -716,7 +726,7 @@ class AuthRequestByReferenceTest {
             }
 
         assertEquals(
-            "Authorization Request Object validation failed: Client Id mismatch in Authorization Request parameter and the Request Object",
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
             invalidClientIdException.message
         )
     }
@@ -841,40 +851,18 @@ class AuthRequestByReferenceTest {
 
         val encoded = createUrlEncodedData(authorizationRequestParamsMap, true, PRE_REGISTERED)
 
-        val exception = assertFailsWith<InvalidData> {
+        val exception = assertFailsWith<MismatchingClientIDInRequest> {
             openID4VP.authenticateVerifier(encoded, trustedVerifiers, shouldValidateClient = true)
         }
 
         assertEquals(
-            "Authorization Request Object validation failed: Client Id mismatch in Authorization Request parameter and the Request Object",
+            "Client Id mismatch in Authorization Request parameter and the Request Object",
             exception.message
         )
     }
 
 
     //Client Id scheme - Redirect URI
-    @Test
-    fun `should accept valid inline request with EdDSA for redirect_uri scheme`() {
-        val jwtHeader = buildJsonObject {
-            put("typ", "oauth-authz-req+jwt")
-            put("alg", "EdDSA")
-        }
-
-        val jwtRequest = createAuthorizationRequestObject(
-            clientIdScheme = ClientIdScheme.REDIRECT_URI,
-            authorizationRequestParams = requestParams + clientIdOfReDirectUriDraft23,
-            jwtHeader = jwtHeader,
-        ) as String
-
-        val encoded = createUrlEncodedData(
-            requestParams + clientIdOfReDirectUriDraft23 + mapOf("request" to jwtRequest),
-            clientIdScheme = ClientIdScheme.REDIRECT_URI
-        )
-
-        assertDoesNotThrow {
-            openID4VP.authenticateVerifier(encoded, trustedVerifiers, shouldValidateClient = true)
-        }
-    }
 
     @Test
     fun `should fail if request_uri is used with redirect_uri scheme`() {
@@ -889,7 +877,7 @@ class AuthRequestByReferenceTest {
         }
 
         assertEquals(
-            "request_uri is not supported for given client_id_scheme - redirect_uri",
+            "Signed request (via request_uri) is not supported for given client_id_scheme - redirect_uri",
             exception.message
         )
     }

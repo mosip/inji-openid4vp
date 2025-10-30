@@ -5,6 +5,7 @@ import io.mosip.openID4VP.networkManager.exception.NetworkManagerClientException
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
 import java.io.InterruptedIOException
 import java.util.logging.Level
@@ -24,21 +25,11 @@ class NetworkManagerClient {
         ): NetworkResponse {
             try {
                 val client = OkHttpClient.Builder().build()
-                val request: Request = when (method) {
-                    HttpMethod.POST -> {
-                        val requestBodyBuilder = FormBody.Builder()
-                        bodyParams?.forEach { (key, value) ->
-                            requestBodyBuilder.add(key, value)
-                        }
-                        val requestBody = requestBodyBuilder.build()
-                        val requestBuilder = Request.Builder().url(url).post(requestBody)
-                        headers?.forEach { (key, value) ->
-                            requestBuilder.addHeader(key, value)
-                        }
-                        requestBuilder.build()
-                    }
-                    HttpMethod.GET -> Request.Builder().url(url).get().build()
-                }
+                val requestBody = requestBody(bodyParams)
+
+                val requestBuilder = Request.Builder().url(url).method(method.name, requestBody)
+                addHeaders(headers, requestBuilder)
+                val request = requestBuilder.build()
 
                 val response: Response = client.newCall(request).execute()
 
@@ -49,14 +40,35 @@ class NetworkManagerClient {
                 }
             } catch (exception: InterruptedIOException) {
                 val specificException = NetworkManagerClientExceptions.NetworkRequestTimeout()
-                Logger.getLogger(logTag()).log(Level.SEVERE,"ERROR | Timeout occurred: ${specificException.message}")
+                Logger.getLogger(logTag())
+                    .log(Level.SEVERE, "ERROR | Timeout occurred: ${specificException.message}")
                 throw specificException
             } catch (exception: Exception) {
                 val specificException = NetworkManagerClientExceptions.NetworkRequestFailed(
                     exception.message ?: "Unknown error"
                 )
-                Logger.getLogger(logTag()).log(Level.SEVERE,"ERROR | Request failed: ${specificException.message}")
+                Logger.getLogger(logTag())
+                    .log(Level.SEVERE, "ERROR | Request failed: ${specificException.message}")
                 throw specificException
+            }
+        }
+
+        private fun requestBody(bodyParams: Map<String, String>?): RequestBody? {
+            if (bodyParams == null) return null
+
+            val requestBodyBuilder = FormBody.Builder()
+            bodyParams.forEach { (key, value) ->
+                requestBodyBuilder.add(key, value)
+            }
+            return requestBodyBuilder.build()
+        }
+
+        private fun addHeaders(
+            headers: Map<String, String>?,
+            requestBuilder: Request.Builder
+        ) {
+            headers?.forEach { (key, value) ->
+                requestBuilder.addHeader(key, value)
             }
         }
     }

@@ -24,11 +24,11 @@ class DidSchemeAuthorizationRequestHandler(
     setResponseUri,
     walletNonce
 ) {
-    override fun isRequestUriSupported(): Boolean {
+    override fun isSignedRequestSupported(): Boolean {
         return true
     }
 
-    override fun isRequestObjectSupported(): Boolean {
+    override fun isUnsignedRequestSupported(): Boolean {
         return false
     }
 

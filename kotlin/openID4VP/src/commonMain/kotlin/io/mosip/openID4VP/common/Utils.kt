@@ -58,13 +58,14 @@ fun generateNonce(minEntropy: Int = 16): String {
 fun validate(
     key: String,
     value: String?,
-    className: String
+    className: String,
+    fieldType: String = "String"
 ) {
     if (value == null || value == "null" || value.isEmpty()) {
         throw if(value == null) {
             OpenID4VPExceptions.MissingInput(listOf(key),"",className)
         } else {
-            OpenID4VPExceptions.InvalidInput(listOf(key), "String", className)
+            OpenID4VPExceptions.InvalidInput(listOf(key), fieldType, className)
         }
     }
 }

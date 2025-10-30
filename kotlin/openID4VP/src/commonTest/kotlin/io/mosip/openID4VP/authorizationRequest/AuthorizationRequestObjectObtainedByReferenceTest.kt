@@ -88,7 +88,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                any()
+                any(),
+                headers = any()
             )
         } returns NetworkResponse(200,
             createAuthorizationRequestObject(DID, authorizationRequestParamsMap).toString(), mapOf("content-type" to listOf("application/json")))
@@ -118,7 +119,8 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         every {
             NetworkManagerClient.sendHTTPRequest(
                 requestUrl,
-                HttpMethod.GET
+                HttpMethod.GET,
+                headers = any()
             )
         } throws NetworkManagerClientExceptions.NetworkRequestTimeout()
 
@@ -170,7 +172,7 @@ class AuthorizationRequestObjectObtainedByReferenceTest {
         }
 
         assertEquals(
-            "request object is not supported for given client_id_scheme - did",
+            "unsigned request is not supported for given client_id_scheme - did",
             invalidDataException.message
         )
     }
