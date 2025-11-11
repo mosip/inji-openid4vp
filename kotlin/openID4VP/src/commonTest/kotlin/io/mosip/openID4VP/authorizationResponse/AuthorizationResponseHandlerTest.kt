@@ -335,7 +335,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.body)
+        assertEquals("success", result.additionalParams)
 
         verify {
             ResponseModeBasedHandlerFactory.get("direct_post")
@@ -742,7 +742,7 @@ class AuthorizationResponseHandlerTest {
         )
         val mockVpTokenSigningPayload = mapOf("uuid-1" to sdJwtCredential1)
 
-        val unsignedVPTokenMap = mapOf(
+        mapOf(
             "unsignedVPToken" to mockUnsignedSdJwtVPToken,
             "vpTokenSigningPayload" to mockVpTokenSigningPayload
         )
@@ -771,7 +771,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.body)
+        assertEquals("success", result.additionalParams)
 
 
         verify(exactly = 1) {
@@ -845,7 +845,7 @@ class AuthorizationResponseHandlerTest {
             responseUrl
         )
 
-        assertEquals("success", result.body)
+        assertEquals("success", result.additionalParams)
     }
 
     @Test
@@ -1006,7 +1006,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.body)
+        assertEquals("success", result.additionalParams)
         // assert if mockResponseHandler is called with correct authorization response
         verify(exactly = 1) {
             mockResponseHandler.sendAuthorizationResponse(
@@ -1016,7 +1016,7 @@ class AuthorizationResponseHandlerTest {
                     // Note: If only more than vp token is being shared then the path in presentation submission takes value as $[<index>] and VP token is an array holding all tokens together
                     assertEquals(
                         """
-                    PresentationSubmission(id=649d581c-f291-4969-9cd5-2c27385a348f, definitionId=649d581c-f891-4969-9cd5-2c27385a348f, descriptorMap=[DescriptorMap(id=input1, format=ldp_vp, path=${'$'}[2], pathNested=PathNested(id=input1, format=ldp_vc, path=${'$'}.verifiableCredential[0])), DescriptorMap(id=input1, format=ldp_vp, path=${'$'}[2], pathNested=PathNested(id=input1, format=ldp_vc, path=${'$'}.verifiableCredential[1])), DescriptorMap(id=input2, format=mdoc_vp, path=${'$'}[3], pathNested=null), DescriptorMap(id=input3, format=vc+sd-jwt, path=${'$'}[4], pathNested=null), DescriptorMap(id=input3, format=vc+sd-jwt, path=${'$'}[5], pathNested=null)])
+                    PresentationSubmission(id=649d581c-f291-4969-9cd5-2c27385a348f, definitionId=649d581c-f891-4969-9cd5-2c27385a348f, descriptorMap=[DescriptorMap(id=input1, format=ldp_vp, path=$[2], pathNested=PathNested(id=input1, format=ldp_vc, path=$.verifiableCredential[0])), DescriptorMap(id=input1, format=ldp_vp, path=$[2], pathNested=PathNested(id=input1, format=ldp_vc, path=$.verifiableCredential[1])), DescriptorMap(id=input2, format=mdoc_vp, path=$[3], pathNested=null), DescriptorMap(id=input3, format=vc+sd-jwt, path=$[4], pathNested=null), DescriptorMap(id=input3, format=vc+sd-jwt, path=$[5], pathNested=null)])
                         """.trimIndent(), it.presentationSubmission.toString()
                     )
                     true
@@ -1051,7 +1051,7 @@ class AuthorizationResponseHandlerTest {
             exception = ex
         )
 
-        assertEquals("mock-error-response", result.body)
+        assertEquals("mock-error-response", result.additionalParams)
         assertTrue(bodySlot.isCaptured)
         assertEquals(authorizationRequest.state, bodySlot.captured["state"])
         assertTrue(headersSlot.captured["Content-Type"]!!.contains("application/x-www-form-urlencoded"))
@@ -1076,7 +1076,7 @@ class AuthorizationResponseHandlerTest {
             exception = ex
         )
 
-        assertEquals("generic-error-response", result.body)
+        assertEquals("generic-error-response", result.additionalParams)
         assertTrue(bodySlot.captured.containsKey("error"))
         assertTrue(bodySlot.captured.values.any { it.contains("Boom") })
     }

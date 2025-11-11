@@ -28,6 +28,7 @@ import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
+import org.json.JSONObject
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
 
@@ -106,7 +107,11 @@ internal class AuthorizationResponseHandler {
         return unsignedVPTokenResults.mapValues { it.value.second }
     }
 
-    internal fun sendAuthorizationError(responseUri: String?, authorizationRequest: AuthorizationRequest?, exception: Exception): NetworkResponse {
+    internal fun sendAuthorizationError(
+        responseUri: String?,
+        authorizationRequest: AuthorizationRequest?,
+        exception: Exception
+    ): VerifierResponse {
         if (responseUri == null) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Response URI is not set. Cannot send error to verifier.",
@@ -132,8 +137,9 @@ internal class AuthorizationResponseHandler {
                 bodyParams = errorPayload,
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
-            (exception as? OpenID4VPExceptions)?.setNetworkResponse(networkResponse)
-            return networkResponse
+            val verifierResponse = toVerifierResponse(networkResponse)
+            (exception as? OpenID4VPExceptions)?.setVerifierResponse(verifierResponse)
+            return verifierResponse
         } catch (err: Exception) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Failed to send error to verifier: ${err.message}",
@@ -146,17 +152,18 @@ internal class AuthorizationResponseHandler {
         authorizationRequest: AuthorizationRequest,
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>,
         responseUri: String,
-    ): NetworkResponse {
+    ): VerifierResponse {
         val authorizationResponse: AuthorizationResponse = createAuthorizationResponse(
             authorizationRequest = authorizationRequest,
             vpTokenSigningResults = vpTokenSigningResults
         )
 
-        return sendAuthorizationResponse(
+        val networkResponse = sendAuthorizationResponse(
             authorizationResponse = authorizationResponse,
             responseUri = responseUri,
             authorizationRequest = authorizationRequest
         )
+        return toVerifierResponse(networkResponse)
     }
 
     //Create authorization response based on the response_type parameter in authorization response
@@ -215,12 +222,12 @@ internal class AuthorizationResponseHandler {
             )
         }
 
-        val finalVpTokens : MutableList<VPToken> = mutableListOf()
-        val finalDescriptorMappings : MutableList<DescriptorMap> = mutableListOf()
+        val finalVpTokens: MutableList<VPToken> = mutableListOf()
+        val finalDescriptorMappings: MutableList<DescriptorMap> = mutableListOf()
         var rootIndex = 0
 
 
-        formatToCredentialInputDescriptorMapping.forEach{ (credentialFormat, credentialInputDescriptorMappings) ->
+        formatToCredentialInputDescriptorMapping.forEach { (credentialFormat, credentialInputDescriptorMappings) ->
             val vpTokenSigningResult = (vpTokenSigningResults[credentialFormat]
                 ?: throw OpenID4VPExceptions.InvalidData(
                     "unable to find the related credential format - $credentialFormat in the vpTokenSigningResults map",
@@ -268,7 +275,10 @@ internal class AuthorizationResponseHandler {
         if (isSingleVPToken) {
             descriptorMaps.forEach { descriptorMap ->
                 val updatedRootPath = descriptorMap.path.replace(Regex("""\[\d+]"""), "")
-                val updatedDescriptorMap = descriptorMap.copy(path = updatedRootPath, pathNested = descriptorMap.pathNested)
+                val updatedDescriptorMap = descriptorMap.copy(
+                    path = updatedRootPath,
+                    pathNested = descriptorMap.pathNested
+                )
                 descriptorMaps[descriptorMaps.indexOf(descriptorMap)] = updatedDescriptorMap
             }
         }
@@ -352,7 +362,9 @@ internal class AuthorizationResponseHandler {
             vpResponseMetadata.validate()
             var pathIndex = 0
 
-            val flattenedCredentials: Map<String, List<Any>> = this.formatToCredentialInputDescriptorMapping.values.flatten() .groupBy({ it.inputDescriptorId }, { it.credential })
+            val flattenedCredentials: Map<String, List<Any>> =
+                this.formatToCredentialInputDescriptorMapping.values.flatten()
+                    .groupBy({ it.inputDescriptorId }, { it.credential })
             val descriptorMap = mutableListOf<DescriptorMap>()
             flattenedCredentials.forEach { (inputDescriptorId, vcs) ->
                 vcs.forEach { _ ->
@@ -415,4 +427,10 @@ internal class AuthorizationResponseHandler {
         this.formatToCredentialInputDescriptorMapping = formatToCredentialInputDescriptorMapping
     }
 
+    private fun toVerifierResponse(networkResponse: NetworkResponse): VerifierResponse {
+        val redirectUri = try { JSONObject(networkResponse.body).optString("redirect_uri", null) } catch (_: Exception) { null }
+        return VerifierResponse(
+            networkResponse.statusCode, redirectUri, networkResponse.body, networkResponse.headers
+        )
+    }
 }

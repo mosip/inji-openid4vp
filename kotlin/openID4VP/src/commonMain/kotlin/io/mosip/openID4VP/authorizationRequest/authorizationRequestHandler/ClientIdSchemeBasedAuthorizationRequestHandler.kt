@@ -127,7 +127,7 @@ abstract class ClientIdSchemeBasedAuthorizationRequestHandler(
             walletMetadata?.let { walletMetadata ->
                 isClientIdSchemeSupported(walletMetadata)
                 val processedWalletMetadata = process(walletMetadata)
-                body = body?.plus(
+                body = body.plus(
                     mapOf(
                         "wallet_metadata" to encodeToJsonString(
                             processedWalletMetadata,

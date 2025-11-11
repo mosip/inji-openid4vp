@@ -144,7 +144,7 @@ object OpenID4VPManager {
             }
 
             try {
-                val finalResponse = instance.sendAuthorizationResponseToVerifier(vpTokenSigningResultMap)
+                val finalResponse = instance.sendVPResponseToVerifier(vpTokenSigningResultMap)
                 Log.d("VP_SHARE", "######## $finalResponse")
                 finalResponse
             } catch (e: Exception) {
@@ -154,7 +154,7 @@ object OpenID4VPManager {
         }
 
     fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
-        return instance.sendErrorResponseToVerifier(ovpException)
+        return instance.sendErrorInfoToVerifier(ovpException)
     }
 }
 

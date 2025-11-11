@@ -9,7 +9,6 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.V
 import io.mosip.openID4VP.constants.*
 import io.mosip.openID4VP.common.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
-import io.mosip.openID4VP.networkManager.NetworkResponse
 
 class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,
@@ -74,9 +73,9 @@ class OpenID4VP @JvmOverloads constructor(
     /** Sends the final Authorization response to Verifier with the Verifiable Presentations as per response type
      * Returns the Verifier response as Network response
      * */
-    fun sendAuthorizationResponseToVerifier(
+    fun sendVPResponseToVerifier(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
-    ): NetworkResponse {
+    ): VerifierResponse {
         return try {
             authorizationResponseHandler.shareVP(
                 authorizationRequest = authorizationRequest!!,
@@ -93,7 +92,7 @@ class OpenID4VP @JvmOverloads constructor(
      * Sends Authorization error to the Verifier and returns the response from the Verifier.
      * The response body from Verifier response is returned as a String.
      */
-    fun sendErrorResponseToVerifier(exception: Exception): NetworkResponse {
+    fun sendErrorInfoToVerifier(exception: Exception): VerifierResponse {
         return authorizationResponseHandler.sendAuthorizationError(
             responseUri,
             authorizationRequest,
@@ -161,7 +160,7 @@ class OpenID4VP @JvmOverloads constructor(
     /** Sends Authorization error to the verifier */
     @Deprecated(
         message = "This does not support listening the response from the verifier",
-        replaceWith = ReplaceWith("sendErrorResponseToVerifier(exception)"),
+        replaceWith = ReplaceWith("sendErrorInfoToVerifier(exception)"),
         level = DeprecationLevel.WARNING
     )
     fun sendErrorToVerifier(exception: Exception) {
@@ -170,22 +169,22 @@ class OpenID4VP @JvmOverloads constructor(
 
     @Deprecated(
         message = "This method does not support listening to the status code sent from the verifier",
-        replaceWith = ReplaceWith("sendAuthorizationResponseToVerifier(vpTokenSigningResults)"),
+        replaceWith = ReplaceWith("sendVPResponseToVerifier(vpTokenSigningResults)"),
         level = DeprecationLevel.WARNING
     )
             /** Sends the final signed VP token response to the verifier */
     fun shareVerifiablePresentation(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
     ): String {
-        return sendAuthorizationResponseToVerifier(vpTokenSigningResults).body
+        return sendVPResponseToVerifier(vpTokenSigningResults).composedBody()
     }
 
     // Ensures that any error occurring in the flow is sent to the Verifier
     // The Verifier's response is attached to the exception for further usage
     private fun safeSendError(exception: Exception) {
         try {
-            val verifierResponse = sendErrorResponseToVerifier(exception)
-            (exception as? OpenID4VPExceptions)?.setNetworkResponse(verifierResponse)
+            val verifierResponse = sendErrorInfoToVerifier(exception)
+            (exception as? OpenID4VPExceptions)?.setVerifierResponse(verifierResponse)
         } catch (error: Exception) {
             OpenID4VPExceptions.error(error.message ?: error.localizedMessage, className)
         }
