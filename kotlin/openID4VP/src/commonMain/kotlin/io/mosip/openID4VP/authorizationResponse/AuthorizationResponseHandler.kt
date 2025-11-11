@@ -428,9 +428,12 @@ internal class AuthorizationResponseHandler {
     }
 
     private fun toVerifierResponse(networkResponse: NetworkResponse): VerifierResponse {
-        val redirectUri = try { JSONObject(networkResponse.body).optString("redirect_uri", null) } catch (_: Exception) { null }
+        val jsonObject = runCatching { JSONObject(networkResponse.body) }.getOrNull()
+        val redirectUri = jsonObject?.optString("redirect_uri", null)
+        val additionalParams = jsonObject?.apply { remove("redirect_uri") }?.toString() ?: networkResponse.body
+
         return VerifierResponse(
-            networkResponse.statusCode, redirectUri, networkResponse.body, networkResponse.headers
+            networkResponse.statusCode, redirectUri, additionalParams, networkResponse.headers
         )
     }
 }
