@@ -177,7 +177,7 @@ class OpenID4VP @JvmOverloads constructor(
     fun shareVerifiablePresentation(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
     ): String {
-        return sendVPResponseToVerifier(vpTokenSigningResults).composedBody()
+        return sendVPResponseToVerifier(vpTokenSigningResults).body()
     }
 
     // Ensures that any error occurring in the flow is sent to the Verifier

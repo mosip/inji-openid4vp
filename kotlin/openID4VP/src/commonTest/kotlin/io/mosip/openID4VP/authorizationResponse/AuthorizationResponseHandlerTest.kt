@@ -1075,7 +1075,7 @@ class AuthorizationResponseHandlerTest {
                 bodyParams = capture(bodySlot),
                 headers = any()
             )
-        } returns NetworkResponse(500, "generic-error-response", mapOf())
+        } returns NetworkResponse(500, "\"message\":\"generic-error-response\"", mapOf())
 
         val ex = RuntimeException("Boom")
         val result = authorizationResponseHandler.sendAuthorizationError(
@@ -1084,7 +1084,7 @@ class AuthorizationResponseHandlerTest {
             exception = ex
         )
 
-        assertEquals("generic-error-response", result.additionalParams)
+        assertEquals("\"message\":\"generic-error-response\"", result.additionalParams)
         assertTrue(bodySlot.captured.containsKey("error"))
         assertTrue(bodySlot.captured.values.any { it.contains("Boom") })
     }

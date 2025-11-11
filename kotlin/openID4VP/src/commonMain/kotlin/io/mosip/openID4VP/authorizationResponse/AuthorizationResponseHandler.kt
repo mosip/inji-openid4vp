@@ -2,34 +2,37 @@ package io.mosip.openID4VP.authorizationResponse
 
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PresentationSubmission
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenFactory
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenArray
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenElement
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
-import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.ResponseType
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
-import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorFields
+import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ContentType
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.constants.ResponseType
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
 import io.mosip.openID4VP.verifier.VerifierResponse
-import org.json.JSONObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonObject
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
 
@@ -429,12 +432,17 @@ internal class AuthorizationResponseHandler {
     }
 
     private fun toVerifierResponse(networkResponse: NetworkResponse): VerifierResponse {
-        val jsonObject = runCatching { JSONObject(networkResponse.body) }.getOrNull()
-        val redirectUri = jsonObject?.optString("redirect_uri", null)
-        val additionalParams = jsonObject?.apply { remove("redirect_uri") }?.toString() ?: networkResponse.body
+        val redirectUriKey = "redirect_uri"
+
+        val jsonElement = runCatching { Json.parseToJsonElement(networkResponse.body) }.getOrNull()
+        val jsonObject = jsonElement as? JsonObject
+        val redirectUri = runCatching { jsonObject?.get(redirectUriKey)?.jsonPrimitive?.contentOrNull }.getOrNull()
+        val additionalParams = jsonObject?.toMutableMap()?.apply { remove(redirectUriKey) }
+            ?.let { Json.encodeToString(JsonObject.serializer(), JsonObject(it)) }
+            ?: networkResponse.body
 
         return VerifierResponse(
-            networkResponse.statusCode, redirectUri, additionalParams, networkResponse.headers
+            networkResponse.statusCode, redirectUri, additionalParams, networkResponse.headers, networkResponse.body
         )
     }
 }
