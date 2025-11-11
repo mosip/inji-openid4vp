@@ -72,7 +72,7 @@ class OpenID4VP @JvmOverloads constructor(
     }
 
     /** Sends the final Authorization response to Verifier with the Verifiable Presentations as per response type
-     * Returns the Verifier response as Network response
+     * Returns the Verifier response as Verifier Response object
      * */
     fun sendVPResponseToVerifier(
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>
@@ -91,7 +91,7 @@ class OpenID4VP @JvmOverloads constructor(
 
     /**
      * Sends Authorization error to the Verifier and returns the response from the Verifier.
-     * The response body from Verifier response is returned as a String.
+     * The response body from Verifier response is returned as a Verifier Response object.
      */
     fun sendErrorInfoToVerifier(exception: Exception): VerifierResponse {
         return authorizationResponseHandler.sendAuthorizationError(
