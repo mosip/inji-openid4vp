@@ -5,6 +5,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.nimbusds.jose.jwk.OctetKeyPair
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
+import io.mosip.openID4VP.authorizationResponse.VerifierResponse
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
@@ -60,7 +61,7 @@ object OpenID4VPManager {
 
     fun shareVerifiablePresentation(
         selectedItems: SnapshotStateList<Pair<String, VCMetadata>>,
-        onResult: (NetworkResponse) -> Unit
+        onResult: (VerifierResponse) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -75,7 +76,7 @@ object OpenID4VPManager {
     }
 
 
-    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): NetworkResponse =
+    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): VerifierResponse =
         withContext(
             Dispatchers.IO
         ) {
@@ -153,7 +154,7 @@ object OpenID4VPManager {
             }
         }
 
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): VerifierResponse {
         return instance.sendErrorInfoToVerifier(ovpException)
     }
 }
