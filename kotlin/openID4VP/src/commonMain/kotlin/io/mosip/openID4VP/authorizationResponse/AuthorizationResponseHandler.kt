@@ -28,6 +28,7 @@ import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
+import io.mosip.openID4VP.verifier.VerifierResponse
 import org.json.JSONObject
 
 private val className = AuthorizationResponseHandler::class.java.simpleName

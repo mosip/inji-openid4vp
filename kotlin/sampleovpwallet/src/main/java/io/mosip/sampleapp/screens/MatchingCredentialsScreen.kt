@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
-import io.mosip.openID4VP.authorizationResponse.VerifierResponse
+import io.mosip.openID4VP.verifier.VerifierResponse
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.sampleapp.Constants
 import io.mosip.sampleapp.Screen

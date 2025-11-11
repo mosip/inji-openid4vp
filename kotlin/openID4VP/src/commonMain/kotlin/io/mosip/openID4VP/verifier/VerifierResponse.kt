@@ -1,4 +1,4 @@
-package io.mosip.openID4VP.authorizationResponse
+package io.mosip.openID4VP.verifier
 
 import org.json.JSONObject
 
@@ -20,5 +20,3 @@ data class VerifierResponse(
         return jsonObject.toString()
     }
 }
-
-

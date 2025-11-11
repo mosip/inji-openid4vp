@@ -9,6 +9,7 @@ import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.V
 import io.mosip.openID4VP.constants.*
 import io.mosip.openID4VP.common.*
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
+import io.mosip.openID4VP.verifier.VerifierResponse
 
 class OpenID4VP @JvmOverloads constructor(
     private val traceabilityId: String,

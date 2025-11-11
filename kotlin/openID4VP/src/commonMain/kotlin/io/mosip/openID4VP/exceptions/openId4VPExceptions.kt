@@ -1,6 +1,6 @@
 package io.mosip.openID4VP.exceptions
 
-import io.mosip.openID4VP.authorizationResponse.VerifierResponse
+import io.mosip.openID4VP.verifier.VerifierResponse
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR
 import io.mosip.openID4VP.common.OpenID4VPErrorFields.ERROR_DESCRIPTION
