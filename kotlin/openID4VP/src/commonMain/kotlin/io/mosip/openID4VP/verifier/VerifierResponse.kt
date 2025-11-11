@@ -12,11 +12,15 @@ data class VerifierResponse(
 ) {
     fun isOk(): Boolean = statusCode in 200..299
     internal fun composedBody(): String {
-        val jsonObject =
-            if (this.additionalParams.isNullOrBlank()) JSONObject() else JSONObject(this.additionalParams)
-        this.redirectUri?.let {
-            jsonObject.put("redirect_uri", it)
+        if (redirectUri == null) {
+            return additionalParams.orEmpty()
         }
-        return jsonObject.toString()
+        return try {
+            val jsonObject = if (additionalParams.isNullOrBlank()) JSONObject() else JSONObject(additionalParams)
+            jsonObject.put("redirect_uri", redirectUri)
+            jsonObject.toString()
+        } catch (_: Exception) {
+            additionalParams.orEmpty()
+        }
     }
 }

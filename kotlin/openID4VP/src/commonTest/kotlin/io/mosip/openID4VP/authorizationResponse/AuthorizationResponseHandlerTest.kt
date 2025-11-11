@@ -178,7 +178,7 @@ class AuthorizationResponseHandlerTest {
                 any(),
                 any()
             )
-        } returns NetworkResponse(200, "success", mapOf())
+        } returns NetworkResponse(200, "{\"message\":\"success\"}", mapOf())
     }
 
     @AfterTest
@@ -335,7 +335,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.additionalParams)
+        assertEquals("{\"message\":\"success\"}", result.additionalParams)
 
         verify {
             ResponseModeBasedHandlerFactory.get("direct_post")
@@ -551,6 +551,14 @@ class AuthorizationResponseHandlerTest {
             "input1" to listOf(encodeToJsonString(ldpCredential1, "ldpCredential1", "LDP_VC")),
             "input2" to listOf(encodeToJsonString(ldpCredential2, "ldpCredential2", "LDP_VC"))
         )
+        every {
+            mockResponseHandler.sendAuthorizationResponse(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } returns NetworkResponse(200, "{\"message\":\"successfully received verifiable presentation\",\"redirect_uri\":\"https://mock.com/redirect#response_code=12334==\"}", mapOf())
 
         authorizationResponseHandler.constructUnsignedVPTokenV1(
             verifiableCredentials = credentials,
@@ -564,7 +572,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result)
+        assertEquals("{\"message\":\"successfully received verifiable presentation\",\"redirect_uri\":\"https://mock.com/redirect#response_code=12334==\"}", result)
 
         verify {
             mockResponseHandler.sendAuthorizationResponse(
@@ -771,7 +779,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.additionalParams)
+        assertEquals("{\"message\":\"success\"}", result.additionalParams)
 
 
         verify(exactly = 1) {
@@ -845,7 +853,7 @@ class AuthorizationResponseHandlerTest {
             responseUrl
         )
 
-        assertEquals("success", result.additionalParams)
+        assertEquals("{\"message\":\"success\"}", result.additionalParams)
     }
 
     @Test
@@ -1006,7 +1014,7 @@ class AuthorizationResponseHandlerTest {
             responseUri = responseUrl
         )
 
-        assertEquals("success", result.additionalParams)
+        assertEquals("{\"message\":\"success\"}", result.additionalParams)
         // assert if mockResponseHandler is called with correct authorization response
         verify(exactly = 1) {
             mockResponseHandler.sendAuthorizationResponse(
