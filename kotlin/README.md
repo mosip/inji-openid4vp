@@ -121,8 +121,8 @@ The following credential formats are supported for sharing:
 - [APIs](#apis)
   - [authenticateVerifier](#authenticateverifier)
   - [constructUnsignedVPToken](#constructunsignedvptoken)
-  - [sendAuthorizationResponseToVerifier](#sendauthorizationresponsetoverifier)
-  - [sendErrorResponseToVerifier](#senderrorresponsetoverifier)
+  - [sendVPResponseToVerifier](#sendvpresponsetoverifier)
+  - [sendErrorInfoToVerifier](#senderrorinfotoverifier)
 
 
 ## Installation
@@ -486,15 +486,15 @@ val unsignedVPToken: String = """
 
 This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
 
-### sendAuthorizationResponseToVerifier
+### sendVPResponseToVerifier
 - Constructs a `vp_token` with proof using the provided `VPTokenSigningResult`, then sends it along with the `presentation_submission` to the Verifier via an HTTP POST request.
-- Returns a response to the consumer app (e.g., mobile app) indicating whether the Verifiable Credentials were successfully shared with the Verifier.
+- Returns back the response received from the Verifier. Refer here for the structure of VerifierResponse - [VerifierResponse structure](#verifierresponse-structure)
 
 **Note 1:** When sharing multiple MSO_MDOC credentials, the verifier is responsible for mapping each credential to its corresponding input descriptor. This mapping is not handled by the library since the ISO standard does not define such a mapping mechanism.
 
 
 ```kotlin
-    val response : NetworkResponse = openID4VP.sendAuthorizationResponseToVerifier(vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>)
+    val response : VerifierResponse = openID4VP.sendVPResponseToVerifier(vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>)
 ```
 
 #### Request Parameters
@@ -502,6 +502,19 @@ This method will also notify the Verifier about the error by sending it to the r
 | Name                  | Type                                  | Description                                                                                                                                                   |
 |-----------------------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vpTokenSigningResults | Map<FormatType, VPTokenSigningResult> | This will be a map with key as credential format and value as VPTokenSigningResult (which is specific to respective credential format's required information) |
+
+### Response Parameters
+
+VerifierResponse contains the following properties:
+
+#### VerifierResponse structure
+
+| Name             | Type             | Description                                                                                                   |
+|------------------|------------------|---------------------------------------------------------------------------------------------------------------|
+| statusCode       | Int              | HTTP status code received from the Verifier                                                                   |
+| redirectUri      | String           | The redirect URI to which the wallet application needs to redirect after sending the response to the Verifier |     
+| additionalParams | Map<String, Any> | A map containing any additional response body parameters received from the Verifier                           |
+| headers          | Map<String, Any> | A map containing any headers received from the Verifier                                                       |
 
 
 #### Example usage
@@ -532,7 +545,7 @@ val vpTokenSigningResults : Map<FormatType, VPTokenSigningResult> = mapOf(
     FormatType.VC_SD_JWT to sdJwtVPTokenSigningResult,
     FormatType.DC_SD_JWT to sdJwtVPTokenSigningResult,
 )
-val response : NetworkResponse = openID4VP.sendAuthorizationResponseToVerifier(vpTokenSigningResults = vpTokenSigningResults)
+val response : VerifierResponse = openID4VP.sendVPResponseToVerifier(vpTokenSigningResults = vpTokenSigningResults)
 ```
 
 
@@ -545,7 +558,7 @@ val response : NetworkResponse = openID4VP.sendAuthorizationResponseToVerifier(v
 
 This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
 
-### shareVerifiablePresentation (deprecated, use sendAuthorizationResponseToVerifier instead)
+### shareVerifiablePresentation (deprecated, use sendVPResponseToVerifier instead)
 - Constructs a `vp_token` with proof using the provided `VPTokenSigningResult`, then sends it along with the `presentation_submission` to the Verifier via an HTTP POST request.
 - Returns a response to the consumer app (e.g., mobile app) indicating whether the Verifiable Credentials were successfully shared with the Verifier.
 
@@ -554,7 +567,7 @@ This method will also notify the Verifier about the error by sending it to the r
 
 ```kotlin
 //NOTE: New API contract
-    val response : String = openID4VP.shareVerifiablePresentation(vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>) 
+    val response : String = openID4VP.sendVPResponseToVerifier(vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>) 
 
 //NOTE: Old API contract for backward compatibility
     val response : String = openID4VP.shareVerifiablePresentation(vpResponseMetadata: VPResponseMetadata)
@@ -608,16 +621,16 @@ val response : String = openID4VP.shareVerifiablePresentation(vpTokenSigningResu
 
 This method will also notify the Verifier about the error by sending it to the response_uri endpoint over http post request. If response_uri is invalid and validation failed then Verifier won't be able to know about it.
 
-### sendErrorResponseToVerifier
+### sendErrorInfoToVerifier
 
 - Receives an exception and sends it's message to the Verifier via an HTTP POST request to the Verifier's response_uri endpoint.
-- Returns back the response body received from the Verifier.
+- Returns back the response received from the Verifier. Refer here for the structure of VerifierResponse - [VerifierResponse structure](#verifierresponse-structure)
 
 ```kotlin
 // Example: The user declines to share the requested credentials. In this case, Verifier needs to be informed about the scenario.
-// So call the sendErrorResponseToVerifier method with appropriate exception message to notify the Verifier.
+// So call the sendErrorInfoToVerifier method with appropriate exception message to notify the Verifier.
 
-val verifierResponse: NetworkResponse = openID4VP.sendErrorResponseToVerifier(
+val verifierResponse: VerifierResponse = openID4VP.sendErrorInfoToVerifier(
     OpenID4VPExceptions.AccessDenied(
         message = "User did not give consent to share the requested Credentials with the Verifier.",
         className = this.className
@@ -629,7 +642,7 @@ val verifierResponse: NetworkResponse = openID4VP.sendErrorResponseToVerifier(
 1. ErrorDispatchFailure is thrown if any issue occurs while sending the Authorization Error response to the Verifier.
 
 
-### sendErrorToVerifier  (deprecated, use sendErrorResponseToVerifier instead)
+### sendErrorToVerifier  (deprecated, use sendErrorInfoToVerifier instead)
 - Receives an exception and sends it's message to the Verifier via an HTTP POST request.
 
 ```kotlin
@@ -664,7 +677,7 @@ This exception has the following properties:
 
 1. errorCode: A unique code representing the type of error.
 2. message: A descriptive message providing details about the error.
-3. networkResponse: An optional property that holds the Verifier response obtained while sending the error to Verifier.
+3. verifierResponse: An optional property that holds the Verifier response obtained while sending the error to Verifier. Refer here for the structure of VerifierResponse - [VerifierResponse structure](#verifierresponse-structure)
 4. className: The name of the class where the exception occurred.
 
 
@@ -672,7 +685,7 @@ This exception has the following properties:
 
 The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives.
 
-| Method Name                 | Description                                   | Deprecated Since | Suggested Alternative                                                       |
-|-----------------------------|-----------------------------------------------|------------------|-----------------------------------------------------------------------------|
-| shareVerifiablePresentation | Sends VP (Authorization response) to verifier | 0.6.0            | [sendAuthorizationResponseToVerifier](#sendauthorizationresponsetoverifier) |
-| sendErrorToVerifier         | Sends Authorization error to the verifier     | 0.6.0            | [sendErrorResponseToVerifier](#senderrorresponsetoverifier)                 |
+| Method Name                 | Description                                   | Deprecated Since | Suggested Alternative                                   |
+|-----------------------------|-----------------------------------------------|------------------|---------------------------------------------------------|
+| shareVerifiablePresentation | Sends VP (Authorization response) to verifier | 0.6.0            | [sendVPResponseToVerifier](#sendvpresponsetoverifier)   |
+| sendErrorToVerifier         | Sends Authorization error to the verifier     | 0.6.0            | [sendErrorInfoToVerifier](#senderrorinfotoverifier)     |

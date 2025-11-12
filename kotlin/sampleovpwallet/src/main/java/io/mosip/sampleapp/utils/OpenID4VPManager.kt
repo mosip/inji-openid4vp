@@ -5,6 +5,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.nimbusds.jose.jwk.OctetKeyPair
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
+import io.mosip.openID4VP.verifier.VerifierResponse
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPToken
@@ -60,7 +61,7 @@ object OpenID4VPManager {
 
     fun shareVerifiablePresentation(
         selectedItems: SnapshotStateList<Pair<String, VCMetadata>>,
-        onResult: (NetworkResponse) -> Unit
+        onResult: (VerifierResponse) -> Unit
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -75,7 +76,7 @@ object OpenID4VPManager {
     }
 
 
-    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): NetworkResponse =
+    private suspend fun sendVP(selectedItems: SnapshotStateList<Pair<String, VCMetadata>>): VerifierResponse =
         withContext(
             Dispatchers.IO
         ) {
@@ -144,7 +145,7 @@ object OpenID4VPManager {
             }
 
             try {
-                val finalResponse = instance.sendAuthorizationResponseToVerifier(vpTokenSigningResultMap)
+                val finalResponse = instance.sendVPResponseToVerifier(vpTokenSigningResultMap)
                 Log.d("VP_SHARE", "######## $finalResponse")
                 finalResponse
             } catch (e: Exception) {
@@ -153,8 +154,8 @@ object OpenID4VPManager {
             }
         }
 
-    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): NetworkResponse {
-        return instance.sendErrorResponseToVerifier(ovpException)
+    fun sendErrorToVerifier(ovpException: OpenID4VPExceptions): VerifierResponse {
+        return instance.sendErrorInfoToVerifier(ovpException)
     }
 }
 

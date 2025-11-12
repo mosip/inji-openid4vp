@@ -2,32 +2,37 @@ package io.mosip.openID4VP.authorizationResponse
 
 import io.mosip.openID4VP.OpenID4VP
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.DescriptorMap
 import io.mosip.openID4VP.authorizationResponse.presentationSubmission.PresentationSubmission
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPToken
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenFactory
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenArray
 import io.mosip.openID4VP.authorizationResponse.vpToken.VPTokenType.VPTokenElement
 import io.mosip.openID4VP.authorizationResponse.vpToken.types.ldp.LdpVPToken
-import io.mosip.openID4VP.common.UUIDGenerator
-import io.mosip.openID4VP.constants.FormatType
-import io.mosip.openID4VP.constants.ResponseType
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPTokenBuilder
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.VPTokenSigningPayload
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.mdoc.UnsignedMdocVPTokenBuilder
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPTokenBuilder
-import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.VPResponseMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorFields
+import io.mosip.openID4VP.common.UUIDGenerator
 import io.mosip.openID4VP.common.encodeToJsonString
 import io.mosip.openID4VP.constants.ContentType
+import io.mosip.openID4VP.constants.FormatType
 import io.mosip.openID4VP.constants.HttpMethod
+import io.mosip.openID4VP.constants.ResponseType
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.openID4VP.networkManager.NetworkManagerClient.Companion.sendHTTPRequest
 import io.mosip.openID4VP.networkManager.NetworkResponse
 import io.mosip.openID4VP.responseModeHandler.ResponseModeBasedHandlerFactory
+import io.mosip.openID4VP.verifier.VerifierResponse
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonObject
 
 private val className = AuthorizationResponseHandler::class.java.simpleName
 
@@ -106,7 +111,11 @@ internal class AuthorizationResponseHandler {
         return unsignedVPTokenResults.mapValues { it.value.second }
     }
 
-    internal fun sendAuthorizationError(responseUri: String?, authorizationRequest: AuthorizationRequest?, exception: Exception): NetworkResponse {
+    internal fun sendAuthorizationError(
+        responseUri: String?,
+        authorizationRequest: AuthorizationRequest?,
+        exception: Exception
+    ): VerifierResponse {
         if (responseUri == null) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Response URI is not set. Cannot send error to verifier.",
@@ -132,8 +141,9 @@ internal class AuthorizationResponseHandler {
                 bodyParams = errorPayload,
                 headers = mapOf("Content-Type" to ContentType.APPLICATION_FORM_URL_ENCODED.value)
             )
-            (exception as? OpenID4VPExceptions)?.setNetworkResponse(networkResponse)
-            return networkResponse
+            val verifierResponse = toVerifierResponse(networkResponse)
+            (exception as? OpenID4VPExceptions)?.setVerifierResponse(verifierResponse)
+            return verifierResponse
         } catch (err: Exception) {
             throw OpenID4VPExceptions.ErrorDispatchFailure(
                 message = "Failed to send error to verifier: ${err.message}",
@@ -146,17 +156,18 @@ internal class AuthorizationResponseHandler {
         authorizationRequest: AuthorizationRequest,
         vpTokenSigningResults: Map<FormatType, VPTokenSigningResult>,
         responseUri: String,
-    ): NetworkResponse {
+    ): VerifierResponse {
         val authorizationResponse: AuthorizationResponse = createAuthorizationResponse(
             authorizationRequest = authorizationRequest,
             vpTokenSigningResults = vpTokenSigningResults
         )
 
-        return sendAuthorizationResponse(
+        val networkResponse = sendAuthorizationResponse(
             authorizationResponse = authorizationResponse,
             responseUri = responseUri,
             authorizationRequest = authorizationRequest
         )
+        return toVerifierResponse(networkResponse)
     }
 
     //Create authorization response based on the response_type parameter in authorization response
@@ -215,12 +226,12 @@ internal class AuthorizationResponseHandler {
             )
         }
 
-        val finalVpTokens : MutableList<VPToken> = mutableListOf()
-        val finalDescriptorMappings : MutableList<DescriptorMap> = mutableListOf()
+        val finalVpTokens: MutableList<VPToken> = mutableListOf()
+        val finalDescriptorMappings: MutableList<DescriptorMap> = mutableListOf()
         var rootIndex = 0
 
 
-        formatToCredentialInputDescriptorMapping.forEach{ (credentialFormat, credentialInputDescriptorMappings) ->
+        formatToCredentialInputDescriptorMapping.forEach { (credentialFormat, credentialInputDescriptorMappings) ->
             val vpTokenSigningResult = (vpTokenSigningResults[credentialFormat]
                 ?: throw OpenID4VPExceptions.InvalidData(
                     "unable to find the related credential format - $credentialFormat in the vpTokenSigningResults map",
@@ -268,7 +279,10 @@ internal class AuthorizationResponseHandler {
         if (isSingleVPToken) {
             descriptorMaps.forEach { descriptorMap ->
                 val updatedRootPath = descriptorMap.path.replace(Regex("""\[\d+]"""), "")
-                val updatedDescriptorMap = descriptorMap.copy(path = updatedRootPath, pathNested = descriptorMap.pathNested)
+                val updatedDescriptorMap = descriptorMap.copy(
+                    path = updatedRootPath,
+                    pathNested = descriptorMap.pathNested
+                )
                 descriptorMaps[descriptorMaps.indexOf(descriptorMap)] = updatedDescriptorMap
             }
         }
@@ -352,7 +366,9 @@ internal class AuthorizationResponseHandler {
             vpResponseMetadata.validate()
             var pathIndex = 0
 
-            val flattenedCredentials: Map<String, List<Any>> = this.formatToCredentialInputDescriptorMapping.values.flatten() .groupBy({ it.inputDescriptorId }, { it.credential })
+            val flattenedCredentials: Map<String, List<Any>> =
+                this.formatToCredentialInputDescriptorMapping.values.flatten()
+                    .groupBy({ it.inputDescriptorId }, { it.credential })
             val descriptorMap = mutableListOf<DescriptorMap>()
             flattenedCredentials.forEach { (inputDescriptorId, vcs) ->
                 vcs.forEach { _ ->
@@ -415,4 +431,18 @@ internal class AuthorizationResponseHandler {
         this.formatToCredentialInputDescriptorMapping = formatToCredentialInputDescriptorMapping
     }
 
+    private fun toVerifierResponse(networkResponse: NetworkResponse): VerifierResponse {
+        val redirectUriKey = "redirect_uri"
+
+        val jsonElement = runCatching { Json.parseToJsonElement(networkResponse.body) }.getOrNull()
+        val jsonObject = jsonElement as? JsonObject
+        val redirectUri = runCatching { jsonObject?.get(redirectUriKey)?.jsonPrimitive?.contentOrNull }.getOrNull()
+        val additionalParams = jsonObject?.toMutableMap()?.apply { remove(redirectUriKey) }
+            ?.let { Json.encodeToString(JsonObject.serializer(), JsonObject(it)) }
+            ?: networkResponse.body
+
+        return VerifierResponse(
+            networkResponse.statusCode, redirectUri, additionalParams, networkResponse.headers, networkResponse.body
+        )
+    }
 }

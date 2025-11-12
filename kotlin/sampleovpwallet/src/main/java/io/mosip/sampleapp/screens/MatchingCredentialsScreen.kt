@@ -38,23 +38,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
+import io.mosip.openID4VP.verifier.VerifierResponse
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions
 import io.mosip.sampleapp.Constants
-import io.mosip.sampleapp.utils.OpenID4VPManager
-import io.mosip.sampleapp.utils.OpenID4VPManager.shareVerifiablePresentation
 import io.mosip.sampleapp.Screen
 import io.mosip.sampleapp.data.SharedViewModel
 import io.mosip.sampleapp.data.VCMetadata
+import io.mosip.sampleapp.utils.OpenID4VPManager
+import io.mosip.sampleapp.utils.OpenID4VPManager.shareVerifiablePresentation
 import io.mosip.sampleapp.utils.Utils.getDisplayLabel
 import io.mosip.sampleovpwallet.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.net.toUri
-import io.mosip.openID4VP.networkManager.NetworkResponse
-import org.json.JSONObject
 
 @Composable
 fun MatchingCredentialsScreen(
@@ -265,18 +264,13 @@ fun handleDecline(
 }
 
 private suspend fun handleVerifierResponse(
-    verifierResponse: NetworkResponse,
+    verifierResponse: VerifierResponse,
     navController: NavHostController,
     callback: () -> Unit = {}
 ) {
     println("Verifier Response: $verifierResponse")
 
-    val redirectUri = try {
-        JSONObject(verifierResponse.body).optString("redirect_uri")
-    } catch (e: Exception) {
-        println("Error parsing JSON: ${e.message}")
-        null
-    }
+    val redirectUri = verifierResponse.redirectUri
     withContext(Dispatchers.Main) {
         redirectUri?.let {
             val intent = Intent(
