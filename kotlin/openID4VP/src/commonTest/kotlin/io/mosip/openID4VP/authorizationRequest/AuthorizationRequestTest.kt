@@ -23,7 +23,6 @@ import io.mosip.openID4VP.testData.assertOpenId4VPException
 import io.mosip.openID4VP.testData.clientIdOfPreRegistered
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft21
 import io.mosip.openID4VP.testData.clientIdOfReDirectUriDraft23
-import io.mosip.openID4VP.testData.clientMetadataString
 import io.mosip.openID4VP.testData.createAuthorizationRequestObject
 import io.mosip.openID4VP.testData.createUrlEncodedData
 import io.mosip.openID4VP.testData.presentationDefinitionString
@@ -32,7 +31,6 @@ import io.mosip.openID4VP.testData.requestUrl
 import io.mosip.openID4VP.testData.trustedVerifiers
 import io.mosip.openID4VP.testData.walletMetadata
 import io.mosip.openID4VP.testData.walletNonce
-import okhttp3.Headers
 import kotlin.test.*
 
 

@@ -9,7 +9,6 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes.INVALID_REQUEST
 import io.mosip.openID4VP.constants.ClientIdScheme.DID
 import io.mosip.openID4VP.constants.ClientIdScheme.PRE_REGISTERED
-import io.mosip.openID4VP.constants.HttpMethod
 import io.mosip.openID4VP.constants.HttpMethod.POST
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm
 import io.mosip.openID4VP.constants.RequestSigningAlgorithm.EdDSA
@@ -33,7 +32,6 @@ import io.mosip.vercred.vcverifier.utils.BuildConfig
 import org.junit.Before
 import org.junit.Test
 import java.security.PublicKey
-import kotlin.test.BeforeTest
 import kotlin.test.assertFailsWith
 
 class ClientIdSchemeBasedAuthorizationRequestHandlerTest {
